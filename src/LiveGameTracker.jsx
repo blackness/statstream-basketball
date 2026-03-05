@@ -3,14 +3,17 @@ import { supabase } from '../supabase';
 import Dashboard from './components/Dashboard/Dashboard';
 import CreateTeam from './components/Team/CreateTeam';
 import PreGameSetup from './components/Game/PreGameSetup';
+import LiveGameView from './components/LiveGame/LiveGameView';
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams, setTeams] = useState([]);
   const [gameHistory, setGameHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState('home'); // 'home', 'createTeam', 'gameSetup', 'liveGame'
+  const [activeView, setActiveView] = useState('home');
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [currentGameSettings, setCurrentGameSettings] = useState(null);
+
+  
   useEffect(() => {
     if (user) {
       loadTeamsAndGames();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabase';
+import { supabase } from '../../../supabase';
 import AppHeader from '../Shared/AppHeader';
 import { Play, Pause, Home } from 'lucide-react';
 
