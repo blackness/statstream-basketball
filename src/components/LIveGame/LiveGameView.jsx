@@ -1,0 +1,332 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../supabase';
+import AppHeader from '../Shared/AppHeader';
+import { Play, Pause, Home } from 'lucide-react';
+
+const LiveGameView = ({ 
+  user,
+  team, 
+  gameSettings, 
+  onEndGame,
+  onGoHome,
+  toast 
+}) => {
+  const [currentGameId, setCurrentGameId] = useState(null);
+  const [homeScore, setHomeScore] = useState(0);
+  const [awayScore, setAwayScore] = useState(0);
+  const [currentPeriod, setCurrentPeriod] = useState(1);
+  const [gameTime, setGameTime] = useState(gameSettings.periodLength * 60);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [liveStats, setLiveStats] = useState({});
+  const [opponentStats, setOpponentStats] = useState({});
+  const [activePlayers, setActivePlayers] = useState([]);
+
+  // Initialize game
+  useEffect(() => {
+    createGame();
+    // Set first 5 players as active
+    if (team.roster && team.roster.length > 0) {
+      setActivePlayers(team.roster.slice(0, 5).map(p => p.id));
+    }
+  }, []);
+
+  // Timer
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning && gameTime > 0) {
+      interval = setInterval(() => {
+        setGameTime(prev => {
+          if (prev <= 1) {
+            setIsTimerRunning(false);
+            toast?.info('Period ended!');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, gameTime]);
+
+  // Auto-save every 5 seconds
+  useEffect(() => {
+    if (!currentGameId) return;
+    
+    const interval = setInterval(() => {
+      saveGame();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentGameId, homeScore, awayScore, currentPeriod, gameTime, liveStats, opponentStats]);
+
+  const createGame = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .insert([{
+          user_id: user.id,
+          team_id: team.id,
+          opponent: gameSettings.opponent,
+          home_team: gameSettings.isHome ? team.name : gameSettings.opponent,
+          status: 'in-progress',
+          period: currentPeriod,
+          time_remaining: gameTime,
+          home_score: 0,
+          away_score: 0,
+          stats: {},
+          opponent_stats: {},
+          game_settings: gameSettings,
+          visibility: 'private'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setCurrentGameId(data.id);
+      toast?.success('Game started!');
+    } catch (err) {
+      console.error('Error creating game:', err);
+      toast?.error('Failed to start game');
+    }
+  };
+
+  const saveGame = async () => {
+    if (!currentGameId) return;
+
+    try {
+      const { error } = await supabase
+        .from('games')
+        .update({
+          home_score: homeScore,
+          away_score: awayScore,
+          period: currentPeriod,
+          time_remaining: gameTime,
+          stats: liveStats,
+          opponent_stats: opponentStats,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentGameId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error saving game:', err);
+    }
+  };
+
+  const handleQuickStat = (playerId, statType, points = 0) => {
+    // Update player stats
+    setLiveStats(prev => {
+      const playerStats = prev[playerId] || {
+        pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0,
+        oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
+      };
+
+      return {
+        ...prev,
+        [playerId]: {
+          ...playerStats,
+          [statType]: (playerStats[statType] || 0) + 1,
+          pts: playerStats.pts + points
+        }
+      };
+    });
+
+    // Update score
+    if (points > 0) {
+      if (gameSettings.isHome) {
+        setHomeScore(prev => prev + points);
+      } else {
+        setAwayScore(prev => prev + points);
+      }
+      toast?.success(`+${points} points!`, 'success', 1000);
+    }
+  };
+
+  const handleOpponentScore = (points) => {
+    if (gameSettings.isHome) {
+      setAwayScore(prev => prev + points);
+    } else {
+      setHomeScore(prev => prev + points);
+    }
+    toast?.info(`Opponent +${points}`, 'info', 1000);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleEndGame = async () => {
+    if (!confirm('End this game?')) return;
+
+    try {
+      await saveGame();
+      
+      const { error } = await supabase
+        .from('games')
+        .update({ status: 'completed' })
+        .eq('id', currentGameId);
+
+      if (error) throw error;
+
+      toast?.success('Game ended!');
+      onGoHome();
+    } catch (err) {
+      console.error('Error ending game:', err);
+      toast?.error('Failed to end game');
+    }
+  };
+
+  return (
+    <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
+      
+      <AppHeader
+        title="Live Game"
+        isDashboard={false}
+        onDashboard={onGoHome}
+        userEmail={user?.email}
+      />
+
+      {/* Scoreboard */}
+      <div className="w-full bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 flex-shrink-0">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1 text-center">
+              <div className="text-sm font-bold opacity-90">{gameSettings.isHome ? team.name : gameSettings.opponent}</div>
+              <div className="text-5xl font-black tabular-nums">{homeScore}</div>
+            </div>
+            
+            <div className="px-6 text-center">
+              <div className="text-sm font-bold opacity-90">Q{currentPeriod}</div>
+              <div className="text-2xl font-black tabular-nums">{formatTime(gameTime)}</div>
+              <button
+                onClick={() => setIsTimerRunning(!isTimerRunning)}
+                className="mt-2 p-2 bg-white/20 hover:bg-white/30 rounded-lg transition"
+              >
+                {isTimerRunning ? <Pause size={20} /> : <Play size={20} />}
+              </button>
+            </div>
+            
+            <div className="flex-1 text-center">
+              <div className="text-sm font-bold opacity-90">{gameSettings.isHome ? gameSettings.opponent : team.name}</div>
+              <div className="text-5xl font-black tabular-nums">{awayScore}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Players & Stats */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-6xl mx-auto space-y-4">
+          
+          {/* Active Players */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+            <h3 className="font-black text-gray-900 mb-3">Active Players</h3>
+            <div className="space-y-2">
+              {team.roster?.filter(p => activePlayers.includes(p.id)).map(player => {
+                const stats = liveStats[player.id] || { pts: 0 };
+                return (
+                  <div key={player.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-gray-900 w-8">#{player.number}</span>
+                      <span className="font-bold text-gray-900">{player.name}</span>
+                      <span className="text-sm text-gray-600">{player.position}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-blue-600 text-lg mr-4">{stats.pts} pts</span>
+                      
+                      <button
+                        onClick={() => handleQuickStat(player.id, 'fgm', 2)}
+                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        2PT
+                      </button>
+                      <button
+                        onClick={() => handleQuickStat(player.id, 'tpm', 3)}
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        3PT
+                      </button>
+                      <button
+                        onClick={() => handleQuickStat(player.id, 'ftm', 1)}
+                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        FT
+                      </button>
+                      <button
+                        onClick={() => handleQuickStat(player.id, 'oreb', 0)}
+                        className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        REB
+                      </button>
+                      <button
+                        onClick={() => handleQuickStat(player.id, 'ast', 0)}
+                        className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-bold text-sm transition"
+                      >
+                        AST
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Opponent Scoring */}
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+            <h3 className="font-black text-gray-900 mb-3">Opponent Scoring</h3>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleOpponentScore(2)}
+                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-lg transition"
+              >
+                +2 PTS
+              </button>
+              <button
+                onClick={() => handleOpponentScore(3)}
+                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-lg transition"
+              >
+                +3 PTS
+              </button>
+              <button
+                onClick={() => handleOpponentScore(1)}
+                className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-lg transition"
+              >
+                +1 PT
+              </button>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (currentPeriod < gameSettings.totalPeriods) {
+                  setCurrentPeriod(prev => prev + 1);
+                  setGameTime(gameSettings.periodLength * 60);
+                  setIsTimerRunning(false);
+                  toast?.info(`Starting Q${currentPeriod + 1}`);
+                }
+              }}
+              disabled={currentPeriod >= gameSettings.totalPeriods}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition disabled:opacity-50"
+            >
+              Next Period
+            </button>
+            <button
+              onClick={handleEndGame}
+              className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-bold transition"
+            >
+              End Game
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LiveGameView;

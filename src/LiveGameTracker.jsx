@@ -1,32 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import Dashboard from './components/Dashboard/Dashboard';
+import CreateTeam from './components/Team/CreateTeam';
+import PreGameSetup from './components/Game/PreGameSetup';
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams, setTeams] = useState([]);
   const [gameHistory, setGameHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Load teams and games
+  const [activeView, setActiveView] = useState('home'); // 'home', 'createTeam', 'gameSetup', 'liveGame'
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [currentGameSettings, setCurrentGameSettings] = useState(null);
   useEffect(() => {
     if (user) {
       loadTeamsAndGames();
     }
   }, [user]);
 
+  
   const loadTeamsAndGames = async () => {
     try {
       setLoading(true);
 
-      // Load teams
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select('*')
+        .select(`
+          *,
+          players:players(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (teamsError) throw teamsError;
 
-      // Load games
+      const teamsWithRoster = teamsData?.map(team => ({
+        ...team,
+        roster: team.players || []
+      })) || [];
+
       const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select('*')
@@ -34,7 +44,7 @@ const LiveGameTracker = ({ user, toast }) => {
 
       if (gamesError) throw gamesError;
 
-      setTeams(teamsData || []);
+      setTeams(teamsWithRoster);
       setGameHistory(gamesData || []);
       
     } catch (err) {
@@ -45,12 +55,63 @@ const LiveGameTracker = ({ user, toast }) => {
     }
   };
 
+  const handleCreateTeam = async (teamData) => {
+    try {
+      const { data: newTeam, error: teamError } = await supabase
+        .from('teams')
+        .insert([{
+          name: teamData.name,
+          coach: teamData.coach,
+          sport: teamData.sport,
+          visibility: teamData.visibility,
+          wins: teamData.wins,
+          losses: teamData.losses,
+          user_id: user.id
+        }])
+        .select()
+        .single();
+
+      if (teamError) throw teamError;
+
+      if (teamData.roster && teamData.roster.length > 0) {
+        const players = teamData.roster.map(player => ({
+          team_id: newTeam.id,
+          name: player.name,
+          number: player.number || '',
+          position: player.position || '',
+          active: true,
+          status: 'rostered'
+        }));
+
+        const { error: playersError } = await supabase
+          .from('players')
+          .insert(players);
+
+        if (playersError) throw playersError;
+      }
+
+      toast?.success('Team created successfully!');
+      setActiveView('home');
+      loadTeamsAndGames();
+      
+    } catch (err) {
+      console.error('Error creating team:', err);
+      toast?.error(err.message || 'Failed to create team');
+    }
+  };
+
+const handleStartGame = (team, gameSettings) => {
+  setSelectedTeam(team);
+  setCurrentGameSettings(gameSettings);
+  setActiveView('liveGame');
+};
+
   const handleNewTeam = () => {
-    toast?.info('Create team feature coming next!');
+    setActiveView('createTeam');
   };
 
   const handleNewGame = () => {
-    toast?.info('Start game feature coming next!');
+    setActiveView('gameSetup');
   };
 
   const handleEditTeam = (team) => {
@@ -118,6 +179,46 @@ const LiveGameTracker = ({ user, toast }) => {
     );
   }
 
+  if (activeView === 'createTeam') {
+    return (
+      <CreateTeam
+        user={user}
+        onSave={handleCreateTeam}
+        onCancel={() => setActiveView('home')}
+        toast={toast}
+      />
+    );
+  }
+
+  if (activeView === 'gameSetup') {
+    return (
+      <PreGameSetup
+        user={user}
+        teams={teams}
+        onStartGame={handleStartGame}
+        onCancel={() => setActiveView('home')}
+        toast={toast}
+      />
+    );
+  }
+if (activeView === 'liveGame') {
+  return (
+    <LiveGameView
+      user={user}
+      team={selectedTeam}
+      gameSettings={currentGameSettings}
+      onEndGame={() => {
+        setActiveView('home');
+        loadTeamsAndGames();
+      }}
+      onGoHome={() => {
+        setActiveView('home');
+        loadTeamsAndGames();
+      }}
+      toast={toast}
+    />
+  );
+}
   return (
     <Dashboard
       user={user}
