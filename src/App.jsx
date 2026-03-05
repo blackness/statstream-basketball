@@ -1,7 +1,7 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import AuthUI from './services/AuthUI';
-import Dashboard from './components/Dashboard/Dashboard';
+import LiveGameTracker from './LiveGameTracker';
 import { ToastContainer, useToast } from './components/Shared/Toast';
 
 function AppContent() {
@@ -26,7 +26,7 @@ function AppContent() {
   return (
     <>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
-      <Dashboard user={user} toast={toast} />
+      <LiveGameTracker user={user} toast={toast} />
     </>
   );
 }
