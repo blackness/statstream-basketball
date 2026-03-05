@@ -1,9 +1,12 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import AuthUI from './services/AuthUI';
+import Dashboard from './components/Dashboard/Dashboard';
+import { ToastContainer, useToast } from './components/Shared/Toast';
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const toast = useToast();
 
   if (loading) {
     return (
@@ -21,15 +24,10 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-black text-gray-900 mb-4">
-          Welcome to Stat<span className="text-blue-600">Stream</span>!
-        </h1>
-        <p className="text-gray-600 mb-4">Email: {user.email}</p>
-        <p className="text-green-600 font-bold">✅ Authentication working!</p>
-      </div>
-    </div>
+    <>
+      <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />
+      <Dashboard user={user} toast={toast} />
+    </>
   );
 }
 
