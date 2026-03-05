@@ -12,6 +12,7 @@ const LiveGameTracker = ({ user, toast }) => {
   const [activeView, setActiveView] = useState('home');
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [currentGameSettings, setCurrentGameSettings] = useState(null);
+  const [resumingGame, setResumingGame] = useState(null);  // ✅ ADD THIS
 
   
   useEffect(() => {
@@ -106,6 +107,7 @@ const LiveGameTracker = ({ user, toast }) => {
 const handleStartGame = (team, gameSettings) => {
   setSelectedTeam(team);
   setCurrentGameSettings(gameSettings);
+  setResumingGame(null);
   setActiveView('liveGame');
 };
 
@@ -125,9 +127,36 @@ const handleStartGame = (team, gameSettings) => {
     toast?.info('Manage roster feature coming next!');
   };
 
-  const handleResumeGame = (game) => {
-    toast?.info('Resume game feature coming next!');
-  };
+const handleResumeGame = async (game) => {
+  try {
+    // Load the team
+    const team = teams.find(t => t.id === game.team_id);
+    if (!team) {
+      toast?.error('Team not found');
+      return;
+    }
+
+    // Set up game state from saved game
+    setSelectedTeam(team);
+    setCurrentGameSettings({
+      opponent: game.opponent,
+      location: game.game_settings?.location || '',
+      isHome: game.home_team === team.name,
+      periodLength: game.game_settings?.periodLength || 8,
+      totalPeriods: game.game_settings?.totalPeriods || 4,
+      homeFouls: game.game_settings?.homeFouls || 0,
+      awayFouls: game.game_settings?.awayFouls || 0
+    });
+    
+    // ✅ NEW: Store the game being resumed
+    setResumingGame(game);
+    
+    setActiveView('liveGame');
+  } catch (err) {
+    console.error('Error resuming game:', err);
+    toast?.error('Failed to resume game');
+  }
+};
 
   const handleViewStats = (game) => {
     toast?.info('View stats feature coming next!');
@@ -210,11 +239,14 @@ if (activeView === 'liveGame') {
       user={user}
       team={selectedTeam}
       gameSettings={currentGameSettings}
+      existingGame={resumingGame}  // ✅ Pass the actual game object
       onEndGame={() => {
+        setResumingGame(null);  // ✅ Clear it
         setActiveView('home');
         loadTeamsAndGames();
       }}
       onGoHome={() => {
+        setResumingGame(null);  // ✅ Clear it
         setActiveView('home');
         loadTeamsAndGames();
       }}

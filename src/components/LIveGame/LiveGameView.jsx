@@ -1,31 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import AppHeader from '../Shared/AppHeader';
-import { Play, Pause, Home } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 
 const LiveGameView = ({ 
   user,
   team, 
-  gameSettings, 
+  gameSettings,
+  existingGame = null, // ✅ NEW: Accept existing game for resume
   onEndGame,
   onGoHome,
   toast 
 }) => {
-  const [currentGameId, setCurrentGameId] = useState(null);
-  const [homeScore, setHomeScore] = useState(0);
-  const [awayScore, setAwayScore] = useState(0);
-  const [currentPeriod, setCurrentPeriod] = useState(1);
-  const [gameTime, setGameTime] = useState(gameSettings.periodLength * 60);
+  const [currentGameId, setCurrentGameId] = useState(existingGame?.id || null);
+  const [homeScore, setHomeScore] = useState(existingGame?.home_score || 0);
+  const [awayScore, setAwayScore] = useState(existingGame?.away_score || 0);
+  const [currentPeriod, setCurrentPeriod] = useState(existingGame?.period || 1);
+  const [gameTime, setGameTime] = useState(existingGame?.time_remaining || (gameSettings.periodLength * 60));
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [liveStats, setLiveStats] = useState({});
-  const [opponentStats, setOpponentStats] = useState({});
+  const [liveStats, setLiveStats] = useState(existingGame?.stats || {});
+  const [opponentStats, setOpponentStats] = useState(existingGame?.opponent_stats || {});
   const [activePlayers, setActivePlayers] = useState([]);
 
   // Initialize game
   useEffect(() => {
-    createGame();
-    // Set first 5 players as active
-    if (team.roster && team.roster.length > 0) {
+    if (!currentGameId) {
+      createGame();
+    } else {
+      toast?.success('Game resumed!');
+    }
+    
+    // Set first 5 players as active if not resuming
+    if (team.roster && team.roster.length > 0 && !existingGame) {
+      setActivePlayers(team.roster.slice(0, 5).map(p => p.id));
+    } else if (existingGame?.active_players) {
+      // Restore active players from saved game
+      const activeIds = existingGame.active_players;
+      setActivePlayers(activeIds);
+    } else if (team.roster && team.roster.length > 0) {
       setActivePlayers(team.roster.slice(0, 5).map(p => p.id));
     }
   }, []);
@@ -57,7 +69,7 @@ const LiveGameView = ({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentGameId, homeScore, awayScore, currentPeriod, gameTime, liveStats, opponentStats]);
+  }, [currentGameId, homeScore, awayScore, currentPeriod, gameTime, liveStats, opponentStats, activePlayers]);
 
   const createGame = async () => {
     try {
@@ -75,6 +87,7 @@ const LiveGameView = ({
           away_score: 0,
           stats: {},
           opponent_stats: {},
+          active_players: activePlayers,
           game_settings: gameSettings,
           visibility: 'private'
         }])
@@ -104,6 +117,7 @@ const LiveGameView = ({
           time_remaining: gameTime,
           stats: liveStats,
           opponent_stats: opponentStats,
+          active_players: activePlayers,
           updated_at: new Date().toISOString()
         })
         .eq('id', currentGameId);
@@ -183,7 +197,7 @@ const LiveGameView = ({
     <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
       
       <AppHeader
-        title="Live Game"
+        title={existingGame ? "Resume Game" : "Live Game"}
         isDashboard={false}
         onDashboard={onGoHome}
         userEmail={user?.email}
