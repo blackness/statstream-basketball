@@ -22,3 +22,34 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Dependencies
+node_modules
+.pnpm-store
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build
+dist
+.vercel
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Cache
+*.log
+npm-debug.log*
+.turbo
+
+# User data
+AppData

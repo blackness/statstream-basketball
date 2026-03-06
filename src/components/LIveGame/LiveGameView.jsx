@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';  // ✅ Add useRef
 import { supabase } from '../../../supabase';
 import AppHeader from '../Shared/AppHeader';
 import { Play, Pause } from 'lucide-react';
+
 
 const LiveGameView = ({ 
   user,
@@ -20,27 +21,33 @@ const LiveGameView = ({
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [liveStats, setLiveStats] = useState(existingGame?.stats || {});
   const [opponentStats, setOpponentStats] = useState(existingGame?.opponent_stats || {});
-  const [activePlayers, setActivePlayers] = useState([]);
+  const creatingGame = useRef(false);
 
-  // Initialize game
-  useEffect(() => {
-    if (!currentGameId) {
+const [activePlayers, setActivePlayers] = useState(
+  existingGame?.active_players && Array.isArray(existingGame.active_players) && existingGame.active_players.length > 0
+    ? existingGame.active_players
+    : []
+);
+
+ // Initialize game
+useEffect(() => {
+  if (!existingGame) {
+    // New game - create it only once
+    if (!creatingGame.current && !currentGameId) {
+      creatingGame.current = true;  // ✅ Prevents Strict Mode double-call
       createGame();
-    } else {
-      toast?.success('Game resumed!');
     }
     
-    // Set first 5 players as active if not resuming
-    if (team.roster && team.roster.length > 0 && !existingGame) {
-      setActivePlayers(team.roster.slice(0, 5).map(p => p.id));
-    } else if (existingGame?.active_players) {
-      // Restore active players from saved game
-      const activeIds = existingGame.active_players;
-      setActivePlayers(activeIds);
-    } else if (team.roster && team.roster.length > 0) {
-      setActivePlayers(team.roster.slice(0, 5).map(p => p.id));
+    // Set default active players
+    if (team.roster && team.roster.length > 0 && activePlayers.length === 0) {
+      const firstFive = team.roster.slice(0, 5).map(p => p.id);
+      setActivePlayers(firstFive);
     }
-  }, []);
+  } else {
+    // Resuming - just show success
+    toast?.success('Game resumed!');
+  }
+}, []);
 
   // Timer
   useEffect(() => {
@@ -128,43 +135,94 @@ const LiveGameView = ({
     }
   };
 
-  const handleQuickStat = (playerId, statType, points = 0) => {
-    // Update player stats
-    setLiveStats(prev => {
-      const playerStats = prev[playerId] || {
+const handleQuickStat = async (playerId, statType, points = 0) => {
+  // Update player stats
+  const updatedStats = {
+    ...liveStats,
+    [playerId]: {
+      ...(liveStats[playerId] || {
         pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0,
         oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
-      };
-
-      return {
-        ...prev,
-        [playerId]: {
-          ...playerStats,
-          [statType]: (playerStats[statType] || 0) + 1,
-          pts: playerStats.pts + points
-        }
-      };
-    });
-
-    // Update score
-    if (points > 0) {
-      if (gameSettings.isHome) {
-        setHomeScore(prev => prev + points);
-      } else {
-        setAwayScore(prev => prev + points);
-      }
-      toast?.success(`+${points} points!`, 'success', 1000);
+      }),
+      [statType]: ((liveStats[playerId]?.[statType] || 0) + 1),
+      pts: (liveStats[playerId]?.pts || 0) + points
     }
   };
 
-  const handleOpponentScore = (points) => {
+  setLiveStats(updatedStats);
+
+  // Update score - use functional setState to get latest value
+  let newHomeScore = homeScore;
+  let newAwayScore = awayScore;
+  
+  if (points > 0) {
     if (gameSettings.isHome) {
-      setAwayScore(prev => prev + points);
+      newHomeScore = homeScore + points;
+      setHomeScore(newHomeScore);
     } else {
-      setHomeScore(prev => prev + points);
+      newAwayScore = awayScore + points;
+      setAwayScore(newAwayScore);
     }
-    toast?.info(`Opponent +${points}`, 'info', 1000);
-  };
+    toast?.success(`+${points} points!`, 'success', 500);
+  }
+
+  // Save immediately with the new values
+  if (currentGameId) {
+    try {
+      await supabase
+        .from('games')
+        .update({
+          home_score: newHomeScore,
+          away_score: newAwayScore,
+          period: currentPeriod,
+          time_remaining: gameTime,
+          stats: updatedStats,
+          opponent_stats: opponentStats,
+          active_players: activePlayers,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentGameId);
+    } catch (err) {
+      console.error('Error saving:', err);
+    }
+  }
+};
+
+const handleOpponentScore = async (points) => {
+  let newHomeScore = homeScore;
+  let newAwayScore = awayScore;
+
+  if (gameSettings.isHome) {
+    newAwayScore = awayScore + points;
+    setAwayScore(newAwayScore);
+  } else {
+    newHomeScore = homeScore + points;
+    setHomeScore(newHomeScore);
+  }
+  
+  toast?.info(`Opponent +${points}`, 'info', 500);
+
+  // Save immediately
+  if (currentGameId) {
+    try {
+      await supabase
+        .from('games')
+        .update({
+          home_score: newHomeScore,
+          away_score: newAwayScore,
+          period: currentPeriod,
+          time_remaining: gameTime,
+          stats: liveStats,
+          opponent_stats: opponentStats,
+          active_players: activePlayers,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentGameId);
+    } catch (err) {
+      console.error('Error saving:', err);
+    }
+  }
+};
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -242,48 +300,67 @@ const LiveGameView = ({
               {team.roster?.filter(p => activePlayers.includes(p.id)).map(player => {
                 const stats = liveStats[player.id] || { pts: 0 };
                 return (
-                  <div key={player.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-gray-900 w-8">#{player.number}</span>
-                      <span className="font-bold text-gray-900">{player.name}</span>
-                      <span className="text-sm text-gray-600">{player.position}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-blue-600 text-lg mr-4">{stats.pts} pts</span>
-                      
-                      <button
-                        onClick={() => handleQuickStat(player.id, 'fgm', 2)}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition"
-                      >
-                        2PT
-                      </button>
-                      <button
-                        onClick={() => handleQuickStat(player.id, 'tpm', 3)}
-                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition"
-                      >
-                        3PT
-                      </button>
-                      <button
-                        onClick={() => handleQuickStat(player.id, 'ftm', 1)}
-                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition"
-                      >
-                        FT
-                      </button>
-                      <button
-                        onClick={() => handleQuickStat(player.id, 'oreb', 0)}
-                        className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold text-sm transition"
-                      >
-                        REB
-                      </button>
-                      <button
-                        onClick={() => handleQuickStat(player.id, 'ast', 0)}
-                        className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-bold text-sm transition"
-                      >
-                        AST
-                      </button>
-                    </div>
-                  </div>
+<div className="flex items-center gap-2">
+  <span className="font-black text-blue-600 text-lg mr-4">{stats.pts} pts</span>
+  
+  {/* Scoring */}
+  <button
+    onClick={() => handleQuickStat(player.id, 'fgm', 2)}
+    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    2PT
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'tpm', 3)}
+    className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    3PT
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'ftm', 1)}
+    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    FT
+  </button>
+  
+  {/* Other Stats */}
+  <button
+    onClick={() => handleQuickStat(player.id, 'oreb', 0)}
+    className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    REB
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'ast', 0)}
+    className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    AST
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'stl', 0)}
+    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    STL
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'blk', 0)}
+    className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    BLK
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'to', 0)}
+    className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    TO
+  </button>
+  <button
+    onClick={() => handleQuickStat(player.id, 'pf', 0)}
+    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition"
+  >
+    FOUL
+  </button>
+</div>
                 );
               })}
             </div>
