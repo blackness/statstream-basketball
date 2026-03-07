@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabase';
 import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import GameStateManager from '../../services/GameStateManager';
@@ -102,10 +102,42 @@ const LiveGameView = ({
     refreshRoster();
   }, [initialTeam.id]);
 
-  // Initialize game
+  // Initialize game - use localStorage to prevent duplicates even across remounts
   useEffect(() => {
     const initializeGame = async () => {
+      const initFlag = `initializing-${sessionKey}`;
+      
+      // FIRST: Check if already initializing (before any other checks)
+      const isInitializing = localStorage.getItem(initFlag);
+      if (isInitializing) {
+        console.log('Another instance is initializing, waiting...');
+        // Wait then check if game was created
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const gameId = localStorage.getItem(sessionKey);
+        if (gameId) {
+          console.log('Game created by another instance:', gameId);
+          setCurrentGameId(gameId);
+        }
+        return;
+      }
+      
+      // Check if already initialized
+      if (currentGameId) {
+        console.log('Game already initialized:', currentGameId);
+        return;
+      }
+      
+      // Set flag IMMEDIATELY to block other instances
+      localStorage.setItem(initFlag, Date.now().toString());
+      
       console.log('Initializing game...', { existingGame, sessionKey });
+      
+      // If starting a NEW game (no existingGame prop), clear any old session
+      if (!existingGame) {
+        console.log('Starting NEW game - clearing old session');
+        localStorage.removeItem(sessionKey);
+      }
+      
       const existingSessionGameId = localStorage.getItem(sessionKey);
       console.log('Existing session game ID:', existingSessionGameId);
       
@@ -126,16 +158,30 @@ const LiveGameView = ({
         toast?.success('Game resumed!');
       } else if (existingSessionGameId && !currentGameId) {
         console.log('Found session game ID, checking if it exists...');
-        // Verify the game still exists
-        const { data, error } = await supabase
+        // Verify the game still exists and load all data
+        const { data: gameData, error } = await supabase
           .from('games')
-          .select('id')
+          .select('*')
           .eq('id', existingSessionGameId)
           .maybeSingle();
         
-        if (data) {
-          console.log('Session game exists, setting it:', existingSessionGameId);
+        if (gameData) {
+          console.log('Session game exists, loading it:', existingSessionGameId);
           setCurrentGameId(existingSessionGameId);
+          setHomeScore(gameData.home_score || 0);
+          setAwayScore(gameData.away_score || 0);
+          setCurrentPeriod(gameData.period || 1);
+          setGameTime(gameData.time_remaining || '10:00');
+          setLiveStats(gameData.stats || {});
+          setOpponentStats(gameData.opponent_stats || { team: {} });
+          setActivePlayers(gameData.active_players || []);
+          setPlusMinus(gameData.plus_minus || {});
+          
+          // Set fouls from game settings
+          setHomeFouls(gameData.game_settings?.homeFouls || 0);
+          setAwayFouls(gameData.game_settings?.awayFouls || 0);
+          
+          toast?.success('Game resumed!');
         } else {
           console.log('Session game no longer exists, clearing and creating new');
           localStorage.removeItem(sessionKey);
@@ -153,6 +199,9 @@ const LiveGameView = ({
         const firstFive = team.roster.slice(0, 5).map(p => p.id);
         setActivePlayers(firstFive);
       }
+      
+      // Clear initialization flag
+      localStorage.removeItem(initFlag);
     };
     
     initializeGame();
@@ -315,7 +364,7 @@ const LiveGameView = ({
     }
   };
 
-  const handleOpponentQuickStat = async (statType, points = 0) => {
+  const handleOpponentQuickStat = async (statType, points = 0, missed = false) => {
     if (!currentGameId) {
       toast?.error('No active game');
       return;
@@ -325,17 +374,24 @@ const LiveGameView = ({
       ...opponentStats,
       team: {
         ...opponentStats.team,
-        [statType]: (opponentStats.team[statType] || 0) + 1,
         pts: opponentStats.team.pts + points
       }
     };
 
-    if (statType === 'fgm') {
-      newOpponentStats.team.fga = (opponentStats.team.fga || 0) + 1;
-    } else if (statType === 'tpm') {
-      newOpponentStats.team.tpa = (opponentStats.team.tpa || 0) + 1;
-    } else if (statType === 'ftm') {
-      newOpponentStats.team.fta = (opponentStats.team.fta || 0) + 1;
+    // Handle shooting stats (made vs missed)
+    if (statType === 'fgm' || statType === 'tpm' || statType === 'ftm') {
+      const attemptStat = statType.replace('m', 'a'); // fgm -> fga, tpm -> tpa, ftm -> fta
+      
+      // Always increment attempts
+      newOpponentStats.team[attemptStat] = (opponentStats.team[attemptStat] || 0) + 1;
+      
+      // Only increment makes if NOT a miss
+      if (!missed) {
+        newOpponentStats.team[statType] = (opponentStats.team[statType] || 0) + 1;
+      }
+    } else {
+      // Non-shooting stats just increment normally
+      newOpponentStats.team[statType] = (opponentStats.team[statType] || 0) + 1;
     }
 
     const newAwayScore = gameSettings.isHome ? awayScore + points : homeScore + points;
@@ -377,9 +433,9 @@ const LiveGameView = ({
       setAwayFouls(newAwayFouls);
 
       const statName = {
-        fgm: '2PT',
-        tpm: '3PT',
-        ftm: 'FT',
+        fgm: missed ? 'Missed 2PT' : '2PT',
+        tpm: missed ? 'Missed 3PT' : '3PT',
+        ftm: missed ? 'Missed FT' : 'FT',
         oreb: 'Off. Rebound',
         dreb: 'Def. Rebound',
         ast: 'Assist',
@@ -499,22 +555,29 @@ const LiveGameView = ({
     const manager = new GameStateManager(currentGameId);
     const currentPlayerStats = liveStats[playerId] || {};
     
-    const newPlayerStats = {
-      ...currentPlayerStats,
-      [statType]: Math.max(0, (currentPlayerStats[statType] || 0) - 1)
-    };
+    const newPlayerStats = { ...currentPlayerStats };
     
-    if (statType === 'fgm') {
-      newPlayerStats.fga = Math.max(0, (currentPlayerStats.fga || 0) - 1);
-    } else if (statType === 'tpm') {
-      newPlayerStats.tpa = Math.max(0, (currentPlayerStats.tpa || 0) - 1);
-    } else if (statType === 'ftm') {
-      newPlayerStats.fta = Math.max(0, (currentPlayerStats.fta || 0) - 1);
+    // Handle shooting stats
+    if (statType === 'fgm' || statType === 'tpm' || statType === 'ftm') {
+      const attemptStat = statType.replace('m', 'a');
+      
+      if (wasMissed) {
+        // For a miss, we only decrement the attempt, not the make
+        newPlayerStats[attemptStat] = Math.max(0, (currentPlayerStats[attemptStat] || 0) - 1);
+      } else {
+        // For a make, decrement both make and attempt
+        newPlayerStats[statType] = Math.max(0, (currentPlayerStats[statType] || 0) - 1);
+        newPlayerStats[attemptStat] = Math.max(0, (currentPlayerStats[attemptStat] || 0) - 1);
+      }
+    } else {
+      // Non-shooting stats just decrement normally
+      newPlayerStats[statType] = Math.max(0, (currentPlayerStats[statType] || 0) - 1);
     }
     
-    const fgm = statType === 'fgm' ? newPlayerStats.fgm : (currentPlayerStats.fgm || 0);
-    const tpm = statType === 'tpm' ? newPlayerStats.tpm : (currentPlayerStats.tpm || 0);
-    const ftm = statType === 'ftm' ? newPlayerStats.ftm : (currentPlayerStats.ftm || 0);
+    // Recalculate points
+    const fgm = newPlayerStats.fgm || 0;
+    const tpm = newPlayerStats.tpm || 0;
+    const ftm = newPlayerStats.ftm || 0;
     newPlayerStats.pts = (fgm * 2) + (tpm * 3) + ftm;
     
     const newStats = {
@@ -779,6 +842,25 @@ const LiveGameView = ({
             {/* ACTIVE PLAYERS */}
             {activePlayers.length > 0 && (
               <div className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-gray-200">
+                {/* Header with SUB button */}
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-gray-700 uppercase">Active Players</h3>
+                  <button
+                    onClick={() => setShowSubPanel(!showSubPanel)}
+                    disabled={team.roster?.filter(p => !activePlayers.includes(p.id)).length === 0}
+                    className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
+                      team.roster?.filter(p => !activePlayers.includes(p.id)).length === 0
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : showSubPanel 
+                          ? 'bg-orange-600 hover:bg-orange-700 text-white' 
+                          : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    SUB
+                  </button>
+                </div>
+
+                {/* Player buttons grid */}
                 <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                   {activePlayers.map(playerId => {
                     const player = team.roster?.find(p => p.id === playerId);
@@ -837,148 +919,32 @@ const LiveGameView = ({
                     );
                   })}
                 </div>
-              </div>
-            )}
 
-            {/* STAT ENTRY PANEL */}
-            {selectedPlayer && (
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-blue-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div>
-                    <p className="text-xs font-bold text-blue-900 uppercase">Recording for</p>
-                    <p className={`${compactMode ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'} font-black text-blue-600`}>
-                      #{team.roster?.find(p => p.id === selectedPlayer)?.number}{' '}
-                      {team.roster?.find(p => p.id === selectedPlayer)?.name}
+                {/* Substitution Panel - below active players */}
+                {showSubPanel && team.roster?.filter(p => !activePlayers.includes(p.id)).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs font-bold text-gray-700 uppercase mb-2">
+                      Sub out {selectedPlayer ? team.roster?.find(p => p.id === selectedPlayer)?.name : 'Select player'}
                     </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedPlayer(null)}
-                    className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-xs sm:text-sm font-bold"
-                  >
-                    Clear
-                  </button>
-                </div>
-                
-                {/* Shooting */}
-                <div className="mb-3 sm:mb-4">
-                  <p className="text-xs font-bold text-gray-700 uppercase mb-2">Scoring</p>
-                  {/* MADE shots - 2PT, 3PT, FT in one row */}
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'fgm', 2, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MADE 2
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 3, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MADE 3
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 1, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MADE FT
-                    </button>
-                  </div>
-                  {/* MISS shots - 2PT, 3PT, FT in one row */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'fgm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MISS 2
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MISS 3
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MISS FT
-                    </button>
-                  </div>
-                </div>
-
-                {/* Other Stats */}
-                <div className="mb-3 sm:mb-4">
-                  <p className="text-xs font-bold text-gray-700 uppercase mb-2">Other Stats</p>
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'oreb', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      OREB
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'dreb', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      DREB
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'ast', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      AST
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'stl', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      STL
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'blk', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      BLK
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'to', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      TO
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'pf', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                    >
-                      FOUL
-                    </button>
-                    {activePlayers.includes(selectedPlayer) && team.roster?.filter(p => !activePlayers.includes(p.id)).length > 0 && (
-                      <button
-                        onClick={() => setShowSubPanel(!showSubPanel)}
-                        className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} ${showSubPanel ? 'bg-orange-600 hover:bg-orange-700' : 'bg-orange-500 hover:bg-orange-600'} active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
-                      >
-                        SUB
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Substitution Panel */}
-                {showSubPanel && activePlayers.includes(selectedPlayer) && team.roster?.filter(p => !activePlayers.includes(p.id)).length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-700 uppercase mb-2">Substitute Player</p>
                     <div className="grid grid-cols-4 gap-2">
                       {team.roster?.filter(p => !activePlayers.includes(p.id)).map(player => (
                         <button
                           key={player.id}
                           onClick={() => {
-                            handleSwapPlayers(selectedPlayer, player.id);
-                            setShowSubPanel(false);
+                            if (selectedPlayer && activePlayers.includes(selectedPlayer)) {
+                              handleSwapPlayers(selectedPlayer, player.id);
+                              setShowSubPanel(false);
+                            }
                           }}
-                          className="flex flex-col items-center justify-center p-3 bg-white border-2 border-orange-300 hover:bg-orange-50 rounded-xl font-bold transition active:scale-95"
+                          disabled={!selectedPlayer || !activePlayers.includes(selectedPlayer)}
+                          className={`p-2 rounded-lg font-bold text-left transition-all ${
+                            !selectedPlayer || !activePlayers.includes(selectedPlayer)
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-orange-100 hover:bg-orange-200 text-gray-900 active:scale-95'
+                          }`}
                         >
-                          <div className="text-xl text-orange-600">#{player.number}</div>
-                          <div className="text-xs text-gray-700 mt-1">{player.name.split(' ')[0]}</div>
+                          <div className="text-xs text-gray-600">#{player.number}</div>
+                          <div className="text-sm font-black truncate">{player.name}</div>
                         </button>
                       ))}
                     </div>
@@ -987,80 +953,205 @@ const LiveGameView = ({
               </div>
             )}
 
-            {/* OPPONENT STATS PANEL */}
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-red-300">
-              <h3 className="font-bold text-red-900 mb-2 sm:mb-3 text-xs sm:text-sm uppercase tracking-wide">
-                {gameSettings.opponent}
-              </h3>
-              
-              <div className="mb-3 sm:mb-4">
-                <p className="text-xs font-bold text-gray-700 uppercase mb-2">Scoring</p>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                  <button
-                    onClick={() => handleOpponentQuickStat('fgm', 2)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                  >
-                    2PT
-                  </button>
-                  <button
-                    onClick={() => handleOpponentQuickStat('tpm', 3)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                  >
-                    3PT
-                  </button>
-                  <button
-                    onClick={() => handleOpponentQuickStat('ftm', 1)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                  >
-                    FT
-                  </button>
+            {/* STAT ENTRY PANEL */}
+            {selectedPlayer && (
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-blue-300">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-lg sm:text-xl font-black text-blue-600">
+                    #{team.roster?.find(p => p.id === selectedPlayer)?.number}{' '}
+                    {team.roster?.find(p => p.id === selectedPlayer)?.name}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'pf', 0)}
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-xs sm:text-sm font-bold text-white"
+                    >
+                      FOUL
+                    </button>
+                    <button
+                      onClick={() => setSelectedPlayer(null)}
+                      className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-xs sm:text-sm font-bold"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Shooting */}
+                <div className="mb-2">
+                  {/* Row 1: MADE shots + rebounds */}
+                  <div className="grid grid-cols-6 gap-1.5 mb-1.5">
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'fgm', 2, false)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MADE 2
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 3, false)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MADE 3
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 1, false)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MADE FT
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'oreb', 0)}
+                      className="h-11 sm:h-12 bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      OREB
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'dreb', 0)}
+                      className="h-11 sm:h-12 bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      DREB
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'ast', 0)}
+                      className="h-11 sm:h-12 bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      AST
+                    </button>
+                  </div>
+                  {/* Row 2: MISS shots + other stats */}
+                  <div className="grid grid-cols-6 gap-1.5">
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'fgm', 0, true)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MISS 2
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 0, true)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MISS 3
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 0, true)}
+                      className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      MISS FT
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'stl', 0)}
+                      className="h-11 sm:h-12 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      STL
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'blk', 0)}
+                      className="h-11 sm:h-12 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      BLK
+                    </button>
+                    <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'to', 0)}
+                      className="h-11 sm:h-12 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                    >
+                      TO
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
 
+            {/* OPPONENT STATS PANEL */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-red-300">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-bold text-red-900 text-lg sm:text-xl">
+                  {gameSettings.opponent}
+                </h3>
+                <button
+                  onClick={() => handleOpponentQuickStat('pf', 0)}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-lg text-xs sm:text-sm font-bold text-white"
+                >
+                  FOUL
+                </button>
+              </div>
+              
               <div>
-                <p className="text-xs font-bold text-gray-700 uppercase mb-2">Other Stats</p>
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                {/* Row 1: Scoring + rebounds */}
+                <div className="grid grid-cols-6 gap-1.5 mb-1.5">
+                  <button
+                    onClick={() => handleOpponentQuickStat('fgm', 2, false)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MADE 2
+                  </button>
+                  <button
+                    onClick={() => handleOpponentQuickStat('tpm', 3, false)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MADE 3
+                  </button>
+                  <button
+                    onClick={() => handleOpponentQuickStat('ftm', 1, false)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MADE FT
+                  </button>
                   <button
                     onClick={() => handleOpponentQuickStat('oreb', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     OREB
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('dreb', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     DREB
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('ast', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     AST
                   </button>
+                </div>
+                {/* Row 2: MISS shots + other stats */}
+                <div className="grid grid-cols-6 gap-1.5">
+                  <button
+                    onClick={() => handleOpponentQuickStat('fgm', 0, true)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MISS 2
+                  </button>
+                  <button
+                    onClick={() => handleOpponentQuickStat('tpm', 0, true)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MISS 3
+                  </button>
+                  <button
+                    onClick={() => handleOpponentQuickStat('ftm', 0, true)}
+                    className="h-11 sm:h-12 bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
+                  >
+                    MISS FT
+                  </button>
                   <button
                     onClick={() => handleOpponentQuickStat('stl', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     STL
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('blk', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     BLK
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('to', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className="h-11 sm:h-12 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs transition-all shadow-md"
                   >
                     TO
-                  </button>
-                  <button
-                    onClick={() => handleOpponentQuickStat('pf', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md col-span-2`}
-                  >
-                    FOUL
                   </button>
                 </div>
               </div>
