@@ -789,10 +789,6 @@ const LiveGameView = ({
                     const pm = plusMinus[playerId] || 0;
                     const reb = (stats.oreb || 0) + (stats.dreb || 0);
                     
-                    // Calculate total field goals (2PT + 3PT)
-                    const totalFGM = (stats.fgm || 0) + (stats.tpm || 0);
-                    const totalFGA = (stats.fga || 0) + (stats.tpa || 0);
-                    
                     return (
                       <button
                         key={playerId}
@@ -818,8 +814,8 @@ const LiveGameView = ({
                           {stats.pts > 0 && (
                             <span className="font-bold">{stats.pts}p</span>
                           )}
-                          {totalFGA > 0 && (
-                            <span>{totalFGM}/{totalFGA}</span>
+                          {stats.fga > 0 && (
+                            <span>{stats.fgm}/{stats.fga}</span>
                           )}
                           {reb > 0 && (
                             <span>{reb}r</span>
@@ -1104,10 +1100,6 @@ const LiveGameView = ({
                     const stats = liveStats[playerId] || {};
                     const pm = plusMinus[playerId] || 0;
                     
-                    // Calculate total FG (2PT + 3PT)
-                    const totalFGM = (stats.fgm || 0) + (stats.tpm || 0);
-                    const totalFGA = (stats.fga || 0) + (stats.tpa || 0);
-                    
                     return (
                       <div key={playerId} className="text-xs">
                         <div className="flex items-center justify-between mb-1">
@@ -1118,7 +1110,7 @@ const LiveGameView = ({
                         </div>
                         <div className="grid grid-cols-3 gap-1 text-gray-600">
                           <span>{stats.pts || 0} PTS</span>
-                          <span>{calculateShootingPct(totalFGM, totalFGA)}% FG</span>
+                          <span>{calculateShootingPct(stats.fgm || 0, stats.fga || 0)}% FG</span>
                           <span>{calculateShootingPct(stats.tpm || 0, stats.tpa || 0)}% 3P</span>
                         </div>
                       </div>
@@ -1137,7 +1129,7 @@ const LiveGameView = ({
                   </div>
                   <div className="flex justify-between">
                     <span>FG%</span>
-                    <span className="font-bold">{calculateShootingPct(teamStats.fgm + teamStats.tpm, teamStats.fga + teamStats.tpa)}%</span>
+                    <span className="font-bold">{calculateShootingPct(teamStats.fgm, teamStats.fga)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span>3PT%</span>

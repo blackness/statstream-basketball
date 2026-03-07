@@ -6,18 +6,14 @@ const BoxScoreView = ({ team, game, onBack }) => {
     const stats = game.stats?.[playerId] || {};
     const plusMinus = game.plus_minus?.[playerId] || 0;
     
-    // Calculate totals - FG includes both 2PT and 3PT
-    const totalFGM = (stats.fgm || 0) + (stats.tpm || 0);
-    const totalFGA = (stats.fga || 0) + (stats.tpa || 0);
+    // Calculate totals
     const reb = (stats.oreb || 0) + (stats.dreb || 0);
-    const fgPct = totalFGA > 0 ? ((totalFGM / totalFGA) * 100).toFixed(1) : '0.0';
+    const fgPct = stats.fga > 0 ? ((stats.fgm / stats.fga) * 100).toFixed(1) : '0.0';
     const tpPct = stats.tpa > 0 ? ((stats.tpm / stats.tpa) * 100).toFixed(1) : '0.0';
     const ftPct = stats.fta > 0 ? ((stats.ftm / stats.fta) * 100).toFixed(1) : '0.0';
     
     return {
       ...stats,
-      totalFGM,
-      totalFGA,
       reb,
       fgPct,
       tpPct,
@@ -38,29 +34,22 @@ const BoxScoreView = ({ team, game, onBack }) => {
       });
     });
     
-    // Calculate total FG (2PT + 3PT combined)
-    const totalFGM = totals.fgm + totals.tpm;
-    const totalFGA = totals.fga + totals.tpa;
     const reb = totals.oreb + totals.dreb;
-    const fgPct = totalFGA > 0 ? ((totalFGM / totalFGA) * 100).toFixed(1) : '0.0';
+    const fgPct = totals.fga > 0 ? ((totals.fgm / totals.fga) * 100).toFixed(1) : '0.0';
     const tpPct = totals.tpa > 0 ? ((totals.tpm / totals.tpa) * 100).toFixed(1) : '0.0';
     const ftPct = totals.fta > 0 ? ((totals.ftm / totals.fta) * 100).toFixed(1) : '0.0';
     
-    return { ...totals, totalFGM, totalFGA, reb, fgPct, tpPct, ftPct };
+    return { ...totals, reb, fgPct, tpPct, ftPct };
   };
 
   const calculateOpponentTeamStats = () => {
     const opStats = game.opponent_stats?.team || {};
-    
-    // Calculate total FG (2PT + 3PT combined)
-    const totalFGM = (opStats.fgm || 0) + (opStats.tpm || 0);
-    const totalFGA = (opStats.fga || 0) + (opStats.tpa || 0);
     const reb = (opStats.oreb || 0) + (opStats.dreb || 0);
-    const fgPct = totalFGA > 0 ? ((totalFGM / totalFGA) * 100).toFixed(1) : '0.0';
+    const fgPct = opStats.fga > 0 ? ((opStats.fgm / opStats.fga) * 100).toFixed(1) : '0.0';
     const tpPct = opStats.tpa > 0 ? ((opStats.tpm / opStats.tpa) * 100).toFixed(1) : '0.0';
     const ftPct = opStats.fta > 0 ? ((opStats.ftm / opStats.fta) * 100).toFixed(1) : '0.0';
     
-    return { ...opStats, totalFGM, totalFGA, reb, fgPct, tpPct, ftPct };
+    return { ...opStats, reb, fgPct, tpPct, ftPct };
   };
 
   const playersWithStats = team.roster?.filter(player => {
@@ -153,7 +142,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
                           <div className="font-bold text-gray-900">#{player.number} {player.name}</div>
                         </td>
                         <td className="px-3 py-3 text-center font-bold text-blue-600">{stats.pts || 0}</td>
-                        <td className="px-3 py-3 text-center text-sm">{stats.totalFGM || 0}/{stats.totalFGA || 0}</td>
+                        <td className="px-3 py-3 text-center text-sm">{stats.fgm || 0}/{stats.fga || 0}</td>
                         <td className="px-3 py-3 text-center text-sm">{stats.fgPct}%</td>
                         <td className="px-3 py-3 text-center text-sm">{stats.tpm || 0}/{stats.tpa || 0}</td>
                         <td className="px-3 py-3 text-center text-sm">{stats.tpPct}%</td>
@@ -183,7 +172,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
                 <tr className="font-bold">
                   <td className="px-4 py-3">TEAM TOTALS</td>
                   <td className="px-3 py-3 text-center text-blue-600">{teamStats.pts}</td>
-                  <td className="px-3 py-3 text-center text-sm">{teamStats.totalFGM}/{teamStats.totalFGA}</td>
+                  <td className="px-3 py-3 text-center text-sm">{teamStats.fgm}/{teamStats.fga}</td>
                   <td className="px-3 py-3 text-center text-sm">{teamStats.fgPct}%</td>
                   <td className="px-3 py-3 text-center text-sm">{teamStats.tpm}/{teamStats.tpa}</td>
                   <td className="px-3 py-3 text-center text-sm">{teamStats.tpPct}%</td>
@@ -232,7 +221,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-bold text-gray-900">{game.opponent}</td>
                   <td className="px-3 py-3 text-center font-bold text-red-600">{opponentStats.pts || 0}</td>
-                  <td className="px-3 py-3 text-center text-sm">{opponentStats.totalFGM || 0}/{opponentStats.totalFGA || 0}</td>
+                  <td className="px-3 py-3 text-center text-sm">{opponentStats.fgm || 0}/{opponentStats.fga || 0}</td>
                   <td className="px-3 py-3 text-center text-sm">{opponentStats.fgPct}%</td>
                   <td className="px-3 py-3 text-center text-sm">{opponentStats.tpm || 0}/{opponentStats.tpa || 0}</td>
                   <td className="px-3 py-3 text-center text-sm">{opponentStats.tpPct}%</td>

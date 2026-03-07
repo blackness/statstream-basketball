@@ -5,8 +5,8 @@ import CreateTeam from './components/Team/CreateTeam';
 import EditTeam from './components/Team/EditTeam';
 import ManageRoster from './components/Team/ManageRoster';
 import PreGameSetup from './components/Game/PreGameSetup';
-import LiveGameView from './components/LiveGame/LiveGameView';
-import BoxScoreView from './components/LiveGame/BoxScoreView';
+import LiveGameView from './components/LIveGame/LiveGameView';
+import BoxScoreView from './components/LIveGame/BoxScoreView';
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams, setTeams] = useState([]);

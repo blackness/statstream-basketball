@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase';
+import { supabase } from '../supabase';
 
 class GameStateManager {
   constructor(gameId) {
@@ -6,44 +6,49 @@ class GameStateManager {
   }
 
   /**
-   * Save game state to database
+   * Save current game state to database
    */
-  async saveGameState(state) {
-    if (!this.gameId) {
-      console.error('❌ No gameId - cannot save');
-      return { success: false, error: 'No game ID' };
-    }
-
+  async saveGameState({
+    homeScore,
+    awayScore,
+    period,
+    timeRemaining,
+    stats,
+    opponentStats,
+    activePlayers,
+    plusMinus,
+    gameSettings
+  }) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('games')
         .update({
-          home_score: state.homeScore,
-          away_score: state.awayScore,
-          period: state.period,
-          time_remaining: state.timeRemaining,
-          stats: state.stats,
-          opponent_stats: state.opponentStats,
-          active_players: state.activePlayers,
-          game_settings: state.gameSettings,
+          home_score: homeScore,
+          away_score: awayScore,
+          period,
+          time_remaining: timeRemaining,
+          stats,
+          opponent_stats: opponentStats,
+          active_players: activePlayers,
+          plus_minus: plusMinus,
+          game_settings: gameSettings,
           updated_at: new Date().toISOString()
         })
-        .eq('id', this.gameId);
+        .eq('id', this.gameId)
+        .select()
+        .single();
 
-      if (error) {
-        console.error('❌ Supabase error:', error);
-        return { success: false, error };
-      }
+      if (error) throw error;
 
-      return { success: true };
-    } catch (err) {
-      console.error('❌ Exception:', err);
-      return { success: false, error: err };
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error saving game state:', error);
+      return { success: false, error };
     }
   }
 
   /**
-   * Update player stat and scores
+   * Record a stat for a player
    */
   async recordStat({
     playerId,
@@ -60,6 +65,7 @@ class GameStateManager {
     timeRemaining,
     opponentStats,
     activePlayers,
+    plusMinus,
     gameSettings
   }) {
     // Calculate new player stats
@@ -70,14 +76,22 @@ class GameStateManager {
 
     const updatedPlayerStats = {
       ...playerStats,
-      [statType]: (playerStats[statType] || 0) + 1,
       pts: playerStats.pts + points
     };
 
-    // Add missed attempt if applicable
-    if (missed) {
+    // Handle shooting stats correctly
+    if (statType === 'fgm' || statType === 'tpm' || statType === 'ftm') {
+      // Always increment attempts
       const attemptStat = statType.replace('m', 'a');
       updatedPlayerStats[attemptStat] = (playerStats[attemptStat] || 0) + 1;
+      
+      // Only increment makes if not a miss
+      if (!missed) {
+        updatedPlayerStats[statType] = (playerStats[statType] || 0) + 1;
+      }
+    } else {
+      // Non-shooting stats just increment normally
+      updatedPlayerStats[statType] = (playerStats[statType] || 0) + 1;
     }
 
     const newStats = {
@@ -117,6 +131,7 @@ class GameStateManager {
       stats: newStats,
       opponentStats,
       activePlayers,
+      plusMinus,
       gameSettings: {
         ...gameSettings,
         homeFouls: newHomeFouls,
@@ -149,16 +164,16 @@ class GameStateManager {
     try {
       const { data, error } = await supabase
         .from('games')
-        .insert([{
+        .insert({
           user_id: userId,
           team_id: teamId,
+          status: 'in-progress',
           opponent,
           home_team: isHome ? teamName : opponent,
-          status: 'in-progress',
-          period: 1,
-          time_remaining: periodLength * 60,
           home_score: 0,
           away_score: 0,
+          period: 1,
+          time_remaining: periodLength * 60,
           stats: {},
           opponent_stats: {
             team: {
@@ -167,57 +182,76 @@ class GameStateManager {
             }
           },
           active_players: [],
+          plus_minus: {},
           game_settings: {
-            opponent,
             isHome,
+            opponent,
             periodLength,
             totalPeriods,
             homeFouls: 0,
             awayFouls: 0
-          },
-          visibility: 'private'
-        }])
+          }
+        })
         .select()
         .single();
 
       if (error) throw error;
 
       return { success: true, game: data };
-    } catch (err) {
-      console.error('❌ Error creating game:', err);
-      return { success: false, error: err };
+    } catch (error) {
+      console.error('Error creating game:', error);
+      return { success: false, error };
     }
   }
 
   /**
    * End game
    */
-  async endGame(finalState) {
-    if (!this.gameId) {
-      return { success: false, error: 'No game ID' };
-    }
-
+  async endGame({ homeScore, awayScore, period, stats, opponentStats, plusMinus, gameSettings }) {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('games')
         .update({
           status: 'completed',
-          home_score: finalState.homeScore,
-          away_score: finalState.awayScore,
-          period: finalState.period,
-          stats: finalState.stats,
-          opponent_stats: finalState.opponentStats,
-          game_settings: finalState.gameSettings,
+          home_score: homeScore,
+          away_score: awayScore,
+          period,
+          stats,
+          opponent_stats: opponentStats,
+          plus_minus: plusMinus,
+          game_settings: gameSettings,
           updated_at: new Date().toISOString()
         })
-        .eq('id', this.gameId);
+        .eq('id', this.gameId)
+        .select()
+        .single();
 
       if (error) throw error;
 
-      return { success: true };
-    } catch (err) {
-      console.error('❌ Error ending game:', err);
-      return { success: false, error: err };
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error ending game:', error);
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Load game by ID
+   */
+  static async loadGame(gameId) {
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, game: data };
+    } catch (error) {
+      console.error('Error loading game:', error);
+      return { success: false, error };
     }
   }
 }

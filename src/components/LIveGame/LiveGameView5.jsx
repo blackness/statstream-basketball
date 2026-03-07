@@ -68,31 +68,15 @@ const LiveGameView = ({
           };
           setTeam(updatedTeam);
           
-          console.log('Roster refreshed. Current active players:', activePlayers);
-          console.log('Updated roster size:', updatedTeam.roster.length);
-          console.log('Existing game active players:', existingGame?.active_players);
-          
-          // If resuming a game, use the saved active players
-          if (existingGame?.active_players && Array.isArray(existingGame.active_players) && existingGame.active_players.length > 0) {
-            console.log('Resuming game with saved active players:', existingGame.active_players);
-            setActivePlayers(existingGame.active_players);
-          } 
           // If we have activePlayers but some are missing from current roster, keep only valid ones
-          else if (activePlayers.length > 0) {
+          if (activePlayers.length > 0) {
             const validPlayerIds = updatedTeam.roster.map(p => p.id);
             const stillActive = activePlayers.filter(id => validPlayerIds.includes(id));
             
             // If some active players are no longer in roster, update activePlayers
             if (stillActive.length !== activePlayers.length) {
-              console.log('Some active players removed, updating list');
               setActivePlayers(stillActive);
             }
-          } 
-          // If no active players but roster has players, set first 5
-          else if (updatedTeam.roster.length > 0) {
-            console.log('No active players set, using first 5 from roster');
-            const firstFive = updatedTeam.roster.slice(0, 5).map(p => p.id);
-            setActivePlayers(firstFive);
           }
         }
       } catch (err) {
@@ -125,22 +109,8 @@ const LiveGameView = ({
         setPlusMinus(existingGame.plus_minus || {});
         toast?.success('Game resumed!');
       } else if (existingSessionGameId && !currentGameId) {
-        console.log('Found session game ID, checking if it exists...');
-        // Verify the game still exists
-        const { data, error } = await supabase
-          .from('games')
-          .select('id')
-          .eq('id', existingSessionGameId)
-          .maybeSingle();
-        
-        if (data) {
-          console.log('Session game exists, setting it:', existingSessionGameId);
-          setCurrentGameId(existingSessionGameId);
-        } else {
-          console.log('Session game no longer exists, clearing and creating new');
-          localStorage.removeItem(sessionKey);
-          await createGame();
-        }
+        console.log('Found session game ID, setting it:', existingSessionGameId);
+        setCurrentGameId(existingSessionGameId);
       } else if (!currentGameId) {
         console.log('No game found, creating new game...');
         await createGame();
@@ -302,16 +272,7 @@ const LiveGameView = ({
         toast?.success(`+${points} ${player?.name}`);
       }
     } else {
-      // Check if game doesn't exist (0 rows error)
-      if (result.error?.code === 'PGRST116' || result.error?.details?.includes('0 rows')) {
-        console.error('Game no longer exists, clearing session and creating new game');
-        localStorage.removeItem(sessionKey);
-        toast?.error('Game session expired. Please start a new game.');
-        // Redirect back to dashboard
-        setTimeout(() => onGoHome(), 2000);
-      } else {
-        toast?.error('Failed to record stat');
-      }
+      toast?.error('Failed to record stat');
     }
   };
 
@@ -779,7 +740,7 @@ const LiveGameView = ({
             {/* ACTIVE PLAYERS */}
             {activePlayers.length > 0 && (
               <div className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-gray-200">
-                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                <div className={`grid ${compactMode ? 'grid-cols-5' : 'grid-cols-2 sm:grid-cols-3'} gap-2`}>
                   {activePlayers.map(playerId => {
                     const player = team.roster?.find(p => p.id === playerId);
                     if (!player) return null;
@@ -789,49 +750,45 @@ const LiveGameView = ({
                     const pm = plusMinus[playerId] || 0;
                     const reb = (stats.oreb || 0) + (stats.dreb || 0);
                     
-                    // Calculate total field goals (2PT + 3PT)
-                    const totalFGM = (stats.fgm || 0) + (stats.tpm || 0);
-                    const totalFGA = (stats.fga || 0) + (stats.tpa || 0);
-                    
                     return (
                       <button
                         key={playerId}
                         onClick={() => setSelectedPlayer(isSelected ? null : playerId)}
-                        className={`p-1.5 sm:p-2 rounded-lg font-bold text-left transition-all active:scale-95 ${
+                        className={`p-2 rounded-lg font-bold text-left transition-all active:scale-95 relative ${
                           isSelected 
                             ? 'bg-blue-600 text-white shadow-lg' 
                             : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
                         }`}
                       >
-                        {/* Top: Number + Name */}
-                        <div className="flex items-baseline gap-1 mb-1">
-                          <span className={`text-base sm:text-lg font-black ${isSelected ? 'text-white' : 'text-gray-900'}`}>
-                            {player?.number}
-                          </span>
-                          <span className={`text-xs ${isSelected ? 'text-blue-200' : 'text-gray-600'} truncate flex-1`}>
-                            {player?.name?.split(' ').pop()}
-                          </span>
-                        </div>
-                        
-                        {/* Stats - Single compact line */}
-                        <div className={`text-xs ${isSelected ? 'text-blue-100' : 'text-gray-600'} flex flex-wrap items-center gap-1`}>
-                          {stats.pts > 0 && (
-                            <span className="font-bold">{stats.pts}p</span>
-                          )}
-                          {totalFGA > 0 && (
-                            <span>{totalFGM}/{totalFGA}</span>
-                          )}
-                          {reb > 0 && (
-                            <span>{reb}r</span>
-                          )}
-                          {stats.ast > 0 && (
-                            <span>{stats.ast}a</span>
-                          )}
-                          {pm !== 0 && (
-                            <span className={`font-bold ${isSelected ? 'text-white' : pm > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {pm > 0 ? '+' : ''}{pm}
-                            </span>
-                          )}
+                        <div className="flex items-start justify-between">
+                          {/* Left side: Number and Name */}
+                          <div className="flex-1 min-w-0">
+                            <div className={`text-xs ${isSelected ? 'text-blue-200' : 'text-gray-500'} mb-0.5`}>
+                              #{player?.number}
+                            </div>
+                            <div className={`text-sm sm:text-base font-black ${isSelected ? 'text-white' : 'text-gray-900'} truncate`}>
+                              {player?.name}
+                            </div>
+                          </div>
+                          
+                          {/* Right side: Stats */}
+                          <div className={`text-right text-xs ml-2 ${isSelected ? 'text-blue-100' : 'text-gray-600'} space-y-0.5`}>
+                            <div className="font-bold">{stats.pts} PTS</div>
+                            {stats.fga > 0 && (
+                              <div>{stats.fgm}/{stats.fga} FG</div>
+                            )}
+                            {reb > 0 && (
+                              <div>{reb} REB</div>
+                            )}
+                            {stats.ast > 0 && (
+                              <div>{stats.ast} AST</div>
+                            )}
+                            {pm !== 0 && (
+                              <div className={pm > 0 ? 'text-green-400' : 'text-red-400'}>
+                                {pm > 0 ? '+' : ''}{pm}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
@@ -1104,10 +1061,6 @@ const LiveGameView = ({
                     const stats = liveStats[playerId] || {};
                     const pm = plusMinus[playerId] || 0;
                     
-                    // Calculate total FG (2PT + 3PT)
-                    const totalFGM = (stats.fgm || 0) + (stats.tpm || 0);
-                    const totalFGA = (stats.fga || 0) + (stats.tpa || 0);
-                    
                     return (
                       <div key={playerId} className="text-xs">
                         <div className="flex items-center justify-between mb-1">
@@ -1118,7 +1071,7 @@ const LiveGameView = ({
                         </div>
                         <div className="grid grid-cols-3 gap-1 text-gray-600">
                           <span>{stats.pts || 0} PTS</span>
-                          <span>{calculateShootingPct(totalFGM, totalFGA)}% FG</span>
+                          <span>{calculateShootingPct(stats.fgm || 0, stats.fga || 0)}% FG</span>
                           <span>{calculateShootingPct(stats.tpm || 0, stats.tpa || 0)}% 3P</span>
                         </div>
                       </div>
@@ -1137,7 +1090,7 @@ const LiveGameView = ({
                   </div>
                   <div className="flex justify-between">
                     <span>FG%</span>
-                    <span className="font-bold">{calculateShootingPct(teamStats.fgm + teamStats.tpm, teamStats.fga + teamStats.tpa)}%</span>
+                    <span className="font-bold">{calculateShootingPct(teamStats.fgm, teamStats.fga)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span>3PT%</span>

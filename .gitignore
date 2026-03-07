@@ -53,3 +53,5 @@ npm-debug.log*
 
 # User data
 AppData
+.vercel
+.env*.local
