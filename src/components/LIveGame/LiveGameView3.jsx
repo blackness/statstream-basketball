@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
-import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown, Target } from 'lucide-react';
+import AppHeader from '../Shared/AppHeader';
+import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown } from 'lucide-react';
 import GameStateManager from '../../services/GameStateManager';
 
 const LiveGameView = ({ 
@@ -45,7 +46,6 @@ const LiveGameView = ({
   const [periodSummaryData, setPeriodSummaryData] = useState(null);
   const [lastFivePlays, setLastFivePlays] = useState([]);
   const [plusMinus, setPlusMinus] = useState({});
-  const [showShotMap, setShowShotMap] = useState(false);
 
   // Refresh roster
   useEffect(() => {
@@ -583,63 +583,39 @@ const LiveGameView = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* CUSTOM HEADER */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onGoHome}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition text-lg sm:text-xl"
-                title="Back"
-              >
-                ←
-              </button>
-              <h1 className="text-base sm:text-xl font-black text-gray-900">Live Game</h1>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <button
-                onClick={() => setShowShotMap(!showShotMap)}
-                className={`flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 ${showShotMap ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'} text-white rounded-lg font-bold text-xs transition`}
-                title="Shot Map"
-              >
-                <Target size={14} className="sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Map</span>
-              </button>
-              <button
-                onClick={() => setCompactMode(!compactMode)}
-                className="hidden sm:flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-xs transition"
-                title={compactMode ? "Full Mode" : "Compact Mode"}
-              >
-                {compactMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-                {compactMode ? 'Full' : 'Compact'}
-              </button>
-              <button
-                onClick={onGoHome}
-                className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition"
-                title="Dashboard"
-              >
-                <LayoutDashboard size={14} className="sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Home</span>
-              </button>
-            </div>
-          </div>
+      <AppHeader 
+        title="Live Game"
+        onBack={onGoHome}
+      >
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCompactMode(!compactMode)}
+            className="flex items-center gap-1 px-2 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold text-xs transition"
+            title={compactMode ? "Full Mode" : "Compact Mode"}
+          >
+            {compactMode ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+          </button>
+          <button
+            onClick={onGoHome}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition"
+          >
+            <LayoutDashboard size={16} />
+            Dashboard
+          </button>
         </div>
-      </div>
+      </AppHeader>
 
-      <div className={`${compactMode ? 'max-w-6xl' : 'max-w-4xl'} mx-auto px-2 sm:px-4 pb-20`}>
+      <div className={`${compactMode ? 'max-w-6xl' : 'max-w-4xl'} mx-auto p-4 pb-20`}>
         {/* SCOREBOARD */}
-        <div className="sticky top-0 z-10 bg-white rounded-xl shadow-lg p-2 sm:p-4 mb-4 border-2 border-gray-200">
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center mb-2 sm:mb-3">
+        <div className="sticky top-0 z-10 bg-white rounded-xl shadow-lg p-4 mb-4 border-2 border-gray-200">
+          <div className="grid grid-cols-3 gap-4 items-center mb-3">
             <div className="text-center">
               <div className="text-xs font-bold text-gray-600 uppercase mb-1">{homeTeamName}</div>
-              <div className="text-3xl sm:text-5xl font-black text-blue-600">{homeScore}</div>
-              <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1 sm:gap-2">
-                <span className="hidden sm:inline">Fouls:</span>
-                <span className="sm:hidden">F:</span>
-                {homeFouls}
+              <div className="text-5xl font-black text-blue-600">{homeScore}</div>
+              <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-2">
+                Fouls: {homeFouls}
                 {homeFouls >= 4 && (
-                  <span className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-xs font-black rounded-full">
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-red-600 text-white text-xs font-black rounded-full">
                     B
                   </span>
                 )}
@@ -647,34 +623,31 @@ const LiveGameView = ({
             </div>
 
             <div className="text-center">
-              <div className="text-xs sm:text-sm font-bold text-gray-600 uppercase">Period {currentPeriod}</div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900 mb-1 sm:mb-2">{formatTime(gameTime)}</div>
+              <div className="text-sm font-bold text-gray-600 uppercase">Period {currentPeriod}</div>
+              <div className="text-3xl font-black text-gray-900 mb-2">{formatTime(gameTime)}</div>
               {momentum && (
-                <div className={`text-xs font-bold ${momentum.color} mb-1 sm:mb-2 flex items-center justify-center gap-1`}>
-                  {momentum.team === 'home' ? <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" /> : <TrendingDown size={12} className="sm:w-3.5 sm:h-3.5" />}
-                  <span className="hidden sm:inline">{momentum.text}</span>
-                  <span className="sm:hidden">{momentum.text.split(' ')[0]}</span>
+                <div className={`text-xs font-bold ${momentum.color} mb-2 flex items-center justify-center gap-1`}>
+                  {momentum.team === 'home' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {momentum.text}
                 </div>
               )}
-              <div className="flex gap-1 sm:gap-2 justify-center">
+              <div className="flex gap-2 justify-center">
                 <button
                   onClick={() => setIsTimerRunning(!isTimerRunning)}
-                  className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
                 >
-                  {isTimerRunning ? <Pause size={16} className="sm:w-5 sm:h-5" /> : <Play size={16} className="sm:w-5 sm:h-5" />}
+                  {isTimerRunning ? <Pause size={20} /> : <Play size={20} />}
                 </button>
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs font-bold text-gray-600 uppercase mb-1">{awayTeamName}</div>
-              <div className="text-3xl sm:text-5xl font-black text-red-600">{awayScore}</div>
-              <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1 sm:gap-2">
-                <span className="hidden sm:inline">Fouls:</span>
-                <span className="sm:hidden">F:</span>
-                {awayFouls}
+              <div className="text-5xl font-black text-red-600">{awayScore}</div>
+              <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-2">
+                Fouls: {awayFouls}
                 {awayFouls >= 4 && (
-                  <span className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 bg-red-600 text-white text-xs font-black rounded-full">
+                  <span className="inline-flex items-center justify-center w-5 h-5 bg-red-600 text-white text-xs font-black rounded-full">
                     B
                   </span>
                 )}
@@ -686,13 +659,13 @@ const LiveGameView = ({
             <button
               onClick={handleNextPeriod}
               disabled={currentPeriod >= gameSettings.totalPeriods}
-              className="py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg font-bold text-xs sm:text-sm transition"
+              className="py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg font-bold text-sm transition"
             >
               Next Period
             </button>
             <button
               onClick={handleEndGame}
-              className="py-1.5 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs sm:text-sm transition"
+              className="py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition"
             >
               End Game
             </button>
@@ -704,56 +677,41 @@ const LiveGameView = ({
           <div className={`${compactMode ? 'col-span-2' : ''} space-y-4`}>
             {/* ACTIVE PLAYERS */}
             {activePlayers.length > 0 && (
-              <div className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-gray-200">
-                <div className={`grid ${compactMode ? 'grid-cols-5' : 'grid-cols-2 sm:grid-cols-3'} gap-2`}>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <div className={`grid ${compactMode ? 'grid-cols-10' : 'grid-cols-5'} gap-2`}>
                   {activePlayers.map(playerId => {
                     const player = team.roster?.find(p => p.id === playerId);
                     if (!player) return null;
                     
-                    const stats = liveStats[playerId] || { pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, reb: 0, ast: 0 };
+                    const stats = liveStats[playerId] || { pts: 0 };
                     const isSelected = selectedPlayer === playerId;
                     const pm = plusMinus[playerId] || 0;
-                    const reb = (stats.oreb || 0) + (stats.dreb || 0);
                     
                     return (
                       <button
                         key={playerId}
                         onClick={() => setSelectedPlayer(isSelected ? null : playerId)}
-                        className={`p-2 rounded-lg font-bold text-left transition-all active:scale-95 relative ${
+                        className={`${compactMode ? 'p-2' : 'p-3'} rounded-xl font-bold text-center transition-all active:scale-95 ${
                           isSelected 
                             ? 'bg-blue-600 text-white shadow-lg' 
                             : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
                         }`}
                       >
-                        <div className="flex items-start justify-between">
-                          {/* Left side: Number and Name */}
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-xs ${isSelected ? 'text-blue-200' : 'text-gray-500'} mb-0.5`}>
-                              #{player?.number}
-                            </div>
-                            <div className={`text-sm sm:text-base font-black ${isSelected ? 'text-white' : 'text-gray-900'} truncate`}>
-                              {player?.name}
-                            </div>
+                        <div className={compactMode ? 'text-xl' : 'text-2xl'}>
+                          {player?.number}
+                        </div>
+                        {stats.pts > 0 && (
+                          <div className={`${compactMode ? 'text-lg' : 'text-xl'} ${isSelected ? 'text-white' : 'text-blue-600'}`}>
+                            {stats.pts}
                           </div>
-                          
-                          {/* Right side: Stats */}
-                          <div className={`text-right text-xs ml-2 ${isSelected ? 'text-blue-100' : 'text-gray-600'} space-y-0.5`}>
-                            <div className="font-bold">{stats.pts} PTS</div>
-                            {stats.fga > 0 && (
-                              <div>{stats.fgm}/{stats.fga} FG</div>
-                            )}
-                            {reb > 0 && (
-                              <div>{reb} REB</div>
-                            )}
-                            {stats.ast > 0 && (
-                              <div>{stats.ast} AST</div>
-                            )}
-                            {pm !== 0 && (
-                              <div className={pm > 0 ? 'text-green-400' : 'text-red-400'}>
-                                {pm > 0 ? '+' : ''}{pm}
-                              </div>
-                            )}
+                        )}
+                        {pm !== 0 && (
+                          <div className={`text-xs ${isSelected ? 'text-blue-200' : pm > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {pm > 0 ? '+' : ''}{pm}
                           </div>
+                        )}
+                        <div className={`text-xs mt-1 ${isSelected ? 'text-blue-200' : 'text-gray-500'}`}>
+                          {player?.name?.split(' ')[0]}
                         </div>
                       </button>
                     );
@@ -764,64 +722,60 @@ const LiveGameView = ({
 
             {/* STAT ENTRY PANEL */}
             {selectedPlayer && (
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-blue-300">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 shadow-lg border-2 border-blue-300">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="text-xs font-bold text-blue-900 uppercase">Recording for</p>
-                    <p className={`${compactMode ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'} font-black text-blue-600`}>
+                    <p className={`${compactMode ? 'text-lg' : 'text-xl'} font-black text-blue-600`}>
                       #{team.roster?.find(p => p.id === selectedPlayer)?.number}{' '}
                       {team.roster?.find(p => p.id === selectedPlayer)?.name}
                     </p>
                   </div>
                   <button
                     onClick={() => setSelectedPlayer(null)}
-                    className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-xs sm:text-sm font-bold"
+                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-bold"
                   >
                     Clear
                   </button>
                 </div>
                 
                 {/* Shooting */}
-                <div className="mb-3 sm:mb-4">
+                <div className="mb-4">
                   <p className="text-xs font-bold text-gray-700 uppercase mb-2">Scoring</p>
-                  {/* MADE shots - 2PT, 3PT, FT in one row */}
-                  <div className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'fgm', 2, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                      className={`${compactMode ? 'h-20' : 'h-24'} bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-95 text-white rounded-2xl font-black text-2xl transition-all shadow-lg`}
                     >
                       MADE 2
                     </button>
                     <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 3, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MADE 3
-                    </button>
-                    <button
-                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 1, false)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
-                    >
-                      MADE FT
-                    </button>
-                  </div>
-                  {/* MISS shots - 2PT, 3PT, FT in one row */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
                       onClick={() => handleQuickStat(selectedPlayer, 'fgm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                      className={`${compactMode ? 'h-20' : 'h-24'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-2xl font-black text-2xl transition-all shadow-lg`}
                     >
                       MISS 2
                     </button>
                     <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'tpm', 3, false)}
+                      className={`${compactMode ? 'h-20' : 'h-24'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-2xl font-black text-2xl transition-all shadow-lg`}
+                    >
+                      MADE 3
+                    </button>
+                    <button
                       onClick={() => handleQuickStat(selectedPlayer, 'tpm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                      className={`${compactMode ? 'h-20' : 'h-24'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-2xl font-black text-2xl transition-all shadow-lg`}
                     >
                       MISS 3
                     </button>
                     <button
+                      onClick={() => handleQuickStat(selectedPlayer, 'ftm', 1, false)}
+                      className={`${compactMode ? 'h-16' : 'h-20'} bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 active:scale-95 text-white rounded-2xl font-black text-xl transition-all shadow-lg`}
+                    >
+                      MADE FT
+                    </button>
+                    <button
                       onClick={() => handleQuickStat(selectedPlayer, 'ftm', 0, true)}
-                      className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                      className={`${compactMode ? 'h-16' : 'h-20'} bg-gradient-to-br from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 active:scale-95 text-white rounded-2xl font-black text-xl transition-all shadow-lg`}
                     >
                       MISS FT
                     </button>
@@ -829,55 +783,55 @@ const LiveGameView = ({
                 </div>
 
                 {/* Other Stats */}
-                <div className="mb-3 sm:mb-4">
+                <div className="mb-4">
                   <p className="text-xs font-bold text-gray-700 uppercase mb-2">Other Stats</p>
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'oreb', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       OREB
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'dreb', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       DREB
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'ast', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       AST
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'stl', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       STL
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'blk', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       BLK
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'to', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       TO
                     </button>
                     <button
                       onClick={() => handleQuickStat(selectedPlayer, 'pf', 0)}
-                      className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                      className={`${compactMode ? 'h-12' : 'h-16'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                     >
                       FOUL
                     </button>
                     {activePlayers.includes(selectedPlayer) && team.roster?.filter(p => !activePlayers.includes(p.id)).length > 0 && (
                       <button
                         onClick={() => setShowSubPanel(!showSubPanel)}
-                        className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} ${showSubPanel ? 'bg-orange-600 hover:bg-orange-700' : 'bg-orange-500 hover:bg-orange-600'} active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                        className={`${compactMode ? 'h-12' : 'h-16'} ${showSubPanel ? 'bg-orange-600 hover:bg-orange-700' : 'bg-orange-500 hover:bg-orange-600'} active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                       >
                         SUB
                       </button>
@@ -910,29 +864,29 @@ const LiveGameView = ({
             )}
 
             {/* OPPONENT STATS PANEL */}
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-3 sm:p-4 shadow-lg border-2 border-red-300">
-              <h3 className="font-bold text-red-900 mb-2 sm:mb-3 text-xs sm:text-sm uppercase tracking-wide">
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 shadow-lg border-2 border-red-300">
+              <h3 className="font-bold text-red-900 mb-3 text-sm uppercase tracking-wide">
                 {gameSettings.opponent}
               </h3>
               
-              <div className="mb-3 sm:mb-4">
+              <div className="mb-4">
                 <p className="text-xs font-bold text-gray-700 uppercase mb-2">Scoring</p>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleOpponentQuickStat('fgm', 2)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                    className={`${compactMode ? 'h-16' : 'h-20'} bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white rounded-xl font-black text-xl transition-all shadow-lg`}
                   >
                     2PT
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('tpm', 3)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                    className={`${compactMode ? 'h-16' : 'h-20'} bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 active:scale-95 text-white rounded-xl font-black text-xl transition-all shadow-lg`}
                   >
                     3PT
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('ftm', 1)}
-                    className={`${compactMode ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 active:scale-95 text-white rounded-lg sm:rounded-xl font-black text-base sm:text-xl transition-all shadow-lg`}
+                    className={`${compactMode ? 'h-16' : 'h-20'} bg-gradient-to-br from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 active:scale-95 text-white rounded-xl font-black text-xl transition-all shadow-lg`}
                   >
                     FT
                   </button>
@@ -941,46 +895,46 @@ const LiveGameView = ({
 
               <div>
                 <p className="text-xs font-bold text-gray-700 uppercase mb-2">Other Stats</p>
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <button
                     onClick={() => handleOpponentQuickStat('oreb', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-gray-600 hover:bg-gray-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     OREB
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('dreb', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-gray-500 hover:bg-gray-600 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     DREB
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('ast', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-yellow-600 hover:bg-yellow-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     AST
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('stl', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     STL
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('blk', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     BLK
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('to', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md`}
                   >
                     TO
                   </button>
                   <button
                     onClick={() => handleOpponentQuickStat('pf', 0)}
-                    className={`${compactMode ? 'h-10 sm:h-12' : 'h-12 sm:h-14'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-lg font-black text-xs sm:text-sm transition-all shadow-md col-span-2`}
+                    className={`${compactMode ? 'h-10' : 'h-14'} bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl font-black text-sm transition-all shadow-md col-span-2`}
                   >
                     FOUL
                   </button>
@@ -990,22 +944,22 @@ const LiveGameView = ({
 
             {/* RECENT PLAYS */}
             {recentPlays.length > 0 && (
-              <div className="bg-white rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200">
-                <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <h3 className="font-bold text-gray-900 text-xs sm:text-sm uppercase tracking-wide">Recent Plays</h3>
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">Recent Plays</h3>
                   <button
                     onClick={undoLastPlay}
-                    className="flex items-center gap-1 px-2 sm:px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-bold text-xs sm:text-sm transition active:scale-95"
+                    className="flex items-center gap-1 px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-bold text-sm transition active:scale-95"
                   >
-                    <RotateCcw size={12} className="sm:w-3.5 sm:h-3.5" />
+                    <RotateCcw size={14} />
                     Undo
                   </button>
                 </div>
                 <div className="space-y-1">
                   {recentPlays.map(play => (
-                    <div key={play.id} className="flex items-center justify-between p-1.5 sm:p-2 bg-gray-50 rounded text-xs sm:text-sm">
-                      <span className="font-medium text-gray-900 truncate">{play.description}</span>
-                      <span className="text-gray-500 text-xs flex-shrink-0 ml-2">{play.time} - {play.period}Q</span>
+                    <div key={play.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                      <span className="font-medium text-gray-900">{play.description}</span>
+                      <span className="text-gray-500 text-xs">{play.time} - {play.period}Q</span>
                     </div>
                   ))}
                 </div>
@@ -1138,50 +1092,19 @@ const LiveGameView = ({
 
             <div className="border-t pt-4">
               <p className="text-sm font-bold text-gray-700 mb-3">Reset team fouls for next period?</p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex gap-3">
                 <button
                   onClick={() => confirmNextPeriod(true)}
-                  className="py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
                 >
-                  Yes, Reset
+                  Yes, Reset Fouls
                 </button>
                 <button
                   onClick={() => confirmNextPeriod(false)}
-                  className="py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold transition"
+                  className="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-bold transition"
                 >
-                  No, Keep
+                  No, Keep Fouls
                 </button>
-                <button
-                  onClick={() => setShowPeriodSummary(false)}
-                  className="py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* SHOT MAP MODAL */}
-      {showShotMap && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-black text-gray-900">Shot Map</h2>
-              <button
-                onClick={() => setShowShotMap(false)}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold transition"
-              >
-                Close
-              </button>
-            </div>
-            
-            <div className="bg-gradient-to-b from-orange-100 to-orange-50 rounded-xl p-8 border-4 border-orange-800">
-              <div className="text-center text-gray-500 py-20">
-                <Target size={64} className="mx-auto mb-4 text-gray-400" />
-                <p className="text-xl font-bold mb-2">Shot Map Coming Soon!</p>
-                <p className="text-sm">Click on the court to record shot locations</p>
-                <p className="text-xs mt-4 text-gray-400">Feature in development - will track make/miss locations for heat maps</p>
               </div>
             </div>
           </div>
