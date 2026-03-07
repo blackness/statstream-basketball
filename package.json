@@ -33,3 +33,16 @@
     "vite": "^7.3.1"
   }
 }
+
+{
+  "name": "statstream-basketball",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    ...
+  }
+}
