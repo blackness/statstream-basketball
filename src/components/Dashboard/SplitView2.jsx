@@ -301,8 +301,7 @@ const SplitView = ({
                   return (
                     <div
                       key={game.id}
-                      onClick={() => onViewStats(game)}
-                      className={`relative bg-gradient-to-br ${gradient} rounded-lg shadow-md overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform`}
+                      className={`relative bg-gradient-to-br ${gradient} rounded-lg shadow-md overflow-hidden`}
                       style={{ minHeight: '84px' }}
                     >
                       <div className="absolute inset-0 opacity-[0.07]"
@@ -340,7 +339,7 @@ const SplitView = ({
                           </div>
                         )}
 
-                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-1">
                           {canEdit(game) && (
                             <button
                               onClick={() => onResumeGame(game)}

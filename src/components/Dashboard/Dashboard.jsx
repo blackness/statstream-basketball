@@ -6,6 +6,10 @@ const Dashboard = ({
   user,
   teams = [],
   gameHistory = [],
+  isSuperUser = false,
+  showMyTeams = true,
+  onToggleMyTeams,
+  onSignIn,
   onNewTeam,
   onNewGame,
   onEditTeam,
@@ -31,6 +35,10 @@ const Dashboard = ({
           user={user}
           teams={teams}
           gameHistory={gameHistory}
+          isSuperUser={isSuperUser}
+          showMyTeams={showMyTeams}
+          onToggleMyTeams={onToggleMyTeams}
+          onSignIn={onSignIn}
           onNewTeam={onNewTeam}
           onNewGame={onNewGame}
           onEditTeam={onEditTeam}

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/auth';
-import { supabase } from '../../supabase';
 
 // This function OUTSIDE the component
 const isSupabaseConfigured = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../../supabase';
+import { supabase } from '../../supabase';
 import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import GameStateManager from '../../services/GameStateManager';
 
@@ -37,7 +37,6 @@ const LiveGameView = ({
   );
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [recentPlays, setRecentPlays] = useState([]);
-  const [playLog, setPlayLog] = useState([]); // full game log, never truncated
   const [homeFouls, setHomeFouls] = useState(existingGame?.game_settings?.homeFouls || 0);
   const [awayFouls, setAwayFouls] = useState(existingGame?.game_settings?.awayFouls || 0);
   const [showSubPanel, setShowSubPanel] = useState(false);
@@ -160,9 +159,6 @@ const LiveGameView = ({
           setRecentPlays(existingGame.recent_plays);
           setLastFivePlays(existingGame.recent_plays);
         }
-        if (existingGame.play_log?.length) {
-          setPlayLog(existingGame.play_log);
-        }
         toast?.success('Game resumed!');
       } else if (existingSessionGameId && !currentGameId) {
         console.log('Found session game ID, checking if it exists...');
@@ -249,8 +245,7 @@ const LiveGameView = ({
         activePlayers,
         plusMinus,
         gameSettings: { ...gameSettings, homeFouls, awayFouls },
-        recentPlays,
-        playLog
+        recentPlays
       });
     }, 10000);
     return () => clearInterval(autosave);
@@ -352,7 +347,6 @@ const LiveGameView = ({
       team: 'home'
     };
     const updatedPlays = [newPlay, ...recentPlays].slice(0, 5);
-    const updatedPlayLog = [newPlay, ...playLog];
 
     const result = await manager.recordStat({
       playerId,
@@ -376,8 +370,7 @@ const LiveGameView = ({
         homeFouls,
         awayFouls
       },
-      recentPlays: updatedPlays,
-      playLog: updatedPlayLog
+      recentPlays: updatedPlays
     });
 
     if (result.success) {
@@ -388,7 +381,6 @@ const LiveGameView = ({
       setAwayFouls(result.newAwayFouls);
       setRecentPlays(updatedPlays);
       setLastFivePlays(updatedPlays);
-      setPlayLog(updatedPlayLog);
 
       if (points > 0) {
         updatePlusMinus(points, true);
@@ -477,7 +469,6 @@ const LiveGameView = ({
       team: 'away'
     };
     const updatedOpponentPlays = [opponentPlay, ...recentPlays].slice(0, 5);
-    const updatedOpponentPlayLog = [opponentPlay, ...playLog];
 
     const manager = new GameStateManager(currentGameId);
     const result = await manager.saveGameState({
@@ -491,8 +482,7 @@ const LiveGameView = ({
       activePlayers,
       plusMinus,
       gameSettings: { ...gameSettings, homeFouls: newHomeFouls, awayFouls: newAwayFouls },
-      recentPlays: updatedOpponentPlays,
-      playLog: updatedOpponentPlayLog
+      recentPlays: updatedOpponentPlays
     });
 
     if (result.success) {
@@ -503,7 +493,6 @@ const LiveGameView = ({
       setAwayFouls(newAwayFouls);
       setRecentPlays(updatedOpponentPlays);
       setLastFivePlays(updatedOpponentPlays);
-      setPlayLog(updatedOpponentPlayLog);
     }
   };
 
@@ -667,10 +656,9 @@ const LiveGameView = ({
       activePlayers,
       plusMinus,
       gameSettings: { ...gameSettings, homeFouls: newHomeFouls, awayFouls: newAwayFouls },
-      recentPlays,
-      playLog
+      recentPlays
     });
-
+    
     if (result.success) {
       setLiveStats(newStats);
       setHomeScore(newHomeScore);
@@ -696,8 +684,7 @@ const LiveGameView = ({
         activePlayers,
         plusMinus,
         gameSettings: { ...gameSettings, homeFouls, awayFouls },
-        recentPlays,
-        playLog
+        recentPlays
       });
     }
   };

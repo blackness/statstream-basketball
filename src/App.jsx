@@ -1,6 +1,5 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './services/AuthContext';
-import AuthUI from './services/AuthUI';
 import LiveGameTracker from './LiveGameTracker';
 import { ToastContainer, useToast } from './components/Shared/Toast';
 
@@ -19,10 +18,7 @@ function AppContent() {
     );
   }
 
-  if (!user) {
-    return <AuthUI />;
-  }
-
+  // Always render LiveGameTracker — handles both logged-in and logged-out states
   return (
     <>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

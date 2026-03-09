@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase';
+import { supabase } from '../supabase';
 
 class GameStateManager {
   constructor(gameId) {
@@ -19,8 +19,7 @@ class GameStateManager {
     activePlayers,
     plusMinus,
     gameSettings,
-    recentPlays,
-    playLog
+    recentPlays
   }) {
     try {
       const { data, error } = await supabase
@@ -37,7 +36,6 @@ class GameStateManager {
           plus_minus: plusMinus,
           game_settings: gameSettings,
           recent_plays: recentPlays || [],
-          play_log: playLog || [],
           updated_at: new Date().toISOString()
         })
         .eq('id', this.gameId)
@@ -74,8 +72,7 @@ class GameStateManager {
     activePlayers,
     plusMinus,
     gameSettings,
-    recentPlays,
-    playLog
+    recentPlays
   }) {
     // Calculate new player stats
     const playerStats = currentStats[playerId] || {
@@ -147,8 +144,7 @@ class GameStateManager {
         homeFouls: newHomeFouls,
         awayFouls: newAwayFouls
       },
-      recentPlays,
-      playLog
+      recentPlays
     });
 
     return {

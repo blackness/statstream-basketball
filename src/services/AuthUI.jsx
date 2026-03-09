@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
-const AuthUI = () => {
+const AuthUI = ({ onBrowseGames }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,11 +39,18 @@ const AuthUI = () => {
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <span className="text-4xl">📊</span>
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="14" width="3" height="7" rx="1" fill="white"/>
+              <rect x="8" y="11" width="3" height="10" rx="1" fill="white"/>
+              <rect x="13" y="8" width="3" height="13" rx="1" fill="white"/>
+              <rect x="18" y="5" width="3" height="16" rx="1" fill="white"/>
+            </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sports Stats Tracker</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-black text-gray-900 mb-1">
+            Stat<span className="text-blue-600">Stream</span>
+          </h1>
+          <p className="text-gray-500 text-sm">
             {isSignUp ? 'Create your account' : 'Sign in to continue'}
           </p>
         </div>
@@ -156,6 +163,14 @@ const AuthUI = () => {
             <p className="text-xs text-gray-400">
               Your data is secure and encrypted
             </p>
+            {onBrowseGames && (
+              <button
+                onClick={onBrowseGames}
+                className="text-xs text-blue-500 hover:text-blue-600 hover:underline font-semibold mt-2 block w-full"
+              >
+                Browse games without signing in →
+              </button>
+            )}
           </div>
         </div>
       </div>

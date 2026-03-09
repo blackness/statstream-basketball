@@ -6,7 +6,11 @@ import EditTeam from './components/Team/EditTeam';
 import ManageRoster from './components/Team/ManageRoster';
 import PreGameSetup from './components/Game/PreGameSetup';
 import LiveGameView from './components/LIveGame/LiveGameView';
+import LiveGameDetail from './components/LIveGame/LiveGameDetail';
 import BoxScoreView from './components/LIveGame/BoxScoreView';
+import AuthUI from './services/AuthUI';
+
+const SUPER_USER_ID = 'cbaf203e-b350-48c7-b38a-62d4533c057f';
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams, setTeams] = useState([]);
@@ -17,44 +21,72 @@ const LiveGameTracker = ({ user, toast }) => {
   const [currentGameSettings, setCurrentGameSettings] = useState(null);
   const [resumingGame, setResumingGame] = useState(null);
   const [viewingBoxScore, setViewingBoxScore] = useState(null);
+  const [viewingGameDetail, setViewingGameDetail] = useState(null);
   const [editingTeam, setEditingTeam] = useState(null);
   const [managingRoster, setManagingRoster] = useState(null);
+  const [showMyTeams, setShowMyTeams] = useState(true); // logged-in default: my teams
 
+
+  const isSuperUser = user?.id === SUPER_USER_ID;
+
+  // Redirect to dashboard when user signs in
   useEffect(() => {
-    if (user) {
+    if (user && (activeView === 'signIn' || activeView === 'home')) {
+      setActiveView('home');
       loadTeamsAndGames();
     }
   }, [user]);
+
+  useEffect(() => {
+    loadTeamsAndGames();
+  }, [showMyTeams]);
 
   const loadTeamsAndGames = async () => {
     try {
       setLoading(true);
 
+      // Always fetch all teams — RLS handles visibility
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
-        .select(`
-          *,
-          players:players(*)
-        `)
+        .select(`*, players:players(*)`)
         .order('created_at', { ascending: false });
 
       if (teamsError) throw teamsError;
 
-      const teamsWithRoster = teamsData?.map(team => ({
+      const teamsWithRoster = (teamsData || []).map(team => ({
         ...team,
         roster: team.players || []
-      })) || [];
+      }));
 
-      const { data: gamesData, error: gamesError } = await supabase
+      // Sort: user's own teams first, then everyone else's alphabetically
+      const sorted = [
+        ...teamsWithRoster.filter(t => t.user_id === user?.id),
+        ...teamsWithRoster
+          .filter(t => t.user_id !== user?.id)
+          .sort((a, b) => a.name.localeCompare(b.name))
+      ];
+
+      // Games query — everyone sees all public games by default
+      let gamesQuery = supabase
         .from('games')
         .select('*')
-        .order('created_at', { ascending: false});
+        .order('created_at', { ascending: false });
 
+      if (user && showMyTeams && !isSuperUser) {
+        // Logged-in user in "My Teams" mode — own games only
+        gamesQuery = gamesQuery.eq('user_id', user.id);
+      } else if (!user) {
+        // Logged-out — public only
+        gamesQuery = gamesQuery.eq('is_public', true);
+      }
+      // Superuser or logged-in "All Teams" — no filter, see everything
+
+      const { data: gamesData, error: gamesError } = await gamesQuery;
       if (gamesError) throw gamesError;
 
-      setTeams(teamsWithRoster);
+      setTeams(sorted);
       setGameHistory(gamesData || []);
-      
+
     } catch (err) {
       console.error('Error loading data:', err);
       toast?.error('Failed to load data');
@@ -98,10 +130,10 @@ const LiveGameTracker = ({ user, toast }) => {
         if (playersError) throw playersError;
       }
 
-      toast?.success('Team created successfully!');
+      toast?.success('Team created!');
       setActiveView('home');
       loadTeamsAndGames();
-      
+
     } catch (err) {
       console.error('Error creating team:', err);
       toast?.error(err.message || 'Failed to create team');
@@ -140,28 +172,22 @@ const LiveGameTracker = ({ user, toast }) => {
 
   const handleDeleteTeam = async (teamId) => {
     try {
-      // Delete all players first
       const { error: playersError } = await supabase
         .from('players')
         .delete()
         .eq('team_id', teamId);
-
       if (playersError) throw playersError;
 
-      // Delete all games
       const { error: gamesError } = await supabase
         .from('games')
         .delete()
         .eq('team_id', teamId);
-
       if (gamesError) throw gamesError;
 
-      // Delete team
       const { error: teamError } = await supabase
         .from('teams')
         .delete()
         .eq('id', teamId);
-
       if (teamError) throw teamError;
 
       setActiveView('home');
@@ -180,15 +206,12 @@ const LiveGameTracker = ({ user, toast }) => {
 
   const handleSaveRoster = async (teamId, roster) => {
     try {
-      // Delete all existing players
       const { error: deleteError } = await supabase
         .from('players')
         .delete()
         .eq('team_id', teamId);
-
       if (deleteError) throw deleteError;
 
-      // Insert new roster
       if (roster.length > 0) {
         const players = roster.map(player => ({
           team_id: teamId,
@@ -202,7 +225,6 @@ const LiveGameTracker = ({ user, toast }) => {
         const { error: insertError } = await supabase
           .from('players')
           .insert(players);
-
         if (insertError) throw insertError;
       }
 
@@ -222,13 +244,8 @@ const LiveGameTracker = ({ user, toast }) => {
     setActiveView('liveGame');
   };
 
-  const handleNewTeam = () => {
-    setActiveView('createTeam');
-  };
-
-  const handleNewGame = () => {
-    setActiveView('gameSetup');
-  };
+  const handleNewTeam = () => setActiveView('createTeam');
+  const handleNewGame = () => setActiveView('gameSetup');
 
   const handleResumeGame = async (game) => {
     try {
@@ -237,13 +254,12 @@ const LiveGameTracker = ({ user, toast }) => {
         .select('*')
         .eq('id', game.id)
         .single();
-      
+
       if (error) {
-        console.error('Error fetching game:', error);
         toast?.error('Failed to load game');
         return;
       }
-      
+
       const team = teams.find(t => t.id === freshGame.team_id);
       if (!team) {
         toast?.error('Team not found');
@@ -251,8 +267,7 @@ const LiveGameTracker = ({ user, toast }) => {
       }
 
       setSelectedTeam(team);
-      
-      const resumedGameSettings = {
+      setCurrentGameSettings({
         opponent: freshGame.opponent,
         location: freshGame.game_settings?.location || '',
         isHome: freshGame.home_team === team.name,
@@ -260,9 +275,7 @@ const LiveGameTracker = ({ user, toast }) => {
         totalPeriods: freshGame.game_settings?.totalPeriods || 4,
         homeFouls: freshGame.game_settings?.homeFouls || 0,
         awayFouls: freshGame.game_settings?.awayFouls || 0
-      };
-      
-      setCurrentGameSettings(resumedGameSettings);
+      });
       setResumingGame(freshGame);
       setActiveView('liveGame');
     } catch (err) {
@@ -273,15 +286,12 @@ const LiveGameTracker = ({ user, toast }) => {
 
   const handleDeleteGame = async (game) => {
     if (!confirm('Delete this game?')) return;
-
     try {
       const { error } = await supabase
         .from('games')
         .delete()
         .eq('id', game.id);
-
       if (error) throw error;
-
       toast?.success('Game deleted!');
       loadTeamsAndGames();
     } catch (err) {
@@ -292,15 +302,12 @@ const LiveGameTracker = ({ user, toast }) => {
 
   const handleEndGame = async (game) => {
     if (!confirm('End this game?')) return;
-
     try {
       const { error } = await supabase
         .from('games')
         .update({ status: 'completed' })
         .eq('id', game.id);
-
       if (error) throw error;
-
       toast?.success('Game ended!');
       loadTeamsAndGames();
     } catch (err) {
@@ -310,7 +317,11 @@ const LiveGameTracker = ({ user, toast }) => {
   };
 
   const handleViewStats = (game) => {
-    setViewingBoxScore(game);
+    if (game.status === 'in-progress') {
+      setViewingGameDetail(game);
+    } else {
+      setViewingBoxScore(game);
+    }
   };
 
   if (loading) {
@@ -318,13 +329,20 @@ const LiveGameTracker = ({ user, toast }) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your data...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
+  if (activeView === 'signIn') {
+    return (
+      <AuthUI onBrowseGames={() => setActiveView('home')} />
+    );
+  }
+
   if (activeView === 'createTeam') {
+    if (!user) { setActiveView('home'); return null; }
     return (
       <CreateTeam
         user={user}
@@ -341,10 +359,7 @@ const LiveGameTracker = ({ user, toast }) => {
         team={editingTeam}
         onSave={handleSaveTeamEdits}
         onDelete={handleDeleteTeam}
-        onCancel={() => {
-          setEditingTeam(null);
-          setActiveView('home');
-        }}
+        onCancel={() => { setEditingTeam(null); setActiveView('home'); }}
         toast={toast}
       />
     );
@@ -355,20 +370,18 @@ const LiveGameTracker = ({ user, toast }) => {
       <ManageRoster
         team={managingRoster}
         onSave={handleSaveRoster}
-        onCancel={() => {
-          setManagingRoster(null);
-          setActiveView('home');
-        }}
+        onCancel={() => { setManagingRoster(null); setActiveView('home'); }}
         toast={toast}
       />
     );
   }
 
   if (activeView === 'gameSetup') {
+    if (!user) { setActiveView('home'); return null; }
     return (
       <PreGameSetup
         user={user}
-        teams={teams}
+        teams={teams.filter(t => t.user_id === user.id)}
         onStartGame={handleStartGame}
         onCancel={() => setActiveView('home')}
         toast={toast}
@@ -383,17 +396,20 @@ const LiveGameTracker = ({ user, toast }) => {
         team={selectedTeam}
         gameSettings={currentGameSettings}
         existingGame={resumingGame}
-        onEndGame={() => {
-          setResumingGame(null);
-          setActiveView('home');
-          loadTeamsAndGames();
-        }}
-        onGoHome={() => {
-          setResumingGame(null);
-          setActiveView('home');
-          loadTeamsAndGames();
-        }}
+        onEndGame={() => { setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
+        onGoHome={() => { setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
         toast={toast}
+      />
+    );
+  }
+
+  if (viewingGameDetail) {
+    const team = teams.find(t => t.id === viewingGameDetail.team_id);
+    return (
+      <LiveGameDetail
+        initialGame={viewingGameDetail}
+        team={team}
+        onBack={() => setViewingGameDetail(null)}
       />
     );
   }
@@ -415,6 +431,10 @@ const LiveGameTracker = ({ user, toast }) => {
       user={user}
       teams={teams}
       gameHistory={gameHistory}
+      isSuperUser={isSuperUser}
+      showMyTeams={showMyTeams}
+      onToggleMyTeams={() => setShowMyTeams(prev => !prev)}
+      onSignIn={() => setActiveView('signIn')}
       onNewTeam={handleNewTeam}
       onNewGame={handleNewGame}
       onEditTeam={handleEditTeam}
@@ -423,6 +443,7 @@ const LiveGameTracker = ({ user, toast }) => {
       onViewStats={handleViewStats}
       onDeleteGame={handleDeleteGame}
       onEndGame={handleEndGame}
+      onSelectTeam={(team) => {/* handled inside SplitView */}}
       toast={toast}
     />
   );
