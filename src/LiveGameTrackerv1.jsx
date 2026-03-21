@@ -41,24 +41,6 @@ const LiveGameTracker = ({ user, toast }) => {
     loadTeamsAndGames();
   }, [showMyTeams]);
 
-  // Realtime subscription — keep gameHistory in sync with DB changes
-  useEffect(() => {
-    const channel = supabase.channel('games-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, (payload) => {
-        if (payload.eventType === 'UPDATE') {
-          setGameHistory(prev => prev.map(g =>
-            g.id === payload.new.id ? { ...g, ...payload.new } : g
-          ));
-        } else if (payload.eventType === 'INSERT') {
-          setGameHistory(prev => [payload.new, ...prev]);
-        } else if (payload.eventType === 'DELETE') {
-          setGameHistory(prev => prev.filter(g => g.id !== payload.old.id));
-        }
-      })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, []);
-
   const loadTeamsAndGames = async () => {
     try {
       setLoading(true);
@@ -379,7 +361,6 @@ const LiveGameTracker = ({ user, toast }) => {
         onSave={handleSaveTeamEdits}
         onDelete={handleDeleteTeam}
         onCancel={() => { setEditingTeam(null); setActiveView('home'); }}
-        onManageRoster={(team) => { setEditingTeam(null); handleManageRoster(team); }}
         toast={toast}
       />
     );

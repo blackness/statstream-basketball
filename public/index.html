@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBL U19 Men — 2025/26</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OBL U19">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:       #0f0f0f;
+  --ink-2:     #3a3a3a;
+  --ink-3:     #777;
+  --ink-4:     #b0b0b0;
+  --rule:      #e6e6e2;
+  --surface:   #f7f7f5;
+  --white:     #fff;
+  --orange:    #e8500a;
+  --or-light:  #fff2ec;
+  --or-mid:    #ffd5bc;
+  --green:     #1a6e3c;
+  --green-bg:  #eaf4ee;
+  --red:       #b83030;
+  --red-bg:    #fdf0ee;
+  --sans:      'Instrument Sans', sans-serif;
+  --cond:      'Barlow Condensed', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--surface); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* ── MASTHEAD ── */
+.masthead { background: var(--white); border-bottom: 2px solid var(--ink); }
+.masthead-inner { max-width: 1120px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: stretch; gap: 0; }
+.masthead-brand { display: flex; flex-direction: column; justify-content: center; padding: 1rem 1.5rem 1rem 0; border-right: 1px solid var(--rule); flex-shrink: 0; }
+.brand-league { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); }
+.brand-name   { font-family: var(--cond); font-size: 26px; font-weight: 800; letter-spacing: .02em; line-height: 1; text-transform: uppercase; color: var(--ink); }
+.brand-season { font-family: var(--cond); font-size: 11px; color: var(--ink-3); letter-spacing: .05em; margin-top: 1px; }
+.pool-nav { display: flex; align-items: stretch; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; padding-left: .5rem; }
+.pool-nav::-webkit-scrollbar { display: none; }
+.pool-btn { background: none; border: none; border-bottom: 3px solid transparent; font-family: var(--cond); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 0 .9rem; cursor: pointer; white-space: nowrap; transition: color .15s, border-color .15s; display: flex; align-items: center; }
+.pool-btn:hover { color: var(--ink); }
+.pool-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+.pool-btn .star { color: var(--orange); margin-left: 3px; font-size: 10px; }
+
+/* ── STATUS BAR ── */
+.status-bar { background: var(--ink); color: var(--white); padding: .4rem 1.5rem; }
+.status-inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; margin-right: 6px; animation: blink 2.5s ease-in-out infinite; }
+.status-dot.loading { background: #facc15; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+.status-txt { font-family: var(--cond); font-size: 11px; letter-spacing: .05em; }
+.refresh-btn { background: none; border: 1px solid rgba(255,255,255,.22); color: rgba(255,255,255,.65); font-family: var(--cond); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 2px 9px; border-radius: 3px; cursor: pointer; transition: all .15s; }
+.refresh-btn:hover { border-color: #fff; color: #fff; }
+
+/* ── PAGE LAYOUT ── */
+.page-wrap { max-width: 1120px; margin: 0 auto; padding: 2rem 1.5rem; display: grid; grid-template-columns: 1fr 300px; gap: 2rem; align-items: start; }
+@media (max-width: 820px) { .page-wrap { grid-template-columns: 1fr; padding: 1.25rem 1rem; } }
+
+/* ── SECTION LABEL ── */
+.slabel { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); padding-bottom: .4rem; margin-bottom: 1.1rem; }
+
+/* ── NEXT GAMES BLOCK ── */
+.next-block { margin-bottom: 2rem; }
+
+/* Prominent — games exist */
+.next-banner { background: var(--orange); border-radius: 6px; overflow: hidden; margin-bottom: 0; }
+.nb-head { padding: .9rem 1.1rem .6rem; }
+.nb-eyebrow { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 3px; }
+.nb-date { font-family: var(--cond); font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+.nb-venue { font-size: 12px; color: rgba(255,255,255,.75); margin-top: 3px; }
+.nb-venue strong { color: #fff; font-weight: 600; }
+
+/* Kingston games — white inset */
+.nb-kingston { background: rgba(255,255,255,.15); border-top: 1px solid rgba(255,255,255,.2); padding: .6rem 1.1rem; }
+.nb-k-label { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.65); margin-bottom: .45rem; }
+.nb-k-games { display: flex; flex-direction: column; gap: 4px; }
+.nb-k-game { background: rgba(255,255,255,.22); border-radius: 4px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; border-left: 3px solid #fff; }
+.nb-k-teams { font-family: var(--cond); font-size: 16px; font-weight: 700; color: #fff; letter-spacing: .02em; }
+.nb-k-meta  { font-size: 11px; color: rgba(255,255,255,.75); margin-top: 1px; }
+.nb-k-time  { font-family: var(--cond); font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; white-space: nowrap; }
+
+/* Rest of weekend games */
+.nb-rest { border-top: 1px solid rgba(255,255,255,.15); padding: .5rem 1.1rem .7rem; }
+.nb-rest-label { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: .4rem; }
+.nb-rest-games { display: flex; flex-direction: column; gap: 3px; }
+.nb-rest-game { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 3px; background: rgba(0,0,0,.12); font-size: 12px; color: rgba(255,255,255,.82); }
+.nb-rest-time { font-family: var(--cond); font-size: 11px; color: rgba(255,255,255,.55); white-space: nowrap; margin-left: 8px; }
+
+/* Quiet state — no games yet */
+.next-quiet { display: flex; align-items: center; gap: .75rem; padding: .8rem 1rem; background: var(--white); border: 1px solid var(--rule); border-radius: 6px; border-left: 3px solid var(--ink-4); }
+.nq-icon { font-family: var(--cond); font-size: 18px; color: var(--ink-4); flex-shrink: 0; }
+.nq-text { font-family: var(--cond); font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--ink-3); text-transform: uppercase; }
+.nq-sub  { font-size: 12px; color: var(--ink-4); font-family: var(--sans); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+/* ── STANDINGS ── */
+.standings-wrap { background: var(--white); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-bottom: 2rem; }
+table.st { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.st thead tr { background: var(--ink); }
+.st th { font-family: var(--cond); font-size: 9px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: #fff; padding: .55rem .7rem; text-align: center; }
+.st th.tname { text-align: left; }
+.st th.bp-h { cursor: help; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+.st colgroup .c-rank { width: 28px; }
+.st colgroup .c-name { width: auto; }
+.st colgroup .c-num  { width: 36px; }
+.st colgroup .c-bp   { width: 50px; }
+.st colgroup .c-arr  { width: 24px; }
+.st tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; transition: background .1s; }
+.st tbody tr:last-child { border-bottom: none; }
+.st tbody tr:hover td { background: #f5f5f2; }
+.st tbody tr.kr { background: var(--or-light); }
+.st tbody tr.kr:hover td { background: #fde8d6; }
+.st tbody tr.expanded > td { border-bottom: none; }
+.st td { padding: .6rem .7rem; font-family: var(--cond); font-size: 14px; color: var(--ink-2); text-align: center; }
+.st td.tname { text-align: left; font-weight: 600; color: var(--ink); }
+.st td.tname.is-k { color: var(--orange); }
+.st td.wins { color: var(--green); font-weight: 700; }
+.st td.arr { color: var(--ink-4); font-size: 12px; transition: transform .2s; }
+.st tbody tr.expanded .arr { transform: rotate(90deg); color: var(--orange); }
+
+/* expanded game log */
+.game-log { background: var(--or-light); border-bottom: 1px solid var(--or-mid); }
+.game-log.other { background: #f9f9f7; border-bottom: 1px solid var(--rule); }
+.gl-inner { padding: .5rem .7rem .65rem 1.5rem; }
+.gl-row { display: flex; align-items: center; justify-content: space-between; padding: .3rem 0; border-bottom: 1px solid rgba(0,0,0,.05); font-size: 12px; }
+.gl-row:last-child { border-bottom: none; }
+.gl-opp { color: var(--ink-2); font-weight: 500; }
+.gl-opp .ha { font-size: 10px; color: var(--ink-4); font-weight: 400; margin-left: 3px; }
+.gl-right { display: flex; align-items: center; gap: 6px; }
+.gl-score { font-family: var(--cond); font-size: 15px; font-weight: 700; }
+.gl-score.w { color: var(--green); }
+.gl-score.l { color: var(--red); }
+.gl-score.tbd { color: var(--ink-4); font-size: 11px; font-weight: 500; font-family: var(--sans); }
+.pill { display: inline-block; font-family: var(--cond); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 5px; border-radius: 2px; }
+.pill.w { background: var(--green-bg); color: var(--green); }
+.pill.l { background: var(--red-bg); color: var(--red); }
+.pill.u { background: #f0f0ee; color: var(--ink-4); }
+
+/* ── PAST RESULTS ── */
+.past-block { margin-bottom: 2rem; }
+.wk-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: .8rem; }
+.wk-num    { font-family: var(--cond); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--orange); }
+.wk-date   { font-family: var(--cond); font-size: 20px; font-weight: 700; color: var(--ink); }
+.wk-venue  { font-size: 12px; color: var(--ink-3); line-height: 1.3; margin-left: auto; text-align: right; }
+.wk-venue strong { display: block; color: var(--ink-2); font-weight: 600; font-size: 12px; }
+
+/* game card */
+.game-card { background: var(--white); border: 1px solid var(--rule); border-radius: 5px; margin-bottom: 5px; overflow: hidden; transition: border-color .12s; }
+.game-card:hover { border-color: var(--ink-4); }
+.game-card.gk { border-color: var(--or-mid); background: var(--or-light); }
+.gc-time { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding: .28rem 1.1rem; border-bottom: 1px solid var(--rule); background: rgba(0,0,0,.015); }
+.game-card.gk .gc-time { color: var(--orange); background: rgba(232,80,10,.045); border-bottom-color: var(--or-mid); }
+.gc-body { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .75rem; padding: .75rem 1.1rem; }
+.gc-team { display: flex; flex-direction: column; gap: 2px; }
+.gc-team.home { text-align: right; }
+.gc-team.away { text-align: left; }
+.gc-name { font-family: var(--cond); font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; line-height: 1.1; color: var(--ink); }
+.gc-name.is-k { color: var(--orange); }
+.gc-name.won  { color: var(--ink); }
+.gc-name.lost { color: var(--ink-4); font-weight: 400; }
+.gc-sub { font-size: 10px; color: var(--ink-4); }
+.gc-pill-wrap { margin-top: 2px; }
+.gc-scores { display: flex; align-items: center; gap: 5px; justify-content: center; flex-shrink: 0; }
+.sc { font-family: var(--cond); font-size: 34px; font-weight: 800; line-height: 1; min-width: 38px; text-align: center; }
+.sc.won  { color: var(--ink); }
+.sc.lost { color: var(--ink-4); font-weight: 300; }
+.sc-sep  { font-family: var(--cond); font-size: 18px; font-weight: 300; color: var(--ink-4); }
+.sc-vs   { font-family: var(--cond); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); padding: .25rem .55rem; border: 1px solid var(--rule); border-radius: 3px; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
+.sb-card { background: var(--white); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.sb-head { padding: .6rem 1rem; border-bottom: 1px solid var(--rule); font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; justify-content: space-between; }
+.sb-head span.badge { background: var(--or-light); color: var(--orange); font-size: 9px; padding: 1px 6px; border-radius: 2px; }
+
+/* kingston record */
+.kr-body { padding: 1.1rem 1rem; display: flex; align-items: center; gap: .9rem; }
+.kr-record { font-family: var(--cond); font-size: 50px; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--ink); }
+.kr-meta { display: flex; flex-direction: column; gap: 2px; }
+.kr-pool { font-family: var(--cond); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+.kr-rank { font-size: 12px; color: var(--ink-3); }
+.kr-bp   { font-family: var(--cond); font-size: 13px; font-weight: 600; color: var(--ink-2); margin-top: 3px; }
+
+/* pool list */
+.pool-list-item { display: flex; align-items: center; justify-content: space-between; padding: .5rem 1rem; border-bottom: 1px solid var(--rule); font-size: 13px; cursor: pointer; transition: background .1s; }
+.pool-list-item:last-child { border-bottom: none; }
+.pool-list-item:hover { background: #f5f5f2; }
+.pool-list-item.active { background: var(--or-light); }
+.pli-name { font-family: var(--cond); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.pli-name .star { color: var(--orange); }
+.pli-count { font-size: 11px; color: var(--ink-3); }
+
+/* ── LOADING / FADE ── */
+.loading-wrap { padding: 4rem 2rem; text-align: center; }
+.spinner { width: 22px; height: 22px; border: 2px solid var(--rule); border-top-color: var(--orange); border-radius: 50%; animation: spin .65s linear infinite; margin: 0 auto .9rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-txt { font-family: var(--cond); font-size: 14px; letter-spacing: .08em; color: var(--ink-3); text-transform: uppercase; }
+.fade-in { animation: fadeUp .28s ease both; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── TOOLTIP ── */
+[data-tip] { position: relative; }
+[data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; font-family: var(--sans); font-size: 11px; font-weight: 400; letter-spacing: 0; text-transform: none; white-space: nowrap; padding: 4px 8px; border-radius: 3px; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 20; }
+[data-tip]:hover::after { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="masthead-brand">
+      <div class="brand-league">Ontario Basketball League</div>
+      <div class="brand-name">U19 Men</div>
+      <div class="brand-season">2025 / 26 Season</div>
+    </div>
+    <nav class="pool-nav" id="poolNav"></nav>
+  </div>
+</header>
+
+<div class="status-bar">
+  <div class="status-inner">
+    <span><span class="status-dot loading" id="statusDot"></span><span class="status-txt" id="statusTxt">Loading…</span></span>
+    <button class="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <main id="mainContent">
+    <div class="loading-wrap"><div class="spinner"></div><div class="loading-txt">Fetching schedule data…</div></div>
+  </main>
+  <aside class="sidebar" id="sidebar"></aside>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────
+const SHEET_ID   = '1vMVuV4Lqa1QXeFw6MfB1aNkd__OsftPM0uxGuch7odk';
+const MY_TEAM    = 'Kingston Impact - Wallace';
+const MY_POOL    = 'A';
+const POOL_GIDS  = { A:'0', B:'342610377', C:'1580774768', D:'879869540', E:'812896024', F:'1484065699' };
+
+// ── STATE ───────────────────────────────────────
+let pools        = {};
+let activePool   = MY_POOL;
+let expandedTeam = null;   // name of expanded standings row
+let lastFetched  = null;
+
+// ── DATA ────────────────────────────────────────
+function hardcodedPoolA() {
+  const K = MY_TEAM;
+  return {
+    standings: [
+      { name:'Oxford Attack',      wins:2, losses:0, pct:1.00, bp:1400 },
+      { name:'KW Viper Randell',   wins:2, losses:0, pct:1.00, bp:1200 },
+      { name:'NT Huskies Nkansah', wins:1, losses:1, pct:0.50, bp:1100 },
+      { name:'ONLX Senior',        wins:1, losses:1, pct:0.50, bp:900  },
+      { name:'DK',                 wins:1, losses:1, pct:0.50, bp:900  },
+      { name:'Pelham Panthers',    wins:0, losses:2, pct:0.00, bp:800  },
+      { name:K,                    wins:0, losses:2, pct:0.00, bp:700  },
+    ],
+    weekends: [
+      {
+        num:1, played:true,
+        date:'Saturday, March 7, 2026',
+        location:'Ajax High School — Court 2',
+        address:'105 Bayly St E, Ajax, ON',
+        games:[
+          { time:'9:00 AM',  home:'NT Huskies Nkansah', away:'DK',             hs:72, as:62 },
+          { time:'10:30 AM', home:K,                    away:'KW Viper Randell', hs:67, as:70 },
+          { time:'12:00 PM', home:'ONLX Senior',         away:'Oxford Attack',  hs:52, as:66 },
+          { time:'1:30 PM',  home:'KW Viper Randell',    away:'NT Huskies Nkansah', hs:59, as:52 },
+          { time:'3:00 PM',  home:'Pelham Panthers',     away:'ONLX Senior',    hs:59, as:68 },
+          { time:'4:30 PM',  home:'Oxford Attack',       away:K,                hs:68, as:56 },
+          { time:'6:00 PM',  home:'DK',                  away:'Pelham Panthers', hs:79, as:77 },
+        ]
+      },
+      {
+        num:2, played:false,
+        date:'Sunday, March 29, 2026',
+        location:'Six Park East — Court 3',
+        address:'1000 Thornton Rd S, Oshawa, ON',
+        games:[
+          { time:'9:00 AM',  home:'KW Viper Randell',   away:'DK',                  hs:null, as:null },
+          { time:'10:30 AM', home:'NT Huskies Nkansah', away:'Oxford Attack',        hs:null, as:null },
+          { time:'12:00 PM', home:'ONLX Senior',        away:K,                     hs:null, as:null },
+          { time:'1:30 PM',  home:'Oxford Attack',      away:'KW Viper Randell',     hs:null, as:null },
+          { time:'3:00 PM',  home:'Pelham Panthers',    away:'NT Huskies Nkansah',   hs:null, as:null },
+          { time:'4:30 PM',  home:'DK',                 away:'ONLX Senior',          hs:null, as:null },
+          { time:'6:00 PM',  home:K,                    away:'Pelham Panthers',      hs:null, as:null },
+        ]
+      },
+      {
+        num:3, played:false,
+        date:null, location:null, address:null,
+        games:[]
+      }
+    ]
+  };
+}
+
+function stubPool(pool) {
+  const teams = {
+    B:['Sudbury Storm','Eurostep','Dundas Dynamo','Downtowns Finest','Ancaster Magic Francis','North Bay Spartans','Vaughan Panthers'],
+    C:['Collingwood Trailblazers','TTT Boys','Pelham Panthers Shy','CBA Varsity','Toronto Lords','Etobicoke Thunder','Blessed Sacrament'],
+    D:['Ancaster Magic Ransom','BALL905 Halton Hills','Barrie Royals','SBA Matsugu','Cambridge Basketball','London Gold Medal','Woodbridge Lions','Brantford CYO Hawks'],
+    E:['Gladiators Andre','CW Celtics','Oakville Venom','KW Viper Streit','Orangeville Bears','Stratford Revolution','Next Generation','IEM Newmarket'],
+    F:['South Muskoka Breakers','Parry Sound Stingers','Orillia Lakers','YSSK Jameer','Blitz Boys','Niagara Falls','MUMBA Elite'],
+  };
+  return { standings:(teams[pool]||[]).map(name=>({name,wins:0,losses:0,pct:0,bp:0})), weekends:[] };
+}
+
+// Build per-team game log from weekends list
+function buildGameLog(standings, weekends) {
+  const log = {};
+  standings.forEach(t => { log[t.name] = []; });
+  weekends.forEach(wk => {
+    wk.games.forEach(g => {
+      const played = g.hs !== null && g.as !== null;
+      const homeWon = played && g.hs > g.as;
+      if (log[g.home] !== undefined) {
+        log[g.home].push({ opp:g.away,  ha:'H', time:g.time, wk:wk.num,
+          score: played ? `${g.hs}–${g.as}` : null,
+          result: played ? (homeWon ? 'W' : 'L') : 'U' });
+      }
+      if (log[g.away] !== undefined) {
+        log[g.away].push({ opp:g.home, ha:'A', time:g.time, wk:wk.num,
+          score: played ? `${g.as}–${g.hs}` : null,
+          result: played ? (!homeWon ? 'W' : 'L') : 'U' });
+      }
+    });
+  });
+  return log;
+}
+
+// ── LOAD ────────────────────────────────────────
+// ── SUPABASE CONFIG ───────────────────────────────
+// Find both values in: Supabase dashboard → Settings → API
+const SUPABASE_URL  = 'https://sclhzmgdafotyiynrjwr.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_N1UhoXnqybNEFCGBMdWXWg_BujE6Eh-';
+
+// ── LOAD ────────────────────────────────────────
+async function loadData(force) {
+  // Show hardcoded Pool A instantly — page is never blank
+  pools.A = hardcodedPoolA();
+  ['B','C','D','E','F'].forEach(p => { pools[p] = stubPool(p); });
+  setStatus('Loading…', false);
+  renderNav();
+  renderPool(activePool);
+  renderSidebar();
+
+  // Fetch live data from Supabase cache (fast — your own infrastructure)
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/obl_schedule_cache?id=eq.u19_men_2526&select=data,fetched_at`,
+      {
+        headers: {
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    if (!rows.length) throw new Error('Cache empty');
+
+    const { data, fetched_at } = rows[0];
+    Object.assign(pools, data);
+    lastFetched = new Date(fetched_at);
+    setStatus('Updated ' + lastFetched.toLocaleTimeString('en-CA', { hour:'numeric', minute:'2-digit' }), true);
+
+  } catch (e) {
+    console.warn('Supabase fetch failed, using fallback:', e.message);
+    setStatus('Schedule data (cached)', true);
+  }
+
+  renderNav();
+  renderPool(activePool);
+  renderSidebar();
+}
+
+// ── RENDER NAV ───────────────────────────────────
+function renderNav() {
+  document.getElementById('poolNav').innerHTML = ['A','B','C','D','E','F'].map(p =>
+    `<button class="pool-btn ${p===activePool?'active':''}" onclick="switchPool('${p}')">Pool ${p}${p===MY_POOL?'<span class="star">★</span>':''}</button>`
+  ).join('');
+}
+
+// ── SWITCH POOL ──────────────────────────────────
+function switchPool(pool) {
+  activePool   = pool;
+  expandedTeam = null;
+  renderNav();
+  renderPool(pool);
+  renderSidebar();
+}
+
+// ── RENDER POOL ──────────────────────────────────
+function renderPool(pool) {
+  const data = pools[pool];
+  if (!data) return;
+  const { standings, weekends } = data;
+  const log = buildGameLog(standings, weekends);
+  const isMyPool = pool === MY_POOL;
+  const myTeam   = isMyPool ? MY_TEAM : null;
+
+  let html = '';
+
+  // ── NEXT GAMES SECTION ──────────────────────────
+  html += `<div class="next-block">`;
+  const nextWk = weekends.find(wk => !wk.played && wk.games.length > 0);
+
+  if (!nextWk) {
+    // No scheduled weekend yet
+    html += `<div class="next-quiet">
+      <div class="nq-icon">—</div>
+      <div>
+        <div class="nq-text">No games scheduled yet</div>
+        <div class="nq-sub">Schedules are typically posted 1–2 weeks before game day</div>
+      </div>
+    </div>`;
+  } else {
+    const myGames    = myTeam ? nextWk.games.filter(g => g.home===myTeam||g.away===myTeam) : [];
+    const otherGames = nextWk.games.filter(g => !myGames.includes(g));
+    const venueLine  = nextWk.location ? `<strong>${nextWk.location}</strong>${nextWk.address ? ' · '+nextWk.address : ''}` : 'Venue TBD';
+
+    html += `<div class="next-banner">
+      <div class="nb-head">
+        <div class="nb-eyebrow">Next up — Weekend ${nextWk.num}</div>
+        <div class="nb-date">${formatDate(nextWk.date)}</div>
+        ${nextWk.location||nextWk.date ? `<div class="nb-venue">${venueLine}</div>` : ''}
+      </div>`;
+
+    if (myTeam && myGames.length > 0) {
+      html += `<div class="nb-kingston">
+        <div class="nb-k-label">${shortName(myTeam)} games</div>
+        <div class="nb-k-games">`;
+      myGames.forEach(g => {
+        const isHome = g.home === myTeam;
+        const opp    = isHome ? g.away : g.home;
+        html += `<div class="nb-k-game">
+          <div>
+            <div class="nb-k-teams">${shortName(myTeam)} <span style="font-weight:300;opacity:.7">vs</span> ${shortName(opp)}</div>
+            <div class="nb-k-meta">${isHome ? 'Home' : 'Away'}</div>
+          </div>
+          <div class="nb-k-time">${g.time}</div>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    if (otherGames.length > 0) {
+      html += `<div class="nb-rest">
+        <div class="nb-rest-label">Rest of the day</div>
+        <div class="nb-rest-games">`;
+      otherGames.forEach(g => {
+        html += `<div class="nb-rest-game">
+          <span>${shortName(g.home)} vs ${shortName(g.away)}</span>
+          <span class="nb-rest-time">${g.time}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    html += `</div>`;
+  }
+  html += `</div>`; // .next-block
+
+  // ── STANDINGS ────────────────────────────────────
+  html += `<div class="slabel">Standings — Pool ${pool}</div>`;
+  const sorted = [...standings].sort((a,b)=>b.bp-a.bp||b.wins-a.wins||a.losses-b.losses);
+
+  if (sorted.length) {
+    html += `<div class="standings-wrap"><table class="st">
+      <colgroup><col class="c-rank"><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-bp"><col class="c-arr"></colgroup>
+      <thead><tr>
+        <th>#</th><th class="tname">Team</th><th>W</th><th>L</th>
+        <th class="bp-h" data-tip="Basis Points: OBL tiebreaker. Win adds more BP than a loss.">BP</th><th></th>
+      </tr></thead><tbody>`;
+
+    sorted.forEach((t, i) => {
+      const isK  = t.name === myTeam;
+      const isEx = expandedTeam === t.name;
+      const pct  = (t.wins+t.losses)===0 ? '—' : t.wins===t.wins+t.losses ? '1.000' : '.'+String(Math.round(t.pct*1000)).padStart(3,'0');
+      html += `<tr class="${isK?'kr':''} ${isEx?'expanded':''}" onclick="toggleExpand('${esc(t.name)}','${pool}')">
+        <td>${i+1}</td>
+        <td class="tname ${isK?'is-k':''}">${t.name}${isK?' ★':''}</td>
+        <td class="wins">${t.wins}</td>
+        <td>${t.losses}</td>
+        <td>${t.bp||'—'}</td>
+        <td class="arr">›</td>
+      </tr>`;
+
+      if (isEx) {
+        const games = log[t.name] || [];
+        html += `<tr class="no-hover"><td colspan="6" style="padding:0;">
+          <div class="game-log ${isK?'':'other'}">
+            <div class="gl-inner">`;
+        if (!games.length) {
+          html += `<div class="gl-row"><span class="gl-opp" style="color:var(--ink-4)">No games recorded</span></div>`;
+        } else {
+          games.forEach(g => {
+            const scoreClass = g.result==='W'?'w':g.result==='L'?'l':'tbd';
+            html += `<div class="gl-row">
+              <span class="gl-opp">vs ${g.opp} <span class="ha">${g.ha}</span></span>
+              <span class="gl-right">
+                ${g.score
+                  ? `<span class="gl-score ${scoreClass}">${g.score}</span><span class="pill ${g.result.toLowerCase()}">${g.result}</span>`
+                  : `<span class="gl-score tbd">Upcoming</span><span class="pill u">Wk${g.wk}</span>`}
+              </span>
+            </div>`;
+          });
+        }
+        html += `</div></div></td></tr>`;
+      }
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  // ── PAST RESULTS ─────────────────────────────────
+  const playedWeekends = weekends.filter(wk => wk.played && wk.games.length > 0);
+  if (playedWeekends.length) {
+    html += `<div class="past-block"><div class="slabel" style="margin-top:2rem;">Results</div>`;
+    playedWeekends.forEach(wk => { html += renderWeekend(wk, myTeam); });
+    html += `</div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = `<div class="fade-in">${html}</div>`;
+}
+
+function toggleExpand(name, pool) {
+  expandedTeam = expandedTeam === name ? null : name;
+  renderPool(pool);
+}
+
+// ── RENDER WEEKEND ────────────────────────────────
+function renderWeekend(wk, myTeam) {
+  let h = `<div class="wk-header">
+    <span class="wk-num">Weekend ${wk.num}</span>
+    <span class="wk-date">${formatDate(wk.date)}</span>
+    ${wk.location ? `<div class="wk-venue"><strong>${wk.location}</strong>${wk.address||''}</div>` : ''}
+  </div>`;
+  wk.games.forEach(g => { h += renderGameCard(g, myTeam); });
+  return h;
+}
+
+function renderGameCard(g, myTeam) {
+  const isK     = g.home===myTeam||g.away===myTeam;
+  const played  = g.hs !== null;
+  const homeWon = played && g.hs > g.as;
+  const awayWon = played && g.as > g.hs;
+  const kHome   = g.home===myTeam;
+  const kAway   = g.away===myTeam;
+  const kWon    = played&&((kHome&&homeWon)||(kAway&&awayWon));
+  const kLost   = played&&((kHome&&!homeWon)||(kAway&&!awayWon));
+
+  const hnc = ['gc-name', g.home===myTeam?'is-k':'', played?(homeWon?'won':'lost'):''].filter(Boolean).join(' ');
+  const anc = ['gc-name', g.away===myTeam?'is-k':'', played?(awayWon?'won':'lost'):''].filter(Boolean).join(' ');
+
+  const scores = played
+    ? `<span class="sc ${homeWon?'won':'lost'}">${g.hs}</span>
+       <span class="sc-sep">–</span>
+       <span class="sc ${awayWon?'won':'lost'}">${g.as}</span>`
+    : `<span class="sc-vs">vs</span>`;
+
+  const kPill = isK && played
+    ? `<div class="gc-pill-wrap"><span class="pill ${kWon?'w':'l'}">${kWon?'W':'L'}</span></div>` : '';
+
+  return `<div class="game-card ${isK?'gk':''}">
+    <div class="gc-time">${g.time||''}</div>
+    <div class="gc-body">
+      <div class="gc-team home">
+        <div class="${hnc}">${g.home}</div>
+        <div class="gc-sub">Home</div>
+        ${kHome?kPill:''}
+      </div>
+      <div class="gc-scores">${scores}</div>
+      <div class="gc-team away">
+        <div class="${anc}">${g.away}</div>
+        <div class="gc-sub">Away</div>
+        ${kAway?kPill:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── RENDER SIDEBAR ────────────────────────────────
+function renderSidebar() {
+  const sb  = document.getElementById('sidebar');
+  const pA  = pools[MY_POOL];
+  if (!pA) { sb.innerHTML=''; return; }
+
+  const kSt = pA.standings.find(t => t.name===MY_TEAM);
+  const srt = [...pA.standings].sort((a,b)=>b.bp-a.bp||b.wins-a.wins);
+  const kRk = srt.findIndex(t=>t.name===MY_TEAM)+1;
+
+  let html = '';
+
+  if (kSt) {
+    html += `<div class="sb-card">
+      <div class="sb-head"><span>Kingston Impact</span><span class="badge">Pool A</span></div>
+      <div class="kr-body">
+        <div class="kr-record">${kSt.wins}–${kSt.losses}</div>
+        <div class="kr-meta">
+          <div class="kr-pool">Pool A · Wallace</div>
+          <div class="kr-rank">${kRk>0?ordinal(kRk)+' in pool':''}</div>
+          ${kSt.bp?`<div class="kr-bp">${kSt.bp} BP</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Next Kingston game
+  let nextG=null, nextWk=null;
+  for (const wk of pA.weekends) {
+    const g = wk.games.find(g=>!wk.played&&(g.home===MY_TEAM||g.away===MY_TEAM));
+    if (g) { nextG=g; nextWk=wk; break; }
+  }
+
+  if (nextG && nextWk) {
+    const opp    = nextG.home===MY_TEAM ? nextG.away : nextG.home;
+    const isHome = nextG.home === MY_TEAM;
+    html += `<div class="sb-card">
+      <div class="sb-head"><span>Next game</span><span style="font-size:9px;color:var(--ink-3);">Wk ${nextWk.num}</span></div>
+      <div style="padding:.9rem 1rem;">
+        <div style="font-family:var(--cond);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:4px;">${formatDate(nextWk.date)||'Date TBD'}</div>
+        <div style="font-family:var(--cond);font-size:19px;font-weight:700;line-height:1.1;color:var(--ink);">Kingston <span style="font-weight:300;color:var(--ink-3);">vs</span> ${shortName(opp)}</div>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:3px;">${nextG.time} · ${isHome?'Home':'Away'}</div>
+        ${nextWk.location?`<div style="font-size:11px;color:var(--ink-4);margin-top:.6rem;border-top:1px solid var(--rule);padding-top:.6rem;line-height:1.4;">${nextWk.location}${nextWk.address?'<br>'+nextWk.address:''}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  // Pool list
+  html += `<div class="sb-card">
+    <div class="sb-head"><span>All pools</span></div>
+    <div>`;
+  ['A','B','C','D','E','F'].forEach(p => {
+    const d = pools[p];
+    html += `<div class="pool-list-item ${p===activePool?'active':''}" onclick="switchPool('${p}')">
+      <span class="pli-name">Pool ${p}${p===MY_POOL?'<span class="star"> ★</span>':''}</span>
+      <span class="pli-count">${d?d.standings.length:'—'} teams</span>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  sb.innerHTML = `<div class="fade-in">${html}</div>`;
+}
+
+// ── UTILS ─────────────────────────────────────────
+function setStatus(msg, ready) {
+  document.getElementById('statusTxt').textContent = msg;
+  const dot = document.getElementById('statusDot');
+  dot.classList.toggle('loading', !ready);
+  dot.style.background = ready ? '#4ade80' : '#facc15';
+}
+
+function formatDate(s) {
+  if (!s) return 'TBD';
+  return s.replace(/Date[:\s]*/i,'').trim();
+}
+
+function shortName(n) {
+  return n
+    .replace(/ - Wallace$/i,'')
+    .replace(/\s*Nkansah$/i,'')
+    .replace(/\s*Randell$/i,'')
+    .replace(/\s*Senior$/i,'')
+    .replace(/\s*Panthers\s*-\s*/i,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
+function ordinal(n) {
+  const s=['th','st','nd','rd'], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+
+function esc(s) { return s.replace(/'/g,"\\'"); }
+
+// ── INIT ──────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────
+loadData();
+
+// Realtime subscription — when edge function updates the cache,
+// every open browser gets fresh data automatically
+(function subscribeRealtime() {
+  if (SUPABASE_URL.includes('YOUR_ANON_KEY')) return;
+  const wsUrl = SUPABASE_URL.replace('https://', 'wss://') +
+    '/realtime/v1/websocket?apikey=' + SUPABASE_ANON + '&vsn=1.0.0';
+  let retryDelay = 3000;
+  function connect() {
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      retryDelay = 3000;
+      ws.send(JSON.stringify({
+        topic: 'realtime:public:obl_schedule_cache',
+        event: 'phx_join',
+        payload: { config: { broadcast: { self: false } } },
+        ref: '1',
+      }));
+    };
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.event === 'postgres_changes' || msg.payload?.type === 'UPDATE') loadData();
+    };
+    ws.onclose = () => { setTimeout(connect, retryDelay); retryDelay = Math.min(retryDelay * 2, 30000); };
+  }
+  connect();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

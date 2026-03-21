@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AppHeader from '../Shared/AppHeader';
 import { Save, X, Trash2 } from 'lucide-react';
 
-const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
+const EditTeam = ({ team, onSave, onDelete, onCancel, onManageRoster, toast }) => {
   const [formData, setFormData] = useState({
     name: team.name || '',
     coach: team.coach || '',
@@ -15,14 +15,11 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast?.error('Team name is required');
       return;
     }
-
     setSaving(true);
     try {
       await onSave(team.id, formData);
@@ -40,7 +37,6 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
       setShowDeleteConfirm(true);
       return;
     }
-
     try {
       await onDelete(team.id);
       toast?.success('Team deleted!');
@@ -54,46 +50,40 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
     <div className="min-h-screen bg-gray-50">
       <AppHeader title="Edit Team" onBack={onCancel} />
 
-      <div className="max-w-2xl mx-auto p-6">
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+      <div className="max-w-2xl mx-auto p-4 sm:p-6">
+        <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-5">
+
           {/* Team Name */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Team Name *
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Team Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
               placeholder="Enter team name"
-              required
             />
           </div>
 
           {/* Coach */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Coach Name
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Coach Name</label>
             <input
               type="text"
               value={formData.coach}
               onChange={(e) => setFormData({ ...formData, coach: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
               placeholder="Enter coach name"
             />
           </div>
 
           {/* Sport */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Sport
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Sport</label>
             <select
               value={formData.sport}
               onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base bg-white"
             >
               <option value="basketball">Basketball</option>
               <option value="soccer">Soccer</option>
@@ -104,13 +94,11 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
 
           {/* Visibility */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              Visibility
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Visibility</label>
             <select
               value={formData.visibility}
               onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base bg-white"
             >
               <option value="private">Private</option>
               <option value="public">Public</option>
@@ -126,62 +114,64 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
           {/* Record */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Wins
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Wins</label>
               <input
                 type="number"
                 min="0"
                 value={formData.wins}
                 onChange={(e) => setFormData({ ...formData, wins: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                Losses
-              </label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Losses</label>
               <input
                 type="number"
                 min="0"
                 value={formData.losses}
                 onChange={(e) => setFormData({ ...formData, losses: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <button
-              type="submit"
+              onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg font-bold transition"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 text-white rounded-lg font-bold transition text-base"
             >
               <Save size={20} />
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
             <button
-              type="button"
               onClick={onCancel}
-              className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-bold transition"
+              className="px-5 py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-700 rounded-lg font-bold transition"
             >
               <X size={20} />
             </button>
           </div>
-        </form>
+
+          {/* Manage Roster */}
+          <button
+            onClick={() => onManageRoster(team)}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-gray-900 hover:bg-gray-800 active:bg-gray-700 text-white rounded-lg font-bold transition text-base"
+          >
+            👥 Manage Roster
+          </button>
+        </div>
 
         {/* Delete Section */}
-        <div className="mt-6 bg-red-50 border-2 border-red-200 rounded-xl p-6">
+        <div className="mt-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 sm:p-6">
           <h3 className="text-lg font-bold text-red-900 mb-2">Danger Zone</h3>
           <p className="text-sm text-red-700 mb-4">
             Deleting this team will permanently remove all associated games, stats, and players. This action cannot be undone.
           </p>
-          
           {!showDeleteConfirm ? (
             <button
               onClick={handleDelete}
-              className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition"
+              className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg font-bold transition"
             >
               <Trash2 size={20} />
               Delete Team
@@ -192,7 +182,7 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, toast }) => {
               <div className="flex gap-2">
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition"
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg font-bold transition"
                 >
                   <Trash2 size={20} />
                   Yes, Delete Forever

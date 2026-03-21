@@ -63,6 +63,22 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  useEffect(() => {
+  const hash = window.location.hash
+  if (hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.replace('#', ''))
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+
+    if (access_token && refresh_token) {
+      supabase.auth.setSession({ access_token, refresh_token })
+        .then(() => {
+          // Clean the tokens out of the URL
+          window.history.replaceState(null, '', window.location.pathname)
+        })
+    }
+  }
+}, [])
   const signUp = async (email, password, fullName) => {
     const data = await authService.signUp(email, password, fullName);
     return data;

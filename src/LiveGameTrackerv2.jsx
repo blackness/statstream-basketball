@@ -379,7 +379,6 @@ const LiveGameTracker = ({ user, toast }) => {
         onSave={handleSaveTeamEdits}
         onDelete={handleDeleteTeam}
         onCancel={() => { setEditingTeam(null); setActiveView('home'); }}
-        onManageRoster={(team) => { setEditingTeam(null); handleManageRoster(team); }}
         toast={toast}
       />
     );

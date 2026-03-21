@@ -24,7 +24,7 @@ const Dashboard = ({
     <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
       
       <AppHeader
-        title="Dashboard"
+        title="StatStream"
         isDashboard={true}
         onDashboard={() => {}}
         userEmail={user?.email}

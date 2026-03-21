@@ -59,147 +59,82 @@ const CreateTeam = ({ user, onSave, onCancel, toast }) => {
     setSaving(false);
   };
 
-  return (
-    <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
-      
-      <AppHeader
-        title="Create Team"
-        isDashboard={false}
-        onDashboard={onCancel}
-        userEmail={user?.email}
-      />
+const [activeTab, setActiveTab] = useState('info'); // 'info' or 'roster'
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          
-          {/* Team Info */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-black text-gray-900 mb-4">Team Information</h3>
-            
+return (
+  <div className="h-screen w-full bg-gray-50 flex flex-col">
+    <AppHeader title="Create Team" isDashboard={false} onDashboard={onCancel} userEmail={user?.email} />
+
+    {/* Tab Navigation */}
+    <div className="flex px-4 pt-4 gap-2">
+      <button 
+        onClick={() => setActiveTab('info')}
+        className={`flex-1 py-3 text-sm font-bold rounded-t-xl transition-all ${activeTab === 'info' ? 'bg-white text-blue-600 shadow-sm' : 'bg-gray-200 text-gray-500'}`}
+      >
+        Team Info
+      </button>
+      <button 
+        onClick={() => setActiveTab('roster')}
+        className={`flex-1 py-3 text-sm font-bold rounded-t-xl transition-all ${activeTab === 'roster' ? 'bg-white text-blue-600 shadow-sm' : 'bg-gray-200 text-gray-500'}`}
+      >
+        Roster ({roster.length})
+      </button>
+    </div>
+
+    <main className="flex-1 overflow-y-auto px-4 py-6 bg-white">
+      <div className="max-w-2xl mx-auto">
+        
+        {activeTab === 'info' ? (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Team Name *
-                </label>
-                <input
-                  type="text"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-600"
-                  placeholder="Enter team name"
-                />
+                <label className="block text-sm font-bold text-gray-700 mb-2">Team Name</label>
+                <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Thunder Bay Wolves" />
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  Coach (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={coach}
-                  onChange={(e) => setCoach(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-600"
-                  placeholder="Enter coach name"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <span className="text-2xl">🏀</span>
-                <span className="font-bold text-blue-900">Basketball</span>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Coach Name</label>
+                <input type="text" value={coach} onChange={(e) => setCoach(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Optional" />
               </div>
             </div>
-          </div>
-
-          {/* Roster */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-gray-900">
-                Roster ({roster.length} players)
-              </h3>
-            </div>
-
-            {/* Add Player Form */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4 p-4 bg-gray-50 rounded-lg">
-              <input
-                type="text"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Player name"
-                className="px-3 py-2 border-2 border-gray-200 rounded-lg outline-none focus:border-blue-600"
-                onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-              />
-              <input
-                type="text"
-                value={playerNumber}
-                onChange={(e) => setPlayerNumber(e.target.value)}
-                placeholder="Number"
-                className="px-3 py-2 border-2 border-gray-200 rounded-lg outline-none focus:border-blue-600"
-                onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-              />
-              <select
-                value={playerPosition}
-                onChange={(e) => setPlayerPosition(e.target.value)}
-                className="px-3 py-2 border-2 border-gray-200 rounded-lg outline-none focus:border-blue-600"
-              >
-                <option>Guard</option>
-                <option>Forward</option>
-                <option>Center</option>
+          </section>
+        ) : (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+             {/* Add Player Input Group */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <input type="text" placeholder="Name" className="sm:col-span-5 px-3 py-2 rounded-lg border border-gray-200 text-sm" value={playerName} onChange={(e) => setPlayerName(e.target.value)} />
+              <input type="text" placeholder="#" className="sm:col-span-2 px-3 py-2 rounded-lg border border-gray-200 text-sm" value={playerNumber} onChange={(e) => setPlayerNumber(e.target.value)} />
+              <select className="sm:col-span-3 px-2 py-2 rounded-lg border border-gray-200 text-sm" value={playerPosition} onChange={(e) => setPlayerPosition(e.target.value)}>
+                <option>Guard</option><option>Forward</option><option>Center</option>
               </select>
-              <button
-                onClick={addPlayer}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
-              >
-                <Plus size={18} />
-                Add
-              </button>
+              <button onClick={addPlayer} className="sm:col-span-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">Add</button>
             </div>
 
-            {/* Player List */}
-            {roster.length > 0 ? (
-              <div className="space-y-2">
-                {roster.map(player => (
-                  <div key={player.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-gray-900 w-8">{player.number || '-'}</span>
-                      <span className="font-bold text-gray-900">{player.name}</span>
-                      <span className="text-sm text-gray-600">{player.position}</span>
-                    </div>
-                    <button
-                      onClick={() => removePlayer(player.id)}
-                      className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition"
-                    >
-                      <X size={18} />
-                    </button>
+            {/* List */}
+            <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl">
+              {roster.map(player => (
+                <div key={player.id} className="flex items-center justify-between px-6 py-4">
+                  <div className="flex items-center gap-4">
+                    <span className="w-8 h-8 flex items-center justify-center bg-blue-50 rounded-full font-bold text-blue-600 text-sm">{player.number}</span>
+                    <span className="font-bold text-gray-900">{player.name}</span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No players added yet
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition disabled:opacity-50"
-            >
-              {saving ? 'Creating...' : 'Create Team'}
-            </button>
-          </div>
-        </div>
+                  <button onClick={() => removePlayer(player.id)} className="text-gray-400 hover:text-red-500"><X size={18} /></button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
+    </main>
+
+    {/* Sticky Bottom Footer */}
+    <div className="p-4 bg-gray-50 border-t border-gray-200 grid grid-cols-2 gap-4">
+      <button onClick={onCancel} className="py-4 font-bold text-gray-600 hover:bg-gray-200 rounded-xl transition">Cancel</button>
+      <button onClick={handleSave} disabled={saving} className="py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition">
+        {saving ? 'Saving...' : 'Create Team'}
+      </button>
     </div>
-  );
+  </div>
+);
 };
 
 export default CreateTeam;

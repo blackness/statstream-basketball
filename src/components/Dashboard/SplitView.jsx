@@ -138,7 +138,7 @@ const SplitView = ({
     <div className="h-full flex overflow-hidden bg-gray-100">
 
       {/* ══ LEFT 30% · TEAMS ══ */}
-      <div className="w-[30%] min-w-[200px] max-w-[320px] flex flex-col border-r-2 border-gray-300 bg-gray-50">
+      <div className="w-[33%] min-w-[200px] max-w-[360px] flex flex-col border-r-2 border-gray-300 bg-gray-50">
 
         <div className="flex items-center justify-between px-4 py-3 bg-white border-b-2 border-gray-300">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Teams</span>
@@ -155,44 +155,60 @@ const SplitView = ({
 
         <div className="flex-1 overflow-y-auto p-3">
           {teams.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col divide-y divide-gray-100">
               {teams.map(team => {
                 const isSelected = filterTeamId === team.id;
                 const isOwn = user && team.user_id === user.id;
                 return (
-                <button
-                  key={team.id}
-                  onClick={() => handleTeamClick(team)}
-                  className={`group relative border-2 rounded-lg p-3 text-left transition-all active:scale-[0.97] focus:outline-none overflow-hidden ${
-                    isSelected
-                      ? 'bg-gray-900 border-gray-700'
-                      : 'bg-white border-gray-200 hover:border-gray-400'
-                  }`}
-                  style={{ minHeight: '84px' }}
-                >
-                  <div
-                    className="absolute left-0 top-0 bottom-0 w-[3px]"
-                    style={{ backgroundColor: getTeamSolid(team.id) }}
-                  />
-                  <div className="pl-2">
+                  <button
+                    key={team.id}
+                    onClick={() => handleTeamClick(team)}
+                    className={`group w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all focus:outline-none ${
+                      isSelected ? 'rounded-lg mx-1 px-2 shadow-md' : 'bg-white hover:bg-gray-50'
+                    }`}
+                    style={isSelected ? {
+                      background: `linear-gradient(135deg, ${getTeamSolid(team.id)}ee, ${getTeamSolid(team.id)}99)`,
+                      width: 'calc(100% - 8px)'
+                    } : {}}
+                  >
+                    {/* Color swatch */}
                     <div
-                      className="w-7 h-7 rounded flex items-center justify-center text-white font-black text-sm mb-2 shadow-sm"
+                      className="w-6 h-6 rounded flex-shrink-0 flex items-center justify-center text-white font-black text-[11px] shadow-sm"
                       style={{ backgroundColor: getTeamSolid(team.id) }}
                     >
                       {team.name[0]?.toUpperCase()}
                     </div>
-                    <div className={`font-black text-[11px] leading-tight truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
-                      {team.name}
-                      {isOwn && <span className="ml-1 text-[8px] font-bold text-gray-400">★</span>}
+                    {/* Name + meta */}
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-black text-[11px] leading-tight truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        {team.name}
+                        {isOwn && <span className={`ml-1 text-[8px] font-bold ${isSelected ? 'text-white/60' : 'text-yellow-500'}`}>★</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`text-[9px] font-bold tabular-nums ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
+                          {team.wins || 0}W–{team.losses || 0}L
+                        </span>
+                        {team.sport && (
+                          <span className={`text-[8px] uppercase tracking-wide truncate ${isSelected ? 'text-white/50' : 'text-gray-300'}`}>· {team.sport}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className={`text-[9px] font-bold tabular-nums mt-0.5 ${isSelected ? 'text-gray-400' : 'text-gray-400'}`}>
-                      {team.wins || 0}W – {team.losses || 0}L
-                    </div>
-                    {team.sport && (
-                      <div className="text-[9px] text-gray-400 uppercase tracking-wide mt-0.5 truncate">{team.sport}</div>
+                    {/* Edit button — own teams only */}
+                    {canEditTeam(team) && (
+                      <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => onEditTeam(team)}
+                          className={`text-[9px] font-black px-1.5 py-0.5 rounded transition ${isSelected ? 'text-white/70 hover:text-white hover:bg-white/20' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`}
+                        >
+                          Edit
+                        </button>
+                      </div>
                     )}
-                  </div>
-                </button>
+                    {/* Selected check */}
+                    {isSelected && (
+                      <span className="text-white/80 text-[11px] flex-shrink-0">✓</span>
+                    )}
+                  </button>
                 );
               })}
             </div>
@@ -223,22 +239,25 @@ const SplitView = ({
       </div>
 
       {/* ══ RIGHT 70% · GAMES ══ */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="w-[67%] flex flex-col overflow-hidden">
 
-        <div className="flex items-center justify-between px-5 py-3 bg-white border-b-2 border-gray-300">
+        {/* Games header - row 1: title + toggles */}
+        <div className="flex items-center justify-between px-5 py-2.5 bg-white border-b border-gray-200">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Games</span>
-            {/* Live scores indicator */}
-            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-50 rounded">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[9px] font-black text-green-600 uppercase tracking-wide">Live</span>
-            </div>
+            {liveGames.length > 0 && (
+              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-50 rounded">
+                <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                <span className="text-[9px] font-black text-yellow-600 uppercase tracking-wide">Live · {liveGames.length}</span>
+              </div>
+            )}
             {filterTeamId && (
               <span className="text-[9px] font-black text-blue-500 uppercase tracking-wide bg-blue-50 px-1.5 py-0.5 rounded">
                 {teams.find(t => t.id === filterTeamId)?.name}
               </span>
             )}
-            {/* My / All toggle — logged-in users only */}
+          </div>
+          <div className="flex items-center gap-2">
             {user && (
               <div className="flex items-center rounded-full border border-gray-300 overflow-hidden">
                 <button
@@ -259,24 +278,28 @@ const SplitView = ({
                 </button>
               </div>
             )}
+            {!user && (
+              <button
+                onClick={onSignIn}
+                className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-black text-[10px] uppercase tracking-wide transition active:scale-95"
+              >
+                Sign In
+              </button>
+            )}
           </div>
-          {user ? (
+        </div>
+        {/* Games header - row 2: prominent Start Game */}
+        {user && (
+          <div className="px-4 py-2 bg-white border-b-2 border-gray-300">
             <button
               onClick={onNewGame}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-black text-[10px] uppercase tracking-wide transition active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg font-black text-sm uppercase tracking-widest transition active:scale-[0.99] shadow-sm"
             >
-              <Play size={11} fill="currentColor" strokeWidth={0} />
+              <Play size={14} fill="currentColor" strokeWidth={0} />
               Start Game
             </button>
-          ) : (
-            <button
-              onClick={onSignIn}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-black text-[10px] uppercase tracking-wide transition active:scale-95"
-            >
-              Sign In
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
 
@@ -430,14 +453,6 @@ const SplitView = ({
                         >
                           Boxscore
                         </button>
-                        {canEdit(game) && (
-                          <button
-                            onClick={() => onResumeGame(game)}
-                            className="flex-1 py-1.5 text-[9px] font-black text-blue-500 hover:text-blue-700 hover:bg-blue-50 transition border-l border-gray-100 uppercase tracking-wide"
-                          >
-                            Resume
-                          </button>
-                        )}
                       </div>
                     </div>
                   );
