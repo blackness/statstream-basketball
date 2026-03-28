@@ -15,6 +15,8 @@ const LiveGameView = ({
   const sessionKey = `game-session-${initialTeam.id}`;
   
   const [team, setTeam] = useState(initialTeam);
+  const [gamePhase, setGamePhase] = useState(existingGame ? 'live' : 'selectStarters');
+  const [starters, setStarters] = useState(existingGame?.starters || []);
   const [currentGameId, setCurrentGameId] = useState(existingGame?.id || null);
   const [homeScore, setHomeScore] = useState(existingGame?.home_score || 0);
   const [awayScore, setAwayScore] = useState(existingGame?.away_score || 0);
@@ -191,23 +193,17 @@ const LiveGameView = ({
           
           toast?.success('Game resumed!');
         } else {
-          console.log('Session game no longer exists, clearing and creating new');
+          console.log('Session game no longer exists, clearing session');
           localStorage.removeItem(sessionKey);
-          await createGame();
+          // Don't auto-create — user will go through starter selection
         }
       } else if (!currentGameId) {
-        console.log('No game found, creating new game...');
-        await createGame();
+        // New game — starter selection handles creation
+        console.log('New game — waiting for starter selection');
       } else {
         console.log('Game already initialized:', currentGameId);
       }
-      
-      if (!existingGame && team.roster && team.roster.length > 0 && activePlayers.length === 0) {
-        console.log('Setting initial active players (first 5)');
-        const firstFive = team.roster.slice(0, 5).map(p => p.id);
-        setActivePlayers(firstFive);
-      }
-      
+
       // Clear initialization flag
       localStorage.removeItem(initFlag);
     };
@@ -802,6 +798,102 @@ const LiveGameView = ({
   const awayTeamName = gameSettings.isHome ? gameSettings.opponent : team.name;
   const teamStats = calculateTeamStats();
   const momentum = getMomentumIndicator();
+
+  // ── Starter Selection Screen ─────────────────────────────────────────────
+  if (gamePhase === 'selectStarters') {
+    const roster = team.roster || [];
+    const toggleStarter = (playerId) => {
+      setStarters(prev =>
+        prev.includes(playerId) ? prev.filter(id => id !== playerId) : [...prev, playerId]
+      );
+    };
+
+    const handleBeginGame = async () => {
+      const result = await GameStateManager.createGame({
+        userId: user.id,
+        teamId: team.id,
+        teamName: team.name,
+        opponent: gameSettings.opponent,
+        isHome: gameSettings.isHome,
+        periodLength: gameSettings.periodLength,
+        totalPeriods: gameSettings.totalPeriods,
+        starters,
+        activePlayers: starters,
+      });
+      if (!result.success) { toast?.error('Failed to start game'); return; }
+      setCurrentGameId(result.game.id);
+      setActivePlayers(starters);
+      localStorage.setItem(sessionKey, result.game.id);
+      setGamePhase('live');
+      toast?.success('Game started!');
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+            <button onClick={onGoHome} className="p-2 hover:bg-gray-100 rounded-lg transition text-xl">←</button>
+            <h1 className="text-lg font-black text-gray-900">Select Starters</h1>
+            <div className="w-8" />
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-black text-gray-900">{team.name} vs {gameSettings.opponent}</h2>
+              <span className={`text-sm font-bold ${starters.length === 5 ? 'text-green-600' : 'text-gray-400'}`}>
+                {starters.length}/5
+              </span>
+            </div>
+            <p className="text-sm text-gray-500">Tap players to select starters. All players appear in the box score.</p>
+          </div>
+          <div className="space-y-2 mb-6">
+            {roster.map(player => {
+              const isStarter = starters.includes(player.id);
+              return (
+                <button
+                  key={player.id}
+                  onClick={() => toggleStarter(player.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition text-left ${
+                    isStarter ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 ${
+                    isStarter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {player.number || '—'}
+                  </div>
+                  <div className="flex-1">
+                    <div className={`font-bold ${isStarter ? 'text-blue-900' : 'text-gray-900'}`}>
+                      {player.name}
+                      {isStarter && <span className="ml-1.5 text-blue-400 text-xs">★ STARTER</span>}
+                    </div>
+                    {player.position && <div className="text-xs text-gray-400">{player.position}</div>}
+                  </div>
+                  {isStarter && (
+                    <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-black">✓</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={handleBeginGame}
+            disabled={starters.length === 0}
+            className={`w-full py-4 rounded-xl font-black text-lg uppercase tracking-wide transition ${
+              starters.length > 0
+                ? 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {starters.length === 0 ? 'Select Starters to Begin' : `Start Game — ${starters.length} Starters`}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

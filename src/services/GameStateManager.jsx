@@ -58,8 +58,6 @@ class GameStateManager {
    */
   async recordStat({
     playerId,
-    playerName,
-    playerNumber,
     statType,
     points = 0,
     missed = false,
@@ -81,16 +79,12 @@ class GameStateManager {
   }) {
     // Calculate new player stats
     const playerStats = currentStats[playerId] || {
-      _name: playerName || '',
-      _number: playerNumber || '',
       pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0,
       oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
     };
 
     const updatedPlayerStats = {
       ...playerStats,
-      _name: playerStats._name || playerName || '',
-      _number: playerStats._number || playerNumber || '',
       pts: playerStats.pts + points
     };
 
@@ -177,7 +171,9 @@ class GameStateManager {
     opponent,
     isHome,
     periodLength,
-    totalPeriods
+    totalPeriods,
+    starters = [],
+    activePlayers = [],
   }) {
     try {
       const { data, error } = await supabase
@@ -199,7 +195,8 @@ class GameStateManager {
               oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
             }
           },
-          active_players: [],
+          active_players: activePlayers,
+          starters,
           plus_minus: {},
           game_settings: {
             isHome,

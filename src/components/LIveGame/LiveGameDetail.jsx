@@ -109,6 +109,7 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
   const oppTotals  = calcOpponentTotals(game);
 
   const activePlayers  = game.active_players || [];
+  const starterIds     = game.starters || [];
   const periodLength   = game.game_settings?.periodLength || 8;
   const periodsPlayed  = (game.period || 1) - 1;
   const clockElapsed   = periodLength * 60 - (game.time_remaining || 0);
@@ -122,12 +123,14 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
   const statsEntries = Object.entries(game.stats || {})
     .map(([id, stats]) => {
       const rosterPlayer = roster.find(p => p.id === id);
-      const onFloor = activePlayers.includes(id);
+      const onFloor   = activePlayers.includes(id);
+      const isStarter = starterIds.includes(id);
       return {
         id,
         name: rosterPlayer?.name || stats._name || '—',
         number: rosterPlayer?.number || stats._number || '',
         onFloor,
+        isStarter,
         mins: estimateMins(id),
         stats
       };
@@ -264,7 +267,9 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
                     <tr key={player.id} className={`hover:bg-white/3 ${player.onFloor ? 'bg-green-400/5' : ''}`}>
                       <td className="px-4 py-2.5 font-bold text-white/80 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
+                          {player.onFloor && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 animate-pulse" />}
                           <span className={player.onFloor ? 'ring-2 ring-green-400 ring-offset-1 ring-offset-gray-900 rounded-full px-2 py-0.5 text-green-300' : ''}>
+                            {player.isStarter && <span className="text-blue-400 mr-0.5">*</span>}
                             {player.number ? `#${player.number} ` : ''}{player.name}
                           </span>
                         </div>

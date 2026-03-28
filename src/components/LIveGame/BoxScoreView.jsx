@@ -63,18 +63,26 @@ const BoxScoreView = ({ team, game, onBack }) => {
     return { ...opStats, totalFGM, totalFGA, reb, fgPct, tpPct, ftPct };
   };
 
-  // Build player list from stats keys — look up names from roster, fallback to _name stored in stats
-  const playersWithStats = Object.entries(game.stats || {})
-    .map(([id, stats]) => {
-      const rosterPlayer = team?.roster?.find(p => p.id === id);
-      return {
-        id,
-        name: rosterPlayer?.name || stats._name || '—',
-        number: rosterPlayer?.number || stats._number || '',
-        stats
-      };
-    })
-    .sort((a, b) => (b.stats.pts || 0) - (a.stats.pts || 0));
+  const starters = game.starters || [];
+
+  const rosterPlayers = (team?.roster || []).map(p => ({
+    id: p.id, name: p.name, number: p.number || '',
+    isStarter: starters.includes(p.id), fromRoster: true,
+  }));
+
+  const rosterIds = new Set(rosterPlayers.map(p => p.id));
+  const orphanPlayers = Object.entries(game.stats || {})
+    .filter(([id]) => !rosterIds.has(id))
+    .map(([id, stats]) => ({
+      id, name: stats._name || '—', number: stats._number || '',
+      isStarter: starters.includes(id), fromRoster: false,
+    }));
+
+  const allPlayers = [
+    ...rosterPlayers.filter(p => p.isStarter),
+    ...rosterPlayers.filter(p => !p.isStarter),
+    ...orphanPlayers,
+  ];
 
   const teamStats = calculateTeamStats();
   const opponentStats = calculateOpponentTeamStats();
@@ -107,7 +115,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="text-center mb-4">
             <h2 className="text-3xl font-black text-gray-900 mb-2">
-              {team?.name || game.home_team} vs {game.opponent}
+              {team.name} vs {game.opponent}
             </h2>
             <div className="text-4xl font-black text-blue-600 mb-2">{finalScore}</div>
             <div className="text-sm text-gray-600">
@@ -119,7 +127,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
         {/* Player Stats */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-blue-600 px-6 py-3">
-            <h3 className="font-black text-white text-lg">{team?.name || game.home_team} - Player Stats</h3>
+            <h3 className="font-black text-white text-lg">{team.name} - Player Stats</h3>
           </div>
           
           <div className="overflow-x-auto">
@@ -144,13 +152,15 @@ const BoxScoreView = ({ team, game, onBack }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {playersWithStats.length > 0 ? (
-                  playersWithStats.map(player => {
+                {allPlayers.length > 0 ? (
+                  allPlayers.map(player => {
                     const stats = calculatePlayerStats(player.id);
+                    const hasPlayed = game.stats?.[player.id] != null;
                     return (
-                      <tr key={player.id} className="hover:bg-gray-50">
+                      <tr key={player.id} className={`hover:bg-gray-50 ${!hasPlayed ? 'opacity-40' : ''}`}>
                         <td className="px-4 py-3">
                           <div className="font-bold text-gray-900">
+                            {player.isStarter && <span className="text-blue-500 mr-1">*</span>}
                             {player.number ? `#${player.number} ` : ''}{player.name}
                           </div>
                         </td>
@@ -176,7 +186,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
                 ) : (
                   <tr>
                     <td colSpan="15" className="px-4 py-8 text-center text-gray-500">
-                      No stats recorded for this game
+                      No roster found for this game
                     </td>
                   </tr>
                 )}
