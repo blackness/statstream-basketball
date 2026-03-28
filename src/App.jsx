@@ -1,10 +1,11 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import LiveGameTracker from './LiveGameTracker';
+import ResetPassword from './components/Shared/ResetPassword';
 import { ToastContainer, useToast } from './components/Shared/Toast';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, needsPasswordReset } = useAuth();
   const toast = useToast();
 
   if (loading) {
@@ -18,7 +19,11 @@ function AppContent() {
     );
   }
 
-  // Always render LiveGameTracker — handles both logged-in and logged-out states
+  // Password reset link clicked — show change password screen before anything else
+  if (needsPasswordReset) {
+    return <ResetPassword />;
+  }
+
   return (
     <>
       <ToastContainer toasts={toast.toasts} removeToast={toast.removeToast} />

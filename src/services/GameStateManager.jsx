@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase';
+import { supabase } from '@/supabase';
 
 class GameStateManager {
   constructor(gameId) {
@@ -171,9 +171,7 @@ class GameStateManager {
     opponent,
     isHome,
     periodLength,
-    totalPeriods,
-    starters = [],
-    activePlayers = [],
+    totalPeriods
   }) {
     try {
       const { data, error } = await supabase
@@ -195,8 +193,7 @@ class GameStateManager {
               oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
             }
           },
-          active_players: activePlayers,
-          starters,
+          active_players: [],
           plus_minus: {},
           game_settings: {
             isHome,

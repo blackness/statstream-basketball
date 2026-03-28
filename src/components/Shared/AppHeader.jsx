@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Home, LogOut, ChevronDown } from 'lucide-react';
-import { supabase } from '../../../supabase';
+import { supabase } from '@/supabase';
 
 const AppHeader = ({ 
   title = "Dashboard",

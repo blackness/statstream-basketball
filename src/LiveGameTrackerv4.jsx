@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/supabase';
+import { supabase } from '../supabase';
 import Dashboard from './components/Dashboard/Dashboard';
 import CreateTeam from './components/Team/CreateTeam';
 import EditTeam from './components/Team/EditTeam';
 import ManageRoster from './components/Team/ManageRoster';
 import PreGameSetup from './components/Game/PreGameSetup';
 import LiveGameView from './components/LIveGame/LiveGameView';
-import GameDetail from './components/LIveGame/GameDetail';
+import LiveGameDetail from './components/LIveGame/LiveGameDetail';
+import BoxScoreView from './components/LIveGame/BoxScoreView';
 import AuthUI from './services/AuthUI';
 
 const SUPER_USER_ID = 'cbaf203e-b350-48c7-b38a-62d4533c057f';
 
 const SESSION_KEY = 'statstream-view';
-const saveSession  = (view, data = {}) => { try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ view, ...data })); } catch(e) {} };
-const clearSession = () => { try { sessionStorage.removeItem(SESSION_KEY); } catch(e) {} };
-const loadSession  = () => { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch(e) { return null; } };
+
+const saveSession = (view, data = {}) => {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify({ view, ...data })); } catch(e) {}
+};
+
+const clearSession = () => {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch(e) {}
+};
+
+const loadSession = () => {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch(e) { return null; }
+};
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams, setTeams] = useState([]);
@@ -28,7 +38,7 @@ const LiveGameTracker = ({ user, toast }) => {
   const [viewingGameDetail, setViewingGameDetail] = useState(null);
   const [editingTeam, setEditingTeam] = useState(null);
   const [managingRoster, setManagingRoster] = useState(null);
-  const [showMyTeams, setShowMyTeams] = useState(true); // logged-in default: my teams
+  const [showMyTeams, setShowMyTeams] = useState(true);
 
 
   const isSuperUser = user?.id === SUPER_USER_ID;
@@ -44,6 +54,45 @@ const LiveGameTracker = ({ user, toast }) => {
   useEffect(() => {
     loadTeamsAndGames();
   }, [showMyTeams]);
+
+  // Restore view from session after data loads
+  const [sessionRestored, setSessionRestored] = useState(false);
+  useEffect(() => {
+    if (loading || sessionRestored) return;
+    setSessionRestored(true);
+    const session = loadSession();
+    if (!session || session.view === 'home') return;
+
+    const restoreView = async () => {
+      if (session.view === 'boxScore' && session.gameId) {
+        const { data: game } = await supabase.from('games').select('*').eq('id', session.gameId).single();
+        if (game) setViewingBoxScore(game);
+      } else if (session.view === 'gameDetail' && session.gameId) {
+        const { data: game } = await supabase.from('games').select('*').eq('id', session.gameId).single();
+        if (game) setViewingGameDetail(game);
+      } else if (session.view === 'liveGame' && session.gameId) {
+        const { data: game } = await supabase.from('games').select('*').eq('id', session.gameId).single();
+        if (game && game.status === 'in-progress') {
+          const team = teams.find(t => t.id === game.team_id);
+          if (team) {
+            setSelectedTeam(team);
+            setCurrentGameSettings({
+              opponent: game.opponent,
+              location: game.game_settings?.location || '',
+              isHome: game.home_team === team.name,
+              periodLength: game.game_settings?.periodLength || 8,
+              totalPeriods: game.game_settings?.totalPeriods || 4,
+              homeFouls: game.game_settings?.homeFouls || 0,
+              awayFouls: game.game_settings?.awayFouls || 0,
+            });
+            setResumingGame(game);
+            setActiveView('liveGame');
+          }
+        }
+      }
+    };
+    restoreView();
+  }, [loading]);
 
   // Realtime subscription — keep gameHistory in sync with DB changes
   useEffect(() => {
@@ -265,10 +314,11 @@ const LiveGameTracker = ({ user, toast }) => {
     setCurrentGameSettings(gameSettings);
     setResumingGame(null);
     setActiveView('liveGame');
+    // session saved when game ID is known — LiveGameView handles that via localStorage
   };
 
-  const handleNewTeam = () => setActiveView('createTeam');
-  const handleNewGame = () => setActiveView('gameSetup');
+  const handleNewTeam = () => { clearSession(); setActiveView('createTeam'); };
+  const handleNewGame = () => { clearSession(); setActiveView('gameSetup'); };
 
   const handleResumeGame = async (game) => {
     try {
@@ -309,6 +359,7 @@ const LiveGameTracker = ({ user, toast }) => {
         awayFouls: freshGame.game_settings?.awayFouls || 0
       });
       setResumingGame(freshGame);
+      saveSession('liveGame', { gameId: freshGame.id });
       setActiveView('liveGame');
     } catch (err) {
       console.error('Error resuming game:', err);
@@ -350,8 +401,10 @@ const LiveGameTracker = ({ user, toast }) => {
 
   const handleViewStats = (game) => {
     if (game.status === 'in-progress') {
+      saveSession('gameDetail', { gameId: game.id });
       setViewingGameDetail(game);
     } else {
+      saveSession('boxScore', { gameId: game.id });
       setViewingBoxScore(game);
     }
   };
@@ -429,8 +482,8 @@ const LiveGameTracker = ({ user, toast }) => {
         team={selectedTeam}
         gameSettings={currentGameSettings}
         existingGame={resumingGame}
-        onEndGame={() => { setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
-        onGoHome={() => { setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
+        onEndGame={() => { clearSession(); setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
+        onGoHome={() => { clearSession(); setResumingGame(null); setActiveView('home'); loadTeamsAndGames(); }}
         toast={toast}
       />
     );
@@ -439,10 +492,10 @@ const LiveGameTracker = ({ user, toast }) => {
   if (viewingGameDetail) {
     const team = teams.find(t => t.id === viewingGameDetail.team_id);
     return (
-      <GameDetail
+      <LiveGameDetail
         initialGame={viewingGameDetail}
         team={team}
-        onBack={() => { clearSession(); setViewingGameDetail(null); setViewingBoxScore(null); }}
+        onBack={() => { clearSession(); setViewingGameDetail(null); }}
       />
     );
   }
@@ -450,10 +503,11 @@ const LiveGameTracker = ({ user, toast }) => {
   if (viewingBoxScore) {
     const team = teams.find(t => t.id === viewingBoxScore.team_id);
     return (
-      <GameDetail
-        initialGame={viewingBoxScore}
+      <BoxScoreView
+        user={user}
+        game={viewingBoxScore}
         team={team}
-        onBack={() => { clearSession(); setViewingBoxScore(null); setViewingGameDetail(null); }}
+        onBack={() => { clearSession(); setViewingBoxScore(null); }}
       />
     );
   }

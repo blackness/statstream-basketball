@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/supabase';
+import { supabase } from '../../../supabase';
 import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import GameStateManager from '../../services/GameStateManager';
-import { useScoreNotifications, requestNotificationPermission } from '../../hooks/useScoreNotifications';
 
 const LiveGameView = ({ 
   user,
@@ -50,22 +49,6 @@ const LiveGameView = ({
   const [lastFivePlays, setLastFivePlays] = useState([]);
   const [plusMinus, setPlusMinus] = useState({});
   const [showShotMap, setShowShotMap] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-
-  // Score notifications
-  const { notifyScore } = useScoreNotifications({
-    enabled: notificationsEnabled,
-    homeTeam: gameSettings.isHome ? team.name : gameSettings.opponent,
-    awayTeam: gameSettings.isHome ? gameSettings.opponent : team.name,
-    period: currentPeriod,
-  });
-
-  // Request notification permission on mount
-  useEffect(() => {
-    requestNotificationPermission().then(granted => {
-      setNotificationsEnabled(granted);
-    });
-  }, []);
 
   // Refresh roster
   useEffect(() => {
@@ -408,12 +391,6 @@ const LiveGameView = ({
       if (points > 0) {
         updatePlusMinus(points, true);
         toast?.success(`+${points} ${player?.name}`);
-        notifyScore(
-          player?.name || 'Player',
-          points,
-          result.newHomeScore,
-          result.newAwayScore
-        );
       }
     } else {
       // Check if game doesn't exist (0 rows error)

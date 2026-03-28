@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Zap } from 'lucide-react';
 import { supabase } from '../../../supabase';
+import PlayByPlay from './PlayByPlay';
 
 // ── Live clock that counts down locally, re-syncs on DB updates ──────────────
 const LiveClock = ({ timeRemaining, updatedAt, timerRunning }) => {
@@ -57,6 +58,7 @@ const calcOpponentTotals = (game) => {
 const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
   const [game, setGame] = useState(initialGame);
   const [roster, setRoster] = useState(initialTeam?.roster || []);
+  const [activeTab, setActiveTab] = useState('boxscore');
   const isLive = game.status === 'in-progress';
 
   // Fetch fresh game data on mount
@@ -130,13 +132,12 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
         id,
         name: rosterPlayer?.name || stats._name || '—',
         number: rosterPlayer?.number || stats._number || '',
-        onFloor,
-        isStarter,
+        onFloor, isStarter,
         mins: estimateMins(id),
+        hasStats: true,
         stats
       };
     })
-    // Remove duplicates by name — keep entry with higher pts if duped
     .reduce((acc, player) => {
       const nameLower = player.name.toLowerCase();
       const existing = acc.find(p => p.name.toLowerCase() === nameLower);
@@ -147,16 +148,30 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
         return acc;
       }
       return [...acc, player];
-    }, [])
+    }, []);
+
+  // Add roster players with no stats yet
+  const statsNames = new Set(statsEntries.map(p => p.name.toLowerCase()));
+  const rosterOnly = roster
+    .filter(p => game.stats?.[p.id] == null && !statsNames.has(p.name.toLowerCase()))
+    .map(p => ({
+      id: p.id, name: p.name, number: p.number || '',
+      onFloor: activePlayers.includes(p.id),
+      isStarter: starterIds.includes(p.id),
+      mins: estimateMins(p.id),
+      hasStats: false, stats: {}
+    }));
+
+  const allPlayers = [...statsEntries, ...rosterOnly]
     .sort((a, b) => (b.stats.pts || 0) - (a.stats.pts || 0));
 
-  const onFloorPlayers = statsEntries.filter(p => p.onFloor);
+  const onFloorPlayers = allPlayers.filter(p => p.onFloor);
 
 
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-gray-950 overflow-y-auto flex flex-col">
 
       {/* ── SCOREBOARD ─────────────────────────────────────────────────────── */}
       <div className={`bg-gradient-to-br ${gradient} px-4 pt-4 pb-6`}>
@@ -243,7 +258,29 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
         </div>
       </div>
 
+      {/* ── TABS ─────────────────────────────────────────────────────────── */}
+      <div style={{ display:'flex', borderBottom:'1px solid #1e293b', background:'#0a0f1a', flexShrink:0 }}>
+        {[['boxscore','Box Score'],['playbyplay','Play by Play']].map(([tab, label]) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex:1, padding:'10px 0', border:'none', cursor:'pointer', fontSize:12, fontWeight:800,
+              letterSpacing:'0.06em', textTransform:'uppercase', transition:'all 0.15s',
+              background: 'transparent',
+              color: activeTab === tab ? '#60a5fa' : '#475569',
+              borderBottom: activeTab === tab ? '2px solid #60a5fa' : '2px solid transparent',
+            }}
+          >{label}</button>
+        ))}
+      </div>
+
       {/* ── CONTENT ────────────────────────────────────────────────────────── */}
+      {activeTab === 'playbyplay' ? (
+        <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+          <PlayByPlay game={game} isDark={true} />
+        </div>
+      ) : (
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
         {/* Team box score */}
@@ -271,10 +308,10 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {statsEntries.length > 0 ? statsEntries.map(player => {
+                {allPlayers.length > 0 ? allPlayers.map(player => {
                   const s = calcPlayerStats(game, player.id);
                   return (
-                    <tr key={player.id} className={`hover:bg-white/3 ${player.onFloor ? 'bg-green-400/5' : ''}`}>
+                    <tr key={player.id} className={`hover:bg-white/3 ${player.onFloor ? 'bg-green-400/5' : ''} ${!player.hasStats ? 'opacity-40' : ''}`}>
                       <td className="px-4 py-2.5 font-bold text-white/80 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           {player.onFloor && <div className="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0 animate-pulse" />}
@@ -302,7 +339,7 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
                   );
                 }) : (
                   <tr>
-                    <td colSpan="13" className="px-4 py-8 text-center text-white/20 text-sm">No stats yet</td>
+                    <td colSpan="13" className="px-4 py-8 text-center text-white/20 text-sm">No roster found</td>
                   </tr>
                 )}
               </tbody>
@@ -376,6 +413,7 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
 
         <div className="h-8" />
       </div>
+      )}
     </div>
   );
 };
