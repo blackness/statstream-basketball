@@ -65,24 +65,41 @@ const BoxScoreView = ({ team, game, onBack }) => {
 
   const starters = game.starters || [];
 
-  const rosterPlayers = (team?.roster || []).map(p => ({
-    id: p.id, name: p.name, number: p.number || '',
-    isStarter: starters.includes(p.id), fromRoster: true,
-  }));
+  // Build from stats keys first — these have the actual data
+  const statsPlayers = Object.entries(game.stats || {}).map(([id, stats]) => {
+    const rosterPlayer = team?.roster?.find(p => p.id === id);
+    return {
+      id,
+      name: rosterPlayer?.name || stats._name || '—',
+      number: rosterPlayer?.number || stats._number || '',
+      isStarter: starters.includes(id),
+      hasStats: true,
+    };
+  });
 
-  const rosterIds = new Set(rosterPlayers.map(p => p.id));
-  const orphanPlayers = Object.entries(game.stats || {})
-    .filter(([id]) => !rosterIds.has(id))
-    .map(([id, stats]) => ({
-      id, name: stats._name || '—', number: stats._number || '',
-      isStarter: starters.includes(id), fromRoster: false,
+  const statsNames = new Set(statsPlayers.map(p => p.name.toLowerCase()));
+
+  // Add roster players who have NO stats entry and whose name isn't already covered
+  const rosterOnly = (team?.roster || [])
+    .filter(p => game.stats?.[p.id] == null && !statsNames.has(p.name.toLowerCase()))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      number: p.number || '',
+      isStarter: starters.includes(p.id),
+      hasStats: false,
     }));
 
   const allPlayers = [
-    ...rosterPlayers.filter(p => p.isStarter),
-    ...rosterPlayers.filter(p => !p.isStarter),
-    ...orphanPlayers,
-  ];
+    ...statsPlayers.filter(p => p.isStarter),
+    ...statsPlayers.filter(p => !p.isStarter),
+    ...rosterOnly.filter(p => p.isStarter),
+    ...rosterOnly.filter(p => !p.isStarter),
+  ].sort((a, b) => {
+    const aPts = game.stats?.[a.id]?.pts || 0;
+    const bPts = game.stats?.[b.id]?.pts || 0;
+    return bPts - aPts;
+  });
 
   const teamStats = calculateTeamStats();
   const opponentStats = calculateOpponentTeamStats();
@@ -155,7 +172,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
                 {allPlayers.length > 0 ? (
                   allPlayers.map(player => {
                     const stats = calculatePlayerStats(player.id);
-                    const hasPlayed = game.stats?.[player.id] != null;
+                    const hasPlayed = player.hasStats;
                     return (
                       <tr key={player.id} className={`hover:bg-gray-50 ${!hasPlayed ? 'opacity-40' : ''}`}>
                         <td className="px-4 py-3">

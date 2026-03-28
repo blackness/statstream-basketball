@@ -120,6 +120,7 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
     return Math.max(1, periodsPlayed * periodLength);
   }
 
+  // Build from stats keys — deduplicate by name to avoid double entries after roster resets
   const statsEntries = Object.entries(game.stats || {})
     .map(([id, stats]) => {
       const rosterPlayer = roster.find(p => p.id === id);
@@ -135,10 +136,19 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
         stats
       };
     })
-    .sort((a, b) => {
-      if (a.onFloor !== b.onFloor) return a.onFloor ? -1 : 1;
-      return (b.stats.pts || 0) - (a.stats.pts || 0);
-    });
+    // Remove duplicates by name — keep entry with higher pts if duped
+    .reduce((acc, player) => {
+      const nameLower = player.name.toLowerCase();
+      const existing = acc.find(p => p.name.toLowerCase() === nameLower);
+      if (existing) {
+        if ((player.stats.pts || 0) > (existing.stats.pts || 0)) {
+          return acc.map(p => p.name.toLowerCase() === nameLower ? player : p);
+        }
+        return acc;
+      }
+      return [...acc, player];
+    }, [])
+    .sort((a, b) => (b.stats.pts || 0) - (a.stats.pts || 0));
 
   const onFloorPlayers = statsEntries.filter(p => p.onFloor);
 
