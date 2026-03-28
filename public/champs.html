@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 KPRDSB Championship Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --surface: #111116;
+    --surface2: #18181f;
+    --border: #222230;
+    --gold: #f5c842;
+    --silver: #c0c8d8;
+    --bronze: #d97a3a;
+    --accent: #e8f020;
+    --accent2: #20e8c8;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --female: #ff6eb0;
+    --male: #5ba8ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,240,32,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,240,32,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 60px 40px 40px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(232,240,32,0.04) 0%, transparent 100%);
+  }
+
+  .hero-year {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.1s;
+  }
+
+  .hero-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    font-weight: 900;
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.2s;
+  }
+
+  .hero-title span {
+    color: var(--accent);
+    display: block;
+  }
+
+  .hero-sub {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 16px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.35s;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    padding: 24px 40px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .stat:nth-child(1) { animation-delay: 0.4s; }
+  .stat:nth-child(2) { animation-delay: 0.5s; }
+  .stat:nth-child(3) { animation-delay: 0.6s; }
+  .stat:nth-child(4) { animation-delay: 0.7s; }
+
+  .stat-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* Filters */
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,12,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 40px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.18s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0c;
+  }
+
+  .filter-btn.female.active {
+    background: var(--female);
+    border-color: var(--female);
+    color: #fff;
+  }
+
+  .filter-btn.male.active {
+    background: var(--male);
+    border-color: var(--male);
+    color: #fff;
+  }
+
+  .search-box {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 6px 12px;
+  }
+
+  .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    width: 180px;
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  .search-icon { color: var(--muted); font-size: 14px; }
+
+  /* Main content */
+  .content {
+    position: relative;
+    z-index: 1;
+    padding: 32px 40px 80px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Division block */
+  .division {
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .division.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .division.hidden { display: none; }
+
+  .division-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    position: relative;
+  }
+
+  .division-header::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .division[data-gender="Female"] .division-header::before { background: var(--female); }
+  .division[data-gender="Male"] .division-header::before { background: var(--male); }
+
+  .division-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text);
+  }
+
+  .division-gender-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+  }
+
+  .division[data-gender="Female"] .division-gender-tag {
+    background: rgba(255,110,176,0.15);
+    color: var(--female);
+    border: 1px solid rgba(255,110,176,0.3);
+  }
+
+  .division[data-gender="Male"] .division-gender-tag {
+    background: rgba(91,168,255,0.15);
+    color: var(--male);
+    border: 1px solid rgba(91,168,255,0.3);
+  }
+
+  .division-count {
+    margin-left: auto;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Results table */
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .results-table thead th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .results-table thead th.right { text-align: right; }
+
+  .result-row {
+    border-bottom: 1px solid rgba(34,34,48,0.6);
+    transition: background 0.15s ease;
+  }
+
+  .result-row:hover { background: var(--surface2); }
+
+  .result-row.hidden { display: none; }
+
+  .result-row td {
+    padding: 10px 12px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  /* Place column */
+  .td-place {
+    width: 52px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    text-align: right;
+    padding-right: 20px !important;
+  }
+
+  .place-1 { color: var(--gold); }
+  .place-2 { color: var(--silver); }
+  .place-3 { color: var(--bronze); }
+  .place-other { color: var(--muted); }
+
+  /* Medal icons for top 3 */
+  .medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .medal-1 { background: rgba(245,200,66,0.15); border: 1.5px solid var(--gold); color: var(--gold); }
+  .medal-2 { background: rgba(192,200,216,0.12); border: 1.5px solid var(--silver); color: var(--silver); }
+  .medal-3 { background: rgba(217,122,58,0.15); border: 1.5px solid var(--bronze); color: var(--bronze); }
+
+  /* Name column */
+  .td-name {
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--text);
+    min-width: 180px;
+  }
+
+  .td-name.top-3 { font-weight: 600; }
+
+  /* Time column */
+  .td-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-align: right;
+    color: var(--text);
+    min-width: 120px;
+  }
+
+  .td-time.top-1 { color: var(--gold); font-size: 20px; }
+  .td-time.top-2 { color: var(--silver); }
+  .td-time.top-3 { color: var(--bronze); }
+
+  /* Gap indicator */
+  .td-gap {
+    text-align: right;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 80px;
+  }
+
+  /* Bib */
+  .td-bib {
+    font-size: 12px;
+    color: var(--muted);
+    width: 60px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  /* Team column */
+  .td-team {
+    font-size: 13px;
+    color: var(--muted);
+    min-width: 150px;
+  }
+
+  /* Time bar */
+  .time-bar-cell {
+    width: 120px;
+    padding-right: 16px !important;
+  }
+
+  .time-bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .time-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent2);
+    transition: width 0.6s ease;
+  }
+
+  .result-row:nth-child(1) .time-bar-fill,
+  .result-row:nth-child(2) .time-bar-fill,
+  .result-row:nth-child(3) .time-bar-fill {
+    background: var(--accent);
+  }
+
+  /* No results message */
+  .no-results {
+    text-align: center;
+    padding: 60px;
+    color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: none;
+  }
+
+  /* Scroll to top */
+  .scroll-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    color: #0a0a0c;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+    font-weight: 900;
+    border-radius: 2px;
+  }
+
+  .scroll-top.visible { opacity: 1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .hero { padding: 40px 20px 28px; }
+    .controls { padding: 12px 20px; }
+    .content { padding: 24px 20px 60px; }
+    .stats-bar { gap: 24px; padding: 16px 20px; }
+    .td-bib, .td-gap, .time-bar-cell { display: none; }
+    .search-box { display: none; }
+    .search-box input { width: 120px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-year">KPRDSB Cross Country Championships · 2025</div>
+  <h1 class="hero-title">
+    Champs
+    <span>Results</span>
+  </h1>
+  <div class="hero-sub">All Divisions · Full Results</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-num" id="stat-athletes">0</div>
+    <div class="stat-label">Athletes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-divisions">8</div>
+    <div class="stat-label">Divisions</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-schools">0</div>
+    <div class="stat-label">Schools</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-fastest">—</div>
+    <div class="stat-label">Fastest Time</div>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="filter-label">Division</span>
+  <div class="filter-group" id="div-filters">
+    <button class="filter-btn active" data-div="all">All</button>
+    <button class="filter-btn" data-div="4">Gr. 4</button>
+    <button class="filter-btn" data-div="5">Gr. 5</button>
+    <button class="filter-btn" data-div="6">Gr. 6</button>
+    <button class="filter-btn" data-div="7">Gr. 7</button>
+    <button class="filter-btn" data-div="8">Gr. 8</button>
+  </div>
+  <div class="filter-group" style="margin-left:12px" id="gender-filters">
+    <button class="filter-btn active" data-gender="all">Both</button>
+    <button class="filter-btn female" data-gender="Female">Girls</button>
+    <button class="filter-btn male" data-gender="Male">Boys</button>
+  </div>
+  <div class="search-box">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="search-input" placeholder="Search name or school…">
+  </div>
+</div>
+
+<div class="content">
+  <div class="no-results" id="no-results">No results found</div>
+  <div id="divisions-container"></div>
+</div>
+
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+const rawData = [
+  { division: 4, gender: "Female", results: [
+    {place:1,bib:648,name:"Ava T",time:"00:09:42.3",team:"Charles Bowman"},
+    {place:2,bib:608,name:"Sammy Dejager",time:"00:09:43.9",team:"North Hope"},
+    {place:3,bib:759,name:"Leanne F",time:"00:09:54.5",team:"John M James"},
+    {place:4,bib:209,name:"Adrienne Bowley",time:"00:09:55.4",team:"Westmount"},
+    {place:5,bib:685,name:"Jaelyn B",time:"00:10:04.4",team:"Duke of Cambridge"},
+    {place:6,bib:465,name:"Delaney Burke",time:"00:10:14.1",team:"Beatrice"},
+    {place:7,bib:101,name:"Lincoln Marshall",time:"00:10:14.6",team:"Kaawaate"},
+    {place:8,bib:100,name:"Anna Noyes",time:"00:10:17.0",team:"Kaawaate"},
+    {place:9,bib:480,name:"Raphaelle Munday",time:"00:10:21.6",team:"C.R. Gummow"},
+    {place:10,bib:210,name:"Gracelyn Davis-Croka",time:"00:10:32.1",team:"Westmount"},
+    {place:11,bib:291,name:"Brielle Eckel",time:"00:10:38.9",team:"Kent"},
+    {place:12,bib:116,name:"Olivia Dimmer",time:"00:10:40.7",team:"Kawartha Heights"},
+    {place:13,bib:360,name:"Brooklyn Brackett",time:"00:10:41.6",team:"Norwood District P"},
+    {place:14,bib:68,name:"Mabel McInroy",time:"00:10:47.2",team:"Edmison Heights"},
+    {place:15,bib:117,name:"Delia Tobey",time:"00:10:47.8",team:"Kawartha Heights"},
+    {place:16,bib:282,name:"Evelyn Demille",time:"00:10:50.3",team:"Havelock-Belmont P"},
+    {place:17,bib:786,name:"Madeline B",time:"00:10:50.4",team:"MacGillivary"},
+    {place:18,bib:734,name:"Lily L",time:"00:10:51.0",team:"Enniskillen"},
+    {place:19,bib:616,name:"Cali Reyns",time:"00:10:51.0",team:"Plainville"},
+    {place:20,bib:735,name:"Evelyn E",time:"00:10:54.3",team:"Enniskillen"},
+    {place:21,bib:178,name:"Ella Young",time:"00:10:55.2",team:"Prince of Wales"},
+    {place:22,bib:169,name:"Gracelyn Davis",time:"00:10:56.9",team:"North Shore"},
+    {place:23,bib:847,name:"Paisley L",time:"00:11:00.9",team:"Orono"},
+    {place:24,bib:748,name:"Addison M",time:"00:11:01.4",team:"Harold Longworth"},
+    {place:25,bib:371,name:"Elle Noce",time:"00:11:03.6",team:"Percy"},
+    {place:26,bib:510,name:"Vivy Williams",time:"00:11:12.8",team:"Camborne"},
+    {place:27,bib:719,name:"Lyla S",time:"00:11:13.8",team:"Emily Stowe"},
+    {place:28,bib:737,name:"Peyton C",time:"00:11:14.1",team:"Enniskillen"},
+    {place:29,bib:237,name:"Madeline Dunham",time:"00:11:14.8",team:"Brighton PS"},
+    {place:30,bib:123,name:"Annalise Caldwell",time:"00:11:15.0",team:"Lakefield"},
+    {place:31,bib:472,name:"Layla McKay",time:"00:11:21.9",team:"Burnham"},
+    {place:32,bib:202,name:"Elisha Mollohan",time:"00:11:31.4",team:"Warsaw"},
+    {place:33,bib:447,name:"Ellie Wilson",time:"00:11:34.1",team:"Baltimore"},
+    {place:34,bib:370,name:"Mila Bagg",time:"00:11:35.2",team:"Percy"},
+    {place:35,bib:124,name:"Triela G",time:"00:11:37.9",team:"Waverley"},
+    {place:36,bib:736,name:"Harper B",time:"00:11:38.0",team:"Enniskillen"},
+    {place:37,bib:617,name:"Ava MacIsaac",time:"00:11:40.5",team:"Plainville"},
+    {place:38,bib:308,name:"Annastyn Pollan",time:"00:12:23.1",team:"Murray"},
+    {place:39,bib:239,name:"Ava Ludolph",time:"00:12:24.4",team:"Brighton PS"},
+    {place:40,bib:307,name:"Madilyn Schuren",time:"00:12:26.4",team:"Murray"},
+    {place:41,bib:402,name:"Bea Perron",time:"00:12:36.4",team:"Smithfield"},
+    {place:42,bib:790,name:"Violet W",time:"00:12:36.6",team:"MacGillivary"},
+    {place:43,bib:335,name:"Everly Newall",time:"00:13:00.9",team:"Northumberland Hil"}
+  ]},
+  { division: 4, gender: "Male", results: [
+    {place:1,bib:438,name:"Bentley Ainsworth",time:"00:08:40.9",team:"Baltimore"},
+    {place:2,bib:728,name:"Eli M",time:"00:08:44.4",team:"Enniskillen"},
+    {place:3,bib:232,name:"Isaac Quinlan",time:"00:08:55.4",team:"Brighton PS"},
+    {place:4,bib:681,name:"Griffin S",time:"00:09:09.1",team:"Duke of Cambridge"},
+    {place:5,bib:891,name:"Grayson L",time:"00:09:09.5",team:"S T Worden"},
+    {place:6,bib:745,name:"Blake S",time:"00:09:10.3",team:"Harold Longworth"},
+    {place:7,bib:62,name:"Adam Elewa",time:"00:09:12.8",team:"Edmison Heights"},
+    {place:8,bib:63,name:"Grayson Muckle",time:"00:09:13.8",team:"Edmison Heights"},
+    {place:9,bib:842,name:"Deacon C",time:"00:09:16.3",team:"Newcastle"},
+    {place:10,bib:765,name:"Jayden A",time:"00:09:17.8",team:"Lydia Trull"},
+    {place:11,bib:28,name:"Keegan Carter",time:"00:09:18.6",team:"Chemong"},
+    {place:12,bib:757,name:"Carter J",time:"00:09:18.8",team:"John M James"},
+    {place:13,bib:441,name:"Holton Kennedy",time:"00:09:19.3",team:"Baltimore"},
+    {place:14,bib:64,name:"Reuben Koller",time:"00:09:20.3",team:"Edmison Heights"},
+    {place:15,bib:758,name:"Hudson H",time:"00:09:20.8",team:"John M James"},
+    {place:16,bib:84,name:"Havey Justynski",time:"00:09:21.3",team:"James Strath"},
+    {place:17,bib:606,name:"Gordon Harding",time:"00:09:23.9",team:"Merwin Greer"},
+    {place:18,bib:843,name:"Nicholas R",time:"00:09:24.0",team:"Newcastle"},
+    {place:19,bib:730,name:"Samuel S",time:"00:09:24.1",team:"Enniskillen"},
+    {place:20,bib:552,name:"Louie Yeo",time:"00:09:24.5",team:"Grafton"},
+    {place:21,bib:301,name:"Theo Price",time:"00:09:24.6",team:"Murray"},
+    {place:22,bib:27,name:"Oscar Simmons",time:"00:09:25.6",team:"Chemong"},
+    {place:23,bib:846,name:"Brent I",time:"00:09:25.8",team:"Newcastle"},
+    {place:24,bib:120,name:"Thomas Doyle",time:"00:09:26.0",team:"Lakefield"},
+    {place:25,bib:729,name:"Obie P",time:"00:09:26.5",team:"Enniskillen"},
+    {place:26,bib:233,name:"Finnley Hill",time:"00:09:27.4",team:"Brighton PS"},
+    {place:27,bib:845,name:"Evan V",time:"00:09:27.7",team:"Newcastle"},
+    {place:28,bib:615,name:"Luke Timlin",time:"00:09:28.7",team:"Plainville"},
+    {place:29,bib:682,name:"Landen O",time:"00:09:32.5",team:"Duke of Cambridge"},
+    {place:30,bib:647,name:"Bodhi D",time:"00:09:34.1",team:"Charles Bowman"},
+    {place:31,bib:302,name:"Caleb Rhebergen",time:"00:09:34.7",team:"Murray"},
+    {place:32,bib:367,name:"Bennett Dudley",time:"00:09:34.9",team:"Percy"},
+    {place:33,bib:99,name:"Charlie Walmsley",time:"00:09:36.4",team:"Kaawaate"},
+    {place:34,bib:746,name:"Blake B",time:"00:09:36.8",team:"Harold Longworth"},
+    {place:35,bib:364,name:"Carter Vanderstoop",time:"00:09:37.4",team:"Percy"},
+    {place:36,bib:844,name:"Knox H",time:"00:09:39.6",team:"Newcastle"},
+    {place:37,bib:121,name:"Everett Walker",time:"00:09:43.1",team:"Lakefield"},
+    {place:38,bib:138,name:"Greyson Reid",time:"00:09:46.1",team:"Millbrook"},
+    {place:39,bib:159,name:"Wyatt George",time:"00:09:47.4",team:"North Cavan"},
+    {place:40,bib:629,name:"Myles Gifford",time:"00:09:48.5",team:"Terry Fox"},
+    {place:41,bib:630,name:"Jacob Holden",time:"00:09:49.1",team:"Terry Fox"},
+    {place:42,bib:365,name:"Lughaidh deBlois",time:"00:09:50.0",team:"Percy"},
+    {place:43,bib:234,name:"Vincent Guzman",time:"00:09:50.3",team:"Brighton PS"},
+    {place:44,bib:207,name:"Murphy Peckham",time:"00:09:51.3",team:"Westmount"},
+    {place:45,bib:614,name:"Lawson Pratt",time:"00:09:52.9",team:"Plainville"},
+    {place:46,bib:731,name:"Nash D",time:"00:09:55.5",team:"Enniskillen"},
+    {place:47,bib:770,name:"Bruce F",time:"00:09:56.4",team:"M. J. Hobbs"},
+    {place:48,bib:439,name:"Lukas Lorenz",time:"00:09:57.2",team:"Baltimore"},
+    {place:49,bib:553,name:"Declan Fox",time:"00:09:57.6",team:"Grafton"},
+    {place:50,bib:544,name:"Henry Gordon",time:"00:09:59.7",team:"Ganaraska"},
+    {place:51,bib:769,name:"Brock B",time:"00:10:00.8",team:"M. J. Hobbs"},
+    {place:52,bib:139,name:"Emil D'Agostino",time:"00:10:01.3",team:"Millbrook"},
+    {place:53,bib:65,name:"Liden Rye",time:"00:10:02.2",team:"Edmison Heights"},
+    {place:54,bib:424,name:"Cullen deWal",time:"00:10:02.3",team:"Stockdale"},
+    {place:55,bib:66,name:"Walker Trude",time:"00:10:02.8",team:"Edmison Heights"},
+    {place:56,bib:332,name:"Callum Jenkins",time:"00:10:02.9",team:"Northumberland Hil"},
+    {place:57,bib:646,name:"Bodhi K",time:"00:10:03.1",team:"Charles Bowman"},
+    {place:58,bib:86,name:"Easton Jefford",time:"00:10:03.3",team:"James Strath"},
+    {place:59,bib:333,name:"Myles Senior",time:"00:10:03.4",team:"Northumberland Hil"},
+    {place:60,bib:423,name:"Cohen deWal",time:"00:10:03.6",team:"Stockdale"},
+    {place:61,bib:168,name:"John Pogue",time:"00:10:06.9",team:"North Shore"},
+    {place:62,bib:29,name:"Austin Rowley",time:"00:10:08.9",team:"Chemong"},
+    {place:63,bib:208,name:"Benjamin Brisson",time:"00:10:09.2",team:"Westmount"},
+    {place:64,bib:366,name:"Issac Daly",time:"00:10:09.5",team:"Percy"},
+    {place:65,bib:303,name:"Nolan McDonald",time:"00:10:14.3",team:"Murray"},
+    {place:66,bib:508,name:"Reese McKenzie",time:"00:10:23.2",team:"Camborne"},
+    {place:67,bib:30,name:"Connor Holton",time:"00:10:24.5",team:"Chemong"},
+    {place:68,bib:440,name:"Niko Bassutti",time:"00:10:24.6",team:"Baltimore"},
+    {place:69,bib:399,name:"James Whaley",time:"00:10:25.5",team:"Smithfield"},
+    {place:70,bib:554,name:"Finn Voycey",time:"00:10:25.7",team:"Grafton"},
+    {place:71,bib:235,name:"Jaxson Scheuermann",time:"00:10:25.8",team:"Brighton PS"},
+    {place:72,bib:442,name:"Henley Ludolph",time:"00:10:28.4",team:"Baltimore"},
+    {place:73,bib:462,name:"Oliver Abrams",time:"00:10:29.3",team:"Beatrice"},
+    {place:74,bib:85,name:"Lincoln Rose",time:"00:10:31.3",team:"James Strath"},
+    {place:75,bib:607,name:"Theo Kapteyn",time:"00:10:34.5",team:"Merwin Greer"},
+    {place:76,bib:236,name:"Harrison Currier",time:"00:10:39.3",team:"Brighton PS"},
+    {place:77,bib:23,name:"Riel Levesque",time:"00:10:41.5",team:"Apsley"},
+    {place:78,bib:509,name:"Bennett Gifford",time:"00:10:43.7",team:"Camborne"},
+    {place:79,bib:732,name:"Miles T",time:"00:10:46.8",team:"Enniskillen"},
+    {place:80,bib:479,name:"Jackson Tanner",time:"00:10:46.9",team:"C.R. Gummow"},
+    {place:81,bib:463,name:"Xander Konecny",time:"00:10:51.8",team:"Beatrice"},
+    {place:82,bib:304,name:"Milo Frampton",time:"00:10:53.2",team:"Murray"},
+    {place:83,bib:901,name:"Kasen Stanley",time:"00:10:54.0",team:"Grafton"},
+    {place:84,bib:400,name:"Logan Vandertoorn",time:"00:10:54.9",team:"Smithfield"},
+    {place:85,bib:555,name:"Kolby Howell",time:"00:11:21.9",team:"Grafton"},
+    {place:86,bib:31,name:"Griffin Ingram",time:"00:11:38.7",team:"Chemong"},
+    {place:87,bib:305,name:"Austin Whaley",time:"00:11:50.6",team:"Murray"},
+    {place:88,bib:368,name:"Phoenix Carey",time:"00:12:58.2",team:"Percy"}
+  ]},
+  { division: 5, gender: "Female", results: [
+    {place:1,bib:205,name:"Kailyn M",time:"00:08:39.7",team:"Waverley"},
+    {place:2,bib:651,name:"Alice S",time:"00:08:52.0",team:"Charles Bowman"},
+    {place:3,bib:311,name:"Cali Renaud",time:"00:08:56.4",team:"Murray"},
+    {place:4,bib:107,name:"Colbie Walker",time:"00:09:10.3",team:"Kaawaate"},
+    {place:5,bib:245,name:"Clara Elliott",time:"00:09:24.0",team:"Brighton PS"},
+    {place:6,bib:414,name:"Grace O'Neill",time:"00:09:29.5",team:"Spring Valley PS"},
+    {place:7,bib:70,name:"Jessa Ward",time:"00:09:32.0",team:"Edmison Heights"},
+    {place:8,bib:74,name:"Miriam Waite",time:"00:09:34.8",team:"Edmison Heights"},
+    {place:9,bib:312,name:"Kaitlyn Sankey",time:"00:09:36.8",team:"Murray"},
+    {place:10,bib:855,name:"Autumn R",time:"00:09:38.7",team:"Pines"},
+    {place:11,bib:450,name:"Mariah Lowe",time:"00:09:43.6",team:"Baltimore"},
+    {place:12,bib:772,name:"Vienna N",time:"00:09:46.5",team:"M. J. Hobbs"},
+    {place:13,bib:26,name:"Rowyn Heidman",time:"00:09:48.3",team:"Buckhorn"},
+    {place:14,bib:792,name:"Gray M",time:"00:09:49.5",team:"MacGillivary"},
+    {place:15,bib:313,name:"Alexa Rashotte",time:"00:09:50.7",team:"Murray"},
+    {place:16,bib:561,name:"Lily Walters",time:"00:09:54.5",team:"Grafton"},
+    {place:17,bib:793,name:"Amelia D",time:"00:09:55.1",team:"MacGillivary"},
+    {place:18,bib:376,name:"Briah Heales",time:"00:10:05.4",team:"Percy"},
+    {place:19,bib:108,name:"Isla Koshurba",time:"00:10:07.9",team:"Kaawaate"},
+    {place:20,bib:766,name:"Isla S",time:"00:10:14.7",team:"Lydia Trull"},
+    {place:21,bib:856,name:"Mackenna W",time:"00:10:16.8",team:"Pines"},
+    {place:22,bib:246,name:"Andi Arbuckle",time:"00:10:18.8",team:"Brighton PS"},
+    {place:23,bib:547,name:"Sophie Macaro",time:"00:10:19.5",team:"Ganaraska"},
+    {place:24,bib:612,name:"Jayda Bickle",time:"00:10:21.6",team:"North Hope"},
+    {place:25,bib:72,name:"Norah Carter",time:"00:10:22.8",team:"Edmison Heights"},
+    {place:26,bib:150,name:"Kayley Conrad",time:"00:10:23.4",team:"Millbrook"},
+    {place:27,bib:71,name:"Dahlia Lenhardt",time:"00:10:24.2",team:"Edmison Heights"},
+    {place:28,bib:490,name:"Makayla Ratte",time:"00:10:25.8",team:"C.R. Gummow"},
+    {place:29,bib:217,name:"Adrienne Ferguson",time:"00:10:26.0",team:"Westmount"},
+    {place:30,bib:152,name:"Nora Gemmiti",time:"00:10:26.4",team:"Millbrook"},
+    {place:31,bib:73,name:"Felicity Ross",time:"00:10:28.3",team:"Edmison Heights"},
+    {place:32,bib:151,name:"Emma Verdoch",time:"00:10:29.8",team:"Millbrook"},
+    {place:33,bib:618,name:"Savanna Ormond",time:"00:10:32.6",team:"Plainville"},
+    {place:34,bib:160,name:"Sophia Boissoin",time:"00:10:34.5",team:"North Cavan"},
+    {place:35,bib:548,name:"Alma Buckley",time:"00:10:37.3",team:"Ganaraska"},
+    {place:36,bib:857,name:"Sea G",time:"00:10:38.7",team:"Pines"},
+    {place:37,bib:672,name:"Penelope P",time:"00:10:41.8",team:"Courtice North"},
+    {place:38,bib:516,name:"Lauren Anil",time:"00:10:43.6",team:"Camborne"},
+    {place:39,bib:470,name:"Zoe Dvernichuk",time:"00:10:45.2",team:"Beatrice"},
+    {place:40,bib:722,name:"Brooklyn W",time:"00:10:45.5",team:"Emily Stowe"},
+    {place:41,bib:119,name:"Grace Regular",time:"00:10:46.8",team:"Kawartha Heights"},
+    {place:42,bib:550,name:"Grayah Gunter",time:"00:10:49.6",team:"Ganaraska"},
+    {place:43,bib:287,name:"Grace Gummer",time:"00:10:49.8",team:"Hillcrest"},
+    {place:44,bib:794,name:"Madilynn C",time:"00:10:50.2",team:"MacGillivary"},
+    {place:45,bib:858,name:"Hannah G",time:"00:10:51.6",team:"Pines"},
+    {place:46,bib:248,name:"Meila Vandertoorn",time:"00:10:52.7",team:"Brighton PS"},
+    {place:47,bib:546,name:"Evie Sayles",time:"00:10:54.4",team:"Ganaraska"},
+    {place:48,bib:451,name:"Aria Walsh",time:"00:10:54.7",team:"Baltimore"},
+    {place:49,bib:489,name:"Emma Laverty",time:"00:10:57.1",team:"C.R. Gummow"},
+    {place:50,bib:229,name:"Madison Pot",time:"00:10:57.2",team:"Brighton PS"},
+    {place:51,bib:488,name:"Anna Mulligan-Anders",time:"00:10:58.0",team:"C.R. Gummow"},
+    {place:52,bib:673,name:"Everly C",time:"00:10:59.0",team:"Courtice North"},
+    {place:53,bib:249,name:"Meaghan Black",time:"00:10:59.9",team:"Brighton PS"},
+    {place:54,bib:247,name:"Audrey Layton",time:"00:11:00.1",team:"Brighton PS"},
+    {place:55,bib:153,name:"Sawyer Carveth",time:"00:11:01.3",team:"Millbrook"},
+    {place:56,bib:179,name:"Maya Dahl",time:"00:11:03.2",team:"Prince of Wales"},
+    {place:57,bib:549,name:"Avery Banks",time:"00:11:03.3",team:"Ganaraska"},
+    {place:58,bib:228,name:"Emma Cripps",time:"00:11:03.6",team:"Brighton PS"},
+    {place:59,bib:109,name:"Leona Farrow",time:"00:11:07.2",team:"Kaawaate"},
+    {place:60,bib:474,name:"Anika Shevliakova",time:"00:11:07.6",team:"Burnham"},
+    {place:61,bib:453,name:"Allie Callacott",time:"00:11:11.1",team:"Baltimore"},
+    {place:62,bib:795,name:"Kyla C",time:"00:11:12.2",team:"MacGillivary"},
+    {place:63,bib:125,name:"Jessica Mattucci",time:"00:11:13.6",team:"Lakefield"},
+    {place:64,bib:796,name:"Lily N",time:"00:11:14.9",team:"MacGillivary"},
+    {place:65,bib:773,name:"Hailey D",time:"00:11:15.6",team:"M. J. Hobbs"},
+    {place:66,bib:89,name:"Myrah Glass",time:"00:11:17.5",team:"James Strath"},
+    {place:67,bib:405,name:"Lily Cooper",time:"00:11:17.8",team:"Smithfield"},
+    {place:68,bib:33,name:"Makenna Davis",time:"00:11:19.5",team:"Chemong"},
+    {place:69,bib:452,name:"Emma Jansen",time:"00:11:19.9",team:"Baltimore"},
+    {place:70,bib:740,name:"Evelyn B",time:"00:11:21.1",team:"Enniskillen"},
+    {place:71,bib:469,name:"Layla Whelan",time:"00:11:22.2",team:"Beatrice"},
+    {place:72,bib:633,name:"Penny Noronha",time:"00:11:22.5",team:"Terry Fox"},
+    {place:73,bib:471,name:"Izzy Gunn-Lewis",time:"00:11:22.6",team:"Beatrice"},
+    {place:74,bib:283,name:"Thea Thompson",time:"00:11:24.5",team:"Havelock-Belmont P"},
+    {place:75,bib:415,name:"Maya Loveless",time:"00:11:24.9",team:"Spring Valley PS"},
+    {place:76,bib:288,name:"Rowynn White",time:"00:11:27.6",team:"Hillcrest"},
+    {place:77,bib:314,name:"Charlotte Williamson",time:"00:11:27.8",team:"Murray"},
+    {place:78,bib:849,name:"Molly M",time:"00:11:31.1",team:"Orono"},
+    {place:79,bib:517,name:"Lennon Watt",time:"00:11:32.1",team:"Camborne"},
+    {place:80,bib:218,name:"Graci Record",time:"00:11:33.9",team:"Westmount"},
+    {place:81,bib:898,name:"Alice J",time:"00:11:33.9",team:"Vincent Massey"},
+    {place:82,bib:377,name:"Connie Atashbar",time:"00:11:38.2",team:"Percy"},
+    {place:83,bib:691,name:"Paisley E",time:"00:11:39.4",team:"Duke of Cambridge"},
+    {place:84,bib:859,name:"Angelina S",time:"00:11:43.1",team:"Pines"},
+    {place:85,bib:454,name:"Finleigh Cochrane",time:"00:11:54.9",team:"Baltimore"},
+    {place:86,bib:315,name:"Rianne Lyon",time:"00:11:58.3",team:"Murray"},
+    {place:87,bib:154,name:"Stella Waterman-Fing",time:"00:12:00.8",team:"Millbrook"}
+  ]},
+  { division: 5, gender: "Male", results: [
+    {place:1,bib:556,name:"Jaxson Withers",time:"00:08:16.7",team:"Grafton"},
+    {place:2,bib:242,name:"Finn Creighton",time:"00:08:20.8",team:"Brighton PS"},
+    {place:3,bib:557,name:"Torrin Eisler",time:"00:08:28.7",team:"Grafton"},
+    {place:4,bib:511,name:"Callen Rogers",time:"00:08:30.5",team:"Camborne"},
+    {place:5,bib:243,name:"Weston Martin",time:"00:08:31.1",team:"Brighton PS"},
+    {place:6,bib:738,name:"Jack L",time:"00:08:39.1",team:"Enniskillen"},
+    {place:7,bib:145,name:"Jonathan Dewhurst",time:"00:08:46.4",team:"Millbrook"},
+    {place:8,bib:106,name:"Finn Grierson",time:"00:08:47.4",team:"Kaawaate"},
+    {place:9,bib:212,name:"Ethan Stone",time:"00:08:47.8",team:"Westmount"},
+    {place:10,bib:213,name:"Case Hedges",time:"00:08:48.7",team:"Westmount"},
+    {place:11,bib:147,name:"Everett Macpherson",time:"00:08:48.9",team:"Millbrook"},
+    {place:12,bib:105,name:"Charlie Czajko",time:"00:08:54.3",team:"Kaawaate"},
+    {place:13,bib:204,name:"Levon K",time:"00:08:55.5",team:"Waverley"},
+    {place:14,bib:374,name:"Corbin Cooney",time:"00:08:56.5",team:"Percy"},
+    {place:15,bib:88,name:"Hudson Armour",time:"00:08:57.3",team:"James Strath"},
+    {place:16,bib:146,name:"Oliver Howe",time:"00:08:57.5",team:"Millbrook"},
+    {place:17,bib:426,name:"Sawyer Mainprize",time:"00:08:57.5",team:"Stockdale"},
+    {place:18,bib:512,name:"Callum Judd",time:"00:08:58.4",team:"Camborne"},
+    {place:19,bib:850,name:"Ethan B",time:"00:08:58.5",team:"Pines"},
+    {place:20,bib:686,name:"Huxley M",time:"00:08:58.6",team:"Duke of Cambridge"},
+    {place:21,bib:170,name:"Crosby Kot",time:"00:08:59.1",team:"North Shore"},
+    {place:22,bib:892,name:"Carter C",time:"00:09:00.1",team:"S T Worden"},
+    {place:23,bib:852,name:"Everett E",time:"00:09:00.5",team:"Pines"},
+    {place:24,bib:851,name:"Xavier K",time:"00:09:01.6",team:"Pines"},
+    {place:25,bib:171,name:"Jonah Vogler",time:"00:09:02.5",team:"North Shore"},
+    {place:26,bib:558,name:"Madden Minifie",time:"00:09:03.7",team:"Grafton"},
+    {place:27,bib:486,name:"George Stoter",time:"00:09:09.5",team:"C.R. Gummow"},
+    {place:28,bib:750,name:"Chase S",time:"00:09:11.0",team:"Harold Longworth"},
+    {place:29,bib:632,name:"Sawyer Maclean",time:"00:09:12.3",team:"Terry Fox"},
+    {place:30,bib:545,name:"Kaden Walton",time:"00:09:14.7",team:"Ganaraska"},
+    {place:31,bib:148,name:"Christian Mayne",time:"00:09:15.7",team:"Millbrook"},
+    {place:32,bib:448,name:"Strachan Stolz",time:"00:09:16.3",team:"Baltimore"},
+    {place:33,bib:467,name:"Rex McNab",time:"00:09:17.0",team:"Beatrice"},
+    {place:34,bib:214,name:"Bronson Arnott",time:"00:09:18.1",team:"Westmount"},
+    {place:35,bib:751,name:"Lincoln A",time:"00:09:20.0",team:"Harold Longworth"},
+    {place:36,bib:739,name:"Walker L",time:"00:09:20.0",team:"Enniskillen"},
+    {place:37,bib:894,name:"Ethan G",time:"00:09:20.0",team:"S T Worden"},
+    {place:38,bib:513,name:"Noah Gifford",time:"00:09:21.3",team:"Camborne"},
+    {place:39,bib:473,name:"Kolby Fortuna",time:"00:09:24.1",team:"Burnham"},
+    {place:40,bib:69,name:"Brighton Boniakowski",time:"00:09:24.6",team:"Edmison Heights"},
+    {place:41,bib:449,name:"Everett Skinner",time:"00:09:27.2",team:"Baltimore"},
+    {place:42,bib:848,name:"Travis M",time:"00:09:28.1",team:"Orono"},
+    {place:43,bib:720,name:"Samir J",time:"00:09:28.8",team:"Emily Stowe"},
+    {place:44,bib:403,name:"John Van Oostrum",time:"00:09:29.3",team:"Smithfield"},
+    {place:45,bib:404,name:"Elias Krer",time:"00:09:30.0",team:"Smithfield"},
+    {place:46,bib:427,name:"Clayton Wade",time:"00:09:30.7",team:"Stockdale"},
+    {place:47,bib:853,name:"Landon H",time:"00:09:32.0",team:"Pines"},
+    {place:48,bib:280,name:"Emerson Kellar",time:"00:09:32.5",team:"Hastings PS"},
+    {place:49,bib:281,name:"Ben Matthews",time:"00:09:32.7",team:"Hastings PS"},
+    {place:50,bib:149,name:"Holden McGill",time:"00:09:34.0",team:"Millbrook"},
+    {place:51,bib:337,name:"Mack Aubin",time:"00:09:34.9",team:"Northumberland Hil"},
+    {place:52,bib:468,name:"Everhett Racine",time:"00:09:35.7",team:"Beatrice"},
+    {place:53,bib:25,name:"Rhylin VanNoort",time:"00:09:36.8",team:"Buckhorn"},
+    {place:54,bib:671,name:"Jacob R",time:"00:09:36.9",team:"Courtice North"},
+    {place:55,bib:610,name:"Parker Gommersall",time:"00:09:38.0",team:"North Hope"},
+    {place:56,bib:428,name:"Leo White",time:"00:09:38.2",team:"Stockdale"},
+    {place:57,bib:791,name:"Jackson R",time:"00:09:39.4",team:"MacGillivary"},
+    {place:58,bib:118,name:"Ryker Orlandi",time:"00:09:40.4",team:"Kawartha Heights"},
+    {place:59,bib:32,name:"Lyle Shackleton",time:"00:09:40.9",team:"Chemong"},
+    {place:60,bib:485,name:"Robbie Proulx",time:"00:09:42.1",team:"C.R. Gummow"},
+    {place:61,bib:721,name:"Evan M",time:"00:09:43.4",team:"Emily Stowe"},
+    {place:62,bib:854,name:"Ike R",time:"00:09:46.6",team:"Pines"},
+    {place:63,bib:611,name:"Lukas Gibson",time:"00:09:48.4",team:"North Hope"},
+    {place:64,bib:688,name:"Lucas R",time:"00:09:49.3",team:"Duke of Cambridge"},
+    {place:65,bib:336,name:"Koen Kelly",time:"00:09:55.3",team:"Northumberland Hil"},
+    {place:66,bib:338,name:"Ben Minion",time:"00:09:58.7",team:"Northumberland Hil"},
+    {place:67,bib:893,name:"Jack O",time:"00:09:58.7",team:"S T Worden"},
+    {place:68,bib:687,name:"Benn G",time:"00:10:00.5",team:"Duke of Cambridge"},
+    {place:69,bib:514,name:"Westin Brooks",time:"00:10:02.5",team:"Camborne"},
+    {place:70,bib:559,name:"Baxter Brisbin",time:"00:10:04.4",team:"Grafton"},
+    {place:71,bib:487,name:"Kolten Wenzel",time:"00:10:04.9",team:"C.R. Gummow"},
+    {place:72,bib:309,name:"Connor Voutour",time:"00:10:06.7",team:"Murray"},
+    {place:73,bib:413,name:"Jase Patterson",time:"00:10:07.5",team:"Spring Valley PS"},
+    {place:74,bib:515,name:"Cole Williams",time:"00:10:09.2",team:"Camborne"},
+    {place:75,bib:310,name:"Hudson Silverberg",time:"00:10:09.9",team:"Murray"},
+    {place:76,bib:158,name:"Brayden Pollock",time:"00:10:15.9",team:"Millbrook"},
+    {place:77,bib:690,name:"Cameron S",time:"00:10:19.1",team:"Duke of Cambridge"},
+    {place:78,bib:197,name:"Justin Barclay",time:"00:10:19.9",team:"RF Downey"},
+    {place:79,bib:215,name:"Max Affonso Jonckhee",time:"00:10:22.7",team:"Westmount"},
+    {place:80,bib:244,name:"Alex Cockerill",time:"00:10:28.2",team:"Brighton PS"},
+    {place:81,bib:560,name:"Davey Hayman",time:"00:10:43.5",team:"Grafton"},
+    {place:82,bib:689,name:"Oliver H",time:"00:10:50.3",team:"Duke of Cambridge"},
+    {place:83,bib:216,name:"James Bonn",time:"00:11:23.5",team:"Westmount"},
+    {place:84,bib:624,name:"Valentino Rodrigues",time:"00:11:25.9",team:"Roseneath"},
+    {place:85,bib:340,name:"Wyatt Weeks",time:"00:11:42.8",team:"Northumberland Hil"},
+    {place:86,bib:339,name:"Jaxson Tippett",time:"00:11:58.2",team:"Northumberland Hil"},
+    {place:87,bib:430,name:"Mason Edwards",time:"00:12:45.2",team:"Stockdale"}
+  ]},
+  { division: 6, gender: "Female", results: [
+    {place:1,bib:867,name:"Sarah P",time:"00:08:48.9",team:"Pines"},
+    {place:2,bib:865,name:"Sadie M",time:"00:08:54.4",team:"Pines"},
+    {place:3,bib:222,name:"Calia Hedges",time:"00:09:00.5",team:"Westmount"},
+    {place:4,bib:654,name:"Samantha G",time:"00:09:06.4",team:"Charles Bowman"},
+    {place:5,bib:754,name:"Hannah P",time:"00:09:09.1",team:"Harold Longworth"},
+    {place:6,bib:742,name:"Georgia W",time:"00:09:09.6",team:"Enniskillen"},
+    {place:7,bib:753,name:"Peyton B",time:"00:09:11.9",team:"Harold Longworth"},
+    {place:8,bib:866,name:"Falon H",time:"00:09:16.8",team:"Pines"},
+    {place:9,bib:613,name:"Hadley Thomson",time:"00:09:20.7",team:"North Hope"},
+    {place:10,bib:111,name:"Sophie Roberts",time:"00:09:21.6",team:"Kaawaate"},
+    {place:11,bib:156,name:"Kennedy Hogg",time:"00:09:23.8",team:"Millbrook"},
+    {place:12,bib:126,name:"Lorelei Archer",time:"00:09:30.2",team:"Lakefield"},
+    {place:13,bib:564,name:"Delilah Fracz",time:"00:09:31.4",team:"Grafton"},
+    {place:14,bib:434,name:"Lily Milford",time:"00:09:32.4",team:"Stockdale"},
+    {place:15,bib:697,name:"Maelle D",time:"00:09:34.4",team:"Duke of Cambridge"},
+    {place:16,bib:166,name:"Joy McCamus",time:"00:09:35.4",team:"North Cavan"},
+    {place:17,bib:724,name:"Kyla M",time:"00:09:36.3",team:"Emily Stowe"},
+    {place:18,bib:563,name:"Ryann Torrieri",time:"00:09:38.2",team:"Grafton"},
+    {place:19,bib:127,name:"Marley Jones",time:"00:09:39.3",team:"Lakefield"},
+    {place:20,bib:800,name:"Emily D",time:"00:09:42.8",team:"MacGillivary"},
+    {place:21,bib:799,name:"Julia W",time:"00:09:44.2",team:"MacGillivary"},
+    {place:22,bib:839,name:"Maisy L",time:"00:09:46.4",team:"MacGillivary"},
+    {place:23,bib:885,name:"Adriana P",time:"00:09:48.9",team:"Ross Tilley"},
+    {place:24,bib:253,name:"Josie Hill",time:"00:09:50.5",team:"Brighton PS"},
+    {place:25,bib:157,name:"Quinn Pollock",time:"00:09:51.5",team:"Millbrook"},
+    {place:26,bib:458,name:"Scarlett Cafik",time:"00:09:53.4",team:"Baltimore"},
+    {place:27,bib:223,name:"Sarah Young",time:"00:09:53.4",team:"Westmount"},
+    {place:28,bib:869,name:"Ella S",time:"00:09:53.5",team:"Pines"},
+    {place:29,bib:457,name:"Adelaide Xi",time:"00:09:58.0",team:"Baltimore"},
+    {place:30,bib:112,name:"Brianna Adey",time:"00:09:59.9",team:"Kaawaate"},
+    {place:31,bib:167,name:"Wini Johnson",time:"00:10:02.4",team:"North Cavan"},
+    {place:32,bib:224,name:"Lily Young",time:"00:10:06.2",team:"Westmount"},
+    {place:33,bib:322,name:"Zoey McMurter",time:"00:10:07.2",team:"Murray"},
+    {place:34,bib:743,name:"Marley G",time:"00:10:12.3",team:"Enniskillen"},
+    {place:35,bib:36,name:"Ava Watson",time:"00:10:14.5",team:"Chemong"},
+    {place:36,bib:192,name:"Zoey Lafot Hough",time:"00:10:17.3",team:"Queen Mary"},
+    {place:37,bib:92,name:"Bridgett Sadowski",time:"00:10:18.7",team:"James Strath"},
+    {place:38,bib:225,name:"Kali Evans",time:"00:10:18.7",team:"Westmount"},
+    {place:39,bib:459,name:"Haven Heenan",time:"00:10:19.6",team:"Baltimore"},
+    {place:40,bib:37,name:"Sophia Scollard",time:"00:10:20.1",team:"Chemong"},
+    {place:41,bib:655,name:"Savannah H",time:"00:10:21.3",team:"Charles Bowman"},
+    {place:42,bib:256,name:"Juliette Dorland",time:"00:10:22.1",team:"Brighton PS"},
+    {place:43,bib:362,name:"Harper McGhee",time:"00:10:22.3",team:"Norwood District P"},
+    {place:44,bib:744,name:"Helena L",time:"00:10:22.7",team:"Enniskillen"},
+    {place:45,bib:519,name:"Caleigh Hall",time:"00:10:26.3",team:"Camborne"},
+    {place:46,bib:363,name:"Aliyah McGrattan",time:"00:10:26.3",team:"Norwood District P"},
+    {place:47,bib:622,name:"Malina Mcloughlin",time:"00:10:26.5",team:"Plainville"},
+    {place:48,bib:128,name:"Neve Burns",time:"00:10:27.5",team:"Lakefield"},
+    {place:49,bib:130,name:"Simone Donoghue",time:"00:10:27.5",team:"Lakefield"},
+    {place:50,bib:91,name:"Addy Prosser",time:"00:10:29.3",team:"James Strath"},
+    {place:51,bib:323,name:"Jenni Clarke",time:"00:10:30.3",team:"Murray"},
+    {place:52,bib:416,name:"Kaylee Altmann",time:"00:10:32.6",team:"Spring Valley PS"},
+    {place:53,bib:129,name:"Darci Thompson",time:"00:10:32.7",team:"Lakefield"},
+    {place:54,bib:321,name:"Tylah McDonald",time:"00:10:35.5",team:"Murray"},
+    {place:55,bib:498,name:"Claire Wilson-Mahane",time:"00:10:35.9",team:"C.R. Gummow"},
+    {place:56,bib:254,name:"Megan Horton",time:"00:10:36.1",team:"Brighton PS"},
+    {place:57,bib:496,name:"Elora Yates",time:"00:10:36.3",team:"C.R. Gummow"},
+    {place:58,bib:840,name:"Emma M",time:"00:10:36.5",team:"MacGillivary"},
+    {place:59,bib:698,name:"Quinn B",time:"00:10:36.8",team:"Duke of Cambridge"},
+    {place:60,bib:285,name:"Chloe King",time:"00:10:38.0",team:"Havelock-Belmont P"},
+    {place:61,bib:226,name:"Thea Chambers",time:"00:10:38.1",team:"Westmount"},
+    {place:62,bib:81,name:"Freddie Watt",time:"00:10:38.4",team:"Edmison Heights"},
+    {place:63,bib:841,name:"Elaina C",time:"00:10:38.9",team:"MacGillivary"},
+    {place:64,bib:80,name:"Peyton East",time:"00:10:38.9",team:"Edmison Heights"},
+    {place:65,bib:199,name:"Tatum Mazanek",time:"00:10:39.8",team:"Roger Neilson"},
+    {place:66,bib:477,name:"Magnolia Murphy",time:"00:10:41.4",team:"Burnham"},
+    {place:67,bib:565,name:"Madison Elder",time:"00:10:47.2",team:"Grafton"},
+    {place:68,bib:868,name:"Anaya W",time:"00:10:50.5",team:"Pines"},
+    {place:69,bib:623,name:"Beatrix Grinham",time:"00:10:52.3",team:"Plainville"},
+    {place:70,bib:460,name:"Ophelia Greer",time:"00:10:54.2",team:"Baltimore"},
+    {place:71,bib:383,name:"Madeline MacIsaac",time:"00:11:01.3",team:"Percy"},
+    {place:72,bib:384,name:"Emma Nabert",time:"00:11:02.3",team:"Percy"},
+    {place:73,bib:255,name:"Blair Goodfellow",time:"00:11:09.3",team:"Brighton PS"},
+    {place:74,bib:344,name:"London Lavoie",time:"00:11:09.8",team:"Northumberland Hil"},
+    {place:75,bib:585,name:"Faith Frimpong",time:"00:11:24.3",team:"Hawkins"},
+    {place:76,bib:626,name:"Charleigh Markland",time:"00:11:32.4",team:"Roseneath"},
+    {place:77,bib:478,name:"Zoe Palalas",time:"00:11:37.4",team:"Burnham"},
+    {place:78,bib:567,name:"Ava Vangennip",time:"00:11:47.8",team:"Grafton"},
+    {place:79,bib:566,name:"Josie Taylor",time:"00:11:48.5",team:"Grafton"},
+    {place:80,bib:410,name:"Cleo Decicco",time:"00:11:54.6",team:"Smithfield"},
+    {place:81,bib:409,name:"Ellie Savarie",time:"00:11:56.1",team:"Smithfield"},
+    {place:82,bib:297,name:"Hayley Southward",time:"00:12:08.2",team:"Kent"},
+    {place:83,bib:499,name:"Summer Ouelette",time:"00:12:11.9",team:"C.R. Gummow"},
+    {place:84,bib:461,name:"Sophie Daniel",time:"00:12:18.3",team:"Baltimore"},
+    {place:85,bib:497,name:"Macharah Beaulieu",time:"00:12:47.3",team:"C.R. Gummow"},
+    {place:86,bib:198,name:"Faith Cupples",time:"00:13:08.2",team:"RF Downey"}
+  ]},
+  { division: 6, gender: "Male", results: [
+    {place:1,bib:860,name:"Sawyer H",time:"00:08:06.4",team:"Pines"},
+    {place:2,bib:76,name:"Paddy James",time:"00:08:07.2",team:"Edmison Heights"},
+    {place:3,bib:861,name:"Kaiyus R",time:"00:08:07.8",team:"Pines"},
+    {place:4,bib:862,name:"Rory R",time:"00:08:10.3",team:"Pines"},
+    {place:5,bib:693,name:"Samuel F",time:"00:08:17.8",team:"Duke of Cambridge"},
+    {place:6,bib:895,name:"Ethan F",time:"00:08:20.3",team:"S T Worden"},
+    {place:7,bib:493,name:"Iver Dahle",time:"00:08:21.9",team:"C.R. Gummow"},
+    {place:8,bib:161,name:"Kato Videto",time:"00:08:22.1",team:"North Cavan"},
+    {place:9,bib:284,name:"Sawyer Cafik",time:"00:08:26.0",team:"Havelock-Belmont P"},
+    {place:10,bib:652,name:"Jackson R",time:"00:08:29.6",team:"Charles Bowman"},
+    {place:11,bib:692,name:"Emmett O",time:"00:08:31.9",team:"Duke of Cambridge"},
+    {place:12,bib:250,name:"Luis Guzman",time:"00:08:33.1",team:"Brighton PS"},
+    {place:13,bib:180,name:"Boris Cullgin",time:"00:08:34.4",team:"Prince of Wales"},
+    {place:14,bib:491,name:"Kolghton Kelleher",time:"00:08:36.3",team:"C.R. Gummow"},
+    {place:15,bib:562,name:"Lawfty Eisler",time:"00:08:36.4",team:"Grafton"},
+    {place:16,bib:190,name:"Sawyer Walpole",time:"00:08:39.0",team:"Queen Mary"},
+    {place:17,bib:494,name:"Caden Dahle",time:"00:08:39.1",team:"C.R. Gummow"},
+    {place:18,bib:317,name:"Luke Brennan",time:"00:08:39.2",team:"Murray"},
+    {place:19,bib:694,name:"Aden A",time:"00:08:43.3",team:"Duke of Cambridge"},
+    {place:20,bib:341,name:"Leo Chapman",time:"00:08:43.8",team:"Northumberland Hil"},
+    {place:21,bib:34,name:"Jackson Buck",time:"00:08:44.7",team:"Chemong"},
+    {place:22,bib:674,name:"Spencer C",time:"00:08:45.6",team:"Courtice North"},
+    {place:23,bib:77,name:"Nico Aguilar",time:"00:08:47.8",team:"Edmison Heights"},
+    {place:24,bib:797,name:"Harrison G",time:"00:08:48.3",team:"MacGillivary"},
+    {place:25,bib:619,name:"Nolan Lawson",time:"00:08:49.0",team:"Plainville"},
+    {place:26,bib:653,name:"Ace K",time:"00:08:50.2",team:"Charles Bowman"},
+    {place:27,bib:863,name:"Conor D",time:"00:08:51.4",team:"Pines"},
+    {place:28,bib:318,name:"William Toulman",time:"00:08:52.8",team:"Murray"},
+    {place:29,bib:155,name:"Remi D'Agostino",time:"00:08:56.0",team:"Millbrook"},
+    {place:30,bib:741,name:"Lewis K",time:"00:08:57.1",team:"Enniskillen"},
+    {place:31,bib:83,name:"Zamir Noori",time:"00:09:00.0",team:"Highland Heights"},
+    {place:32,bib:620,name:"Jackson Medcalf",time:"00:09:01.5",team:"Plainville"},
+    {place:33,bib:406,name:"Dylan Peckford",time:"00:09:04.1",team:"Smithfield"},
+    {place:34,bib:251,name:"Emmett Sexsmith",time:"00:09:05.1",team:"Brighton PS"},
+    {place:35,bib:884,name:"Gavin M",time:"00:09:06.5",team:"Ross Tilley"},
+    {place:36,bib:518,name:"Madden Yutronkie",time:"00:09:07.7",team:"Camborne"},
+    {place:37,bib:191,name:"Tobin Harrald",time:"00:09:08.1",team:"Queen Mary"},
+    {place:38,bib:582,name:"Evan Fairservice",time:"00:09:11.3",team:"Hawkins"},
+    {place:39,bib:580,name:"Nathan Lupson",time:"00:09:11.4",team:"Hawkins"},
+    {place:40,bib:581,name:"Ben Collins",time:"00:09:14.0",team:"Hawkins"},
+    {place:41,bib:407,name:"Austin Winter",time:"00:09:15.2",team:"Smithfield"},
+    {place:42,bib:864,name:"Give N",time:"00:09:17.6",team:"Pines"},
+    {place:43,bib:752,name:"Tyler B",time:"00:09:20.3",team:"Harold Longworth"},
+    {place:44,bib:35,name:"Bentley Brand",time:"00:09:21.2",team:"Chemong"},
+    {place:45,bib:78,name:"Nolan Butan",time:"00:09:21.9",team:"Edmison Heights"},
+    {place:46,bib:798,name:"Ewan P",time:"00:09:23.9",team:"MacGillivary"},
+    {place:47,bib:24,name:"Levon Levesque",time:"00:09:24.7",team:"Apsley"},
+    {place:48,bib:882,name:"Finley L",time:"00:09:25.1",team:"Pines"},
+    {place:49,bib:378,name:"Felix deBlois",time:"00:09:25.8",team:"Percy"},
+    {place:50,bib:634,name:"Landon Baki",time:"00:09:26.6",team:"Terry Fox"},
+    {place:51,bib:380,name:"Lucas Malette",time:"00:09:26.7",team:"Percy"},
+    {place:52,bib:379,name:"Sam Ducie",time:"00:09:29.5",team:"Percy"},
+    {place:53,bib:381,name:"Jackson Spilsbury",time:"00:09:30.0",team:"Percy"},
+    {place:54,bib:432,name:"Colton Dunkley",time:"00:09:30.9",team:"Stockdale"},
+    {place:55,bib:343,name:"Torin Roberts",time:"00:09:31.6",team:"Northumberland Hil"},
+    {place:56,bib:695,name:"Joshua M",time:"00:09:32.2",team:"Duke of Cambridge"},
+    {place:57,bib:696,name:"Hudson H",time:"00:09:32.5",team:"Duke of Cambridge"},
+    {place:58,bib:90,name:"Eli Bursey",time:"00:09:35.2",team:"James Strath"},
+    {place:59,bib:252,name:"Wyatt Harnden",time:"00:09:40.0",team:"Brighton PS"},
+    {place:60,bib:110,name:"Simon Wageman",time:"00:09:40.9",team:"Kaawaate"},
+    {place:61,bib:455,name:"Riley Parsons",time:"00:09:43.8",team:"Baltimore"},
+    {place:62,bib:342,name:"Emerson Kovacs",time:"00:09:46.1",team:"Northumberland Hil"},
+    {place:63,bib:220,name:"Thomas Sayer",time:"00:09:49.9",team:"Westmount"},
+    {place:64,bib:320,name:"Eliot Bak",time:"00:09:50.0",team:"Murray"},
+    {place:65,bib:583,name:"Attilio Costanzo",time:"00:09:50.6",team:"Hawkins"},
+    {place:66,bib:164,name:"Tyler Knapp",time:"00:09:50.7",team:"North Cavan"},
+    {place:67,bib:162,name:"Sterling Denton",time:"00:10:01.4",team:"North Cavan"},
+    {place:68,bib:82,name:"Rocco Henwood",time:"00:10:07.2",team:"Highland Heights"},
+    {place:69,bib:625,name:"Emi Rodrigues",time:"00:10:08.5",team:"Roseneath"},
+    {place:70,bib:635,name:"Jacob Cameron",time:"00:10:09.3",team:"Terry Fox"},
+    {place:71,bib:408,name:"Cameron Covell",time:"00:10:11.2",team:"Smithfield"},
+    {place:72,bib:456,name:"Cameron Cole",time:"00:10:14.6",team:"Baltimore"},
+    {place:73,bib:495,name:"Emmett Colaiezzi",time:"00:10:17.9",team:"C.R. Gummow"},
+    {place:74,bib:433,name:"Holden Beasley",time:"00:10:19.1",team:"Stockdale"},
+    {place:75,bib:475,name:"Avery Bodmore",time:"00:10:23.0",team:"Burnham"},
+    {place:76,bib:584,name:"Lochlan Bailey-Mcard",time:"00:10:24.1",team:"Hawkins"},
+    {place:77,bib:165,name:"William Jeffries",time:"00:10:24.7",team:"North Cavan"},
+    {place:78,bib:163,name:"Connor Elliott",time:"00:10:27.2",team:"North Cavan"},
+    {place:79,bib:221,name:"Jacob Cahorn",time:"00:10:31.0",team:"Westmount"},
+    {place:80,bib:382,name:"Nicholas Smith",time:"00:10:45.6",team:"Percy"}
+  ]},
+  { division: 7, gender: "Female", results: [
+    {place:1,bib:704,name:"Ellie A",time:"00:11:02.0",team:"Duke of Cambridge"},
+    {place:2,bib:263,name:"Maddie Turner",time:"00:11:21.5",team:"Brighton PS"},
+    {place:3,bib:172,name:"Delila Maynard",time:"00:11:25.3",team:"North Shore"},
+    {place:4,bib:95,name:"Kylie Mulligan",time:"00:11:26.2",team:"James Strath"},
+    {place:5,bib:525,name:"Amy Cole",time:"00:11:33.8",team:"Dale Road"},
+    {place:6,bib:590,name:"Elizabeth Banjeree",time:"00:11:37.8",team:"Hawkins"},
+    {place:7,bib:173,name:"Eliana Brown",time:"00:11:41.6",team:"North Shore"},
+    {place:8,bib:659,name:"Charlotte S",time:"00:11:43.0",team:"Charles Bowman"},
+    {place:9,bib:725,name:"Leighton S",time:"00:11:47.4",team:"Emily Stowe"},
+    {place:10,bib:779,name:"Emily M",time:"00:11:59.6",team:"M. J. Hobbs"},
+    {place:11,bib:767,name:"Madison W",time:"00:12:08.5",team:"Lydia Trull"},
+    {place:12,bib:593,name:"Harriet Racine",time:"00:12:14.4",team:"Hawkins"},
+    {place:13,bib:592,name:"Clara Thompson",time:"00:12:14.6",team:"Hawkins"},
+    {place:14,bib:768,name:"Kaiya F",time:"00:12:23.1",team:"Lydia Trull"},
+    {place:15,bib:706,name:"Abby K",time:"00:12:30.1",team:"Duke of Cambridge"},
+    {place:16,bib:705,name:"Eberlee W",time:"00:12:34.2",team:"Duke of Cambridge"},
+    {place:17,bib:6,name:"Eliza Vardy",time:"00:12:35.5",team:"Adam Scott"},
+    {place:18,bib:872,name:"Chloe H",time:"00:12:38.2",team:"Pines"},
+    {place:19,bib:8,name:"Mackenzie Murdock",time:"00:12:38.5",team:"Adam Scott"},
+    {place:20,bib:264,name:"Alexa Elliott",time:"00:12:39.8",team:"Brighton PS"},
+    {place:21,bib:40,name:"Sofie Pazdzior",time:"00:12:40.0",team:"Chemong"},
+    {place:22,bib:662,name:"Grace S",time:"00:12:41.8",team:"Courtice Intermedi"},
+    {place:23,bib:181,name:"Thea Chaput",time:"00:12:42.8",team:"Prince of Wales"},
+    {place:24,bib:388,name:"Zoe Barron",time:"00:12:42.9",team:"Percy"},
+    {place:25,bib:501,name:"Charlotte Thompson",time:"00:12:47.9",team:"C.R. Gummow"},
+    {place:26,bib:502,name:"Olive Baxter",time:"00:12:48.0",team:"C.R. Gummow"},
+    {place:27,bib:53,name:"Elle Wittek",time:"00:12:50.8",team:"Crestwood"},
+    {place:28,bib:265,name:"Evelyn Amos",time:"00:12:51.9",team:"Brighton PS"},
+    {place:29,bib:591,name:"Brooke Barbara",time:"00:12:52.3",team:"Hawkins"},
+    {place:30,bib:676,name:"Callie A",time:"00:12:56.8",team:"Courtice North"},
+    {place:31,bib:7,name:"Gabi McCann",time:"00:12:58.7",team:"Adam Scott"},
+    {place:32,bib:417,name:"Eva Loveless",time:"00:13:04.7",team:"Spring Valley PS"},
+    {place:33,bib:10,name:"Jocelyn Lauder",time:"00:13:04.8",team:"Adam Scott"},
+    {place:34,bib:193,name:"Claire Martichenko",time:"00:13:05.8",team:"Queen Mary"},
+    {place:35,bib:54,name:"Ali Dutrisac",time:"00:13:10.7",team:"Crestwood"},
+    {place:36,bib:603,name:"Holly Dejager",time:"00:13:12.5",team:"Hawkins"},
+    {place:37,bib:873,name:"Ava B",time:"00:13:20.1",team:"Pines"},
+    {place:38,bib:266,name:"Kree Ferguson",time:"00:13:23.5",team:"Brighton PS"},
+    {place:39,bib:345,name:"Layla Brunton",time:"00:13:26.3",team:"Northumberland Hil"},
+    {place:40,bib:604,name:"Hazel Horn",time:"00:13:27.2",team:"Hawkins"},
+    {place:41,bib:51,name:"Keira Morris",time:"00:13:28.8",team:"Crestwood"},
+    {place:42,bib:755,name:"Katelyn S",time:"00:13:30.2",team:"Harold Longworth"},
+    {place:43,bib:327,name:"Charlie Schuren",time:"00:13:30.5",team:"Murray"},
+    {place:44,bib:132,name:"Ivanka Sabata",time:"00:13:31.3",team:"Lakefield"},
+    {place:45,bib:594,name:"Abby Grant",time:"00:13:35.1",team:"Hawkins"},
+    {place:46,bib:677,name:"Everly C",time:"00:13:37.0",team:"Courtice North"},
+    {place:47,bib:529,name:"Lilly Steppacher",time:"00:13:38.3",team:"Dale Road"},
+    {place:48,bib:328,name:"Lauren Charron",time:"00:13:39.9",team:"Murray"},
+    {place:49,bib:9,name:"Esme Kinos",time:"00:13:47.2",team:"Adam Scott"},
+    {place:50,bib:526,name:"Charlie Maika",time:"00:13:48.1",team:"Dale Road"},
+    {place:51,bib:182,name:"Grace Jackson",time:"00:13:50.8",team:"Prince of Wales"},
+    {place:52,bib:708,name:"Mila K",time:"00:14:02.7",team:"Duke of Cambridge"},
+    {place:53,bib:707,name:"Rylan R",time:"00:14:05.2",team:"Duke of Cambridge"},
+    {place:54,bib:329,name:"Avery Bowser",time:"00:14:09.2",team:"Murray"},
+    {place:55,bib:133,name:"Nora Donnery",time:"00:14:11.3",team:"Lakefield"},
+    {place:56,bib:52,name:"Brianna Morris",time:"00:14:11.5",team:"Crestwood"},
+    {place:57,bib:780,name:"Hailey A",time:"00:14:12.2",team:"M. J. Hobbs"},
+    {place:58,bib:267,name:"Audrina Arbuckle",time:"00:14:12.7",team:"Brighton PS"},
+    {place:59,bib:183,name:"Elizabeth Cooper",time:"00:14:12.8",team:"Prince of Wales"},
+    {place:60,bib:528,name:"Sophia Harkness",time:"00:14:15.3",team:"Dale Road"},
+    {place:61,bib:527,name:"Paytyn Donovan",time:"00:14:18.5",team:"Dale Road"},
+    {place:62,bib:503,name:"Molly McMillan",time:"00:14:19.2",team:"C.R. Gummow"},
+    {place:63,bib:55,name:"Anna Hamond",time:"00:14:26.3",team:"Crestwood"},
+    {place:64,bib:874,name:"Lauren P",time:"00:14:26.6",team:"Pines"},
+    {place:65,bib:184,name:"Jill Trinier",time:"00:14:31.8",team:"Prince of Wales"},
+    {place:66,bib:389,name:"Scarlett Heinrich",time:"00:14:45.0",team:"Percy"},
+    {place:67,bib:346,name:"Anabelle Hiscock",time:"00:14:51.7",team:"Northumberland Hil"},
+    {place:68,bib:418,name:"Morgan Wilson",time:"00:14:59.8",team:"Spring Valley PS"},
+    {place:69,bib:875,name:"Katara C",time:"00:15:12.3",team:"Pines"},
+    {place:70,bib:678,name:"Adalyn S",time:"00:15:17.6",team:"Courtice North"},
+    {place:71,bib:177,name:"Rylynn Bisson",time:"00:15:21.4",team:"Otonabee Valley"},
+    {place:72,bib:390,name:"Winter Honey",time:"00:15:22.9",team:"Percy"},
+    {place:73,bib:290,name:"Silva McCarrell",time:"00:15:37.8",team:"Hillcrest"},
+    {place:74,bib:540,name:"Bree Blakely",time:"00:15:44.6",team:"DRPS"},
+    {place:75,bib:572,name:"Hanna Merry",time:"00:15:56.2",team:"Grafton"},
+    {place:76,bib:627,name:"Evelyn Giroux",time:"00:16:19.6",team:"Roseneath"},
+    {place:77,bib:330,name:"Rachel Wannamaker",time:"00:16:50.1",team:"Murray"},
+    {place:78,bib:391,name:"Autumn Hay",time:"00:18:09.1",team:"Percy"},
+    {place:79,bib:886,name:"Calla M",time:"00:59:15.5",team:"Ross Tilley"}
+  ]},
+  { division: 7, gender: "Male", results: [
+    {place:1,bib:259,name:"Asher Todd",time:"00:09:13.9",team:"Brighton PS"},
+    {place:2,bib:38,name:"Easton Clarke",time:"00:09:22.1",team:"Chemong"},
+    {place:3,bib:46,name:"Camron Thiffault",time:"00:09:25.5",team:"Crestwood"},
+    {place:4,bib:200,name:"Sam Sweet-Singh",time:"00:09:28.0",team:"Roger Neilson"},
+    {place:5,bib:774,name:"Isaac C",time:"00:09:33.3",team:"M. J. Hobbs"},
+    {place:6,bib:258,name:"Evan Andrews",time:"00:09:46.2",team:"Brighton PS"},
+    {place:7,bib:637,name:"Cole MacLean",time:"00:09:47.1",team:"Terry Fox"},
+    {place:8,bib:522,name:"Jacob Dafoe",time:"00:09:49.5",team:"Dale Road"},
+    {place:9,bib:521,name:"Ben Laverty",time:"00:09:54.3",team:"Dale Road"},
+    {place:10,bib:2,name:"Owen Anderson",time:"00:09:57.2",team:"Adam Scott"},
+    {place:11,bib:636,name:"Xander McKay",time:"00:10:00.0",team:"Terry Fox"},
+    {place:12,bib:385,name:"Harrison Anchor",time:"00:10:03.3",team:"Percy"},
+    {place:13,bib:520,name:"Linden Ludolph",time:"00:10:05.1",team:"Dale Road"},
+    {place:14,bib:1,name:"Oliver Hodge",time:"00:10:08.7",team:"Adam Scott"},
+    {place:15,bib:775,name:"Bryce B",time:"00:10:13.9",team:"M. J. Hobbs"},
+    {place:16,bib:870,name:"Greyson R",time:"00:10:20.5",team:"Pines"},
+    {place:17,bib:896,name:"Anthony F",time:"00:10:24.2",team:"S T Worden"},
+    {place:18,bib:260,name:"Andrew Jagoe",time:"00:10:26.6",team:"Brighton PS"},
+    {place:19,bib:39,name:"Connor Watson",time:"00:10:28.0",team:"Chemong"},
+    {place:20,bib:3,name:"Salvador Haines",time:"00:10:28.3",team:"Adam Scott"},
+    {place:21,bib:586,name:"Luke Aubin",time:"00:10:28.8",team:"Hawkins"},
+    {place:22,bib:656,name:"Colton B",time:"00:10:32.4",team:"Charles Bowman"},
+    {place:23,bib:701,name:"Andrew H",time:"00:10:35.5",team:"Duke of Cambridge"},
+    {place:24,bib:386,name:"Hayden Vanderstoop",time:"00:10:42.0",team:"Percy"},
+    {place:25,bib:261,name:"Rafa Caceres",time:"00:10:44.9",team:"Brighton PS"},
+    {place:26,bib:551,name:"Finn O'Leary",time:"00:10:47.1",team:"Dale Road"},
+    {place:27,bib:176,name:"Riordan MacQuarrie",time:"00:10:47.5",team:"Otonabee Valley"},
+    {place:28,bib:776,name:"Connor S",time:"00:10:49.2",team:"M. J. Hobbs"},
+    {place:29,bib:47,name:"Sawyer Hancock",time:"00:10:51.3",team:"Crestwood"},
+    {place:30,bib:700,name:"Noah P",time:"00:10:55.7",team:"Duke of Cambridge"},
+    {place:31,bib:699,name:"David P",time:"00:10:59.1",team:"Duke of Cambridge"},
+    {place:32,bib:94,name:"Lachlan Anderson",time:"00:11:05.8",team:"James Strath"},
+    {place:33,bib:777,name:"Aiden C",time:"00:11:10.2",team:"M. J. Hobbs"},
+    {place:34,bib:278,name:"William Dart",time:"00:11:15.2",team:"Colborne"},
+    {place:35,bib:201,name:"Griffin Lockhart",time:"00:11:16.3",team:"Roger Neilson"},
+    {place:36,bib:324,name:"Blake Gregory",time:"00:11:17.4",team:"Murray"},
+    {place:37,bib:644,name:"Quinten Dyson",time:"00:11:17.8",team:"Terry Fox"},
+    {place:38,bib:524,name:"Emmett Timlin",time:"00:11:19.1",team:"Dale Road"},
+    {place:39,bib:5,name:"Liam Flaherty",time:"00:11:20.0",team:"Adam Scott"},
+    {place:40,bib:48,name:"Max DeBlock",time:"00:11:26.8",team:"Crestwood"},
+    {place:41,bib:21,name:"Alex Pineiro",time:"00:11:29.8",team:"Adam Scott"},
+    {place:42,bib:587,name:"Tripp Carr",time:"00:11:32.6",team:"Hawkins"},
+    {place:43,bib:638,name:"Bryson Rose",time:"00:11:35.4",team:"Terry Fox"},
+    {place:44,bib:354,name:"Spencer Hilts",time:"00:11:38.0",team:"Norwood District I"},
+    {place:45,bib:49,name:"Lucas Wilson",time:"00:11:40.2",team:"Crestwood"},
+    {place:46,bib:658,name:"Evan B",time:"00:11:50.0",team:"Charles Bowman"},
+    {place:47,bib:325,name:"Levi Gregory-Dusa",time:"00:11:51.3",team:"Murray"},
+    {place:48,bib:702,name:"Hudson W",time:"00:11:53.1",team:"Duke of Cambridge"},
+    {place:49,bib:680,name:"Colton E",time:"00:11:53.3",team:"Duke of Cambridge"},
+    {place:50,bib:675,name:"Jack M",time:"00:11:54.6",team:"Courtice North"},
+    {place:51,bib:703,name:"Lachlan G",time:"00:11:56.2",team:"Duke of Cambridge"},
+    {place:52,bib:639,name:"Sage Brown-Fray",time:"00:12:01.4",team:"Terry Fox"},
+    {place:53,bib:50,name:"Ben Mckie",time:"00:12:01.8",team:"Crestwood"},
+    {place:54,bib:778,name:"Mason Y",time:"00:12:04.1",team:"M. J. Hobbs"},
+    {place:55,bib:262,name:"Daxton Ibbotson",time:"00:12:04.7",team:"Brighton PS"},
+    {place:56,bib:131,name:"Wyatt Kennedy",time:"00:12:06.1",team:"Lakefield"},
+    {place:57,bib:230,name:"Brady Thompson",time:"00:12:10.8",team:"Brighton PS"},
+    {place:58,bib:568,name:"Jack Voycey",time:"00:12:14.3",team:"Grafton"},
+    {place:59,bib:411,name:"Lukas Neves",time:"00:12:29.7",team:"Smithfield"},
+    {place:60,bib:897,name:"Gustavo L",time:"00:12:30.0",team:"S T Worden"},
+    {place:61,bib:570,name:"Pax Little",time:"00:12:33.5",team:"Grafton"},
+    {place:62,bib:760,name:"Aayushmaan K",time:"00:12:35.0",team:"John M James"},
+    {place:63,bib:640,name:"Levi Beer",time:"00:12:37.8",team:"Terry Fox"},
+    {place:64,bib:206,name:"Cameron A",time:"00:12:49.5",team:"Waverley"},
+    {place:65,bib:500,name:"Oliver Fitchett",time:"00:12:56.8",team:"C.R. Gummow"},
+    {place:66,bib:569,name:"Owen Williams",time:"00:13:35.7",team:"Grafton"},
+    {place:67,bib:657,name:"Nolan W",time:"00:13:38.7",team:"Charles Bowman"},
+    {place:68,bib:588,name:"Jord Walsh",time:"00:14:06.2",team:"Hawkins"},
+    {place:69,bib:589,name:"Jack Oxland",time:"00:14:09.9",team:"Hawkins"},
+    {place:70,bib:231,name:"Mason Randall",time:"00:14:17.9",team:"Brighton PS"},
+    {place:71,bib:571,name:"Duke Yde",time:"00:15:48.9",team:"Grafton"}
+  ]},
+  { division: 8, gender: "Female", results: [
+    {place:1,bib:665,name:"Lily G",time:"00:11:12.4",team:"Courtice Intermedi"},
+    {place:2,bib:888,name:"Keira S",time:"00:11:13.1",team:"Ross Tilley"},
+    {place:3,bib:643,name:"Sidney Hewson",time:"00:11:15.0",team:"Terry Fox"},
+    {place:4,bib:535,name:"Presley Giroux",time:"00:11:42.4",team:"Dale Road"},
+    {place:5,bib:273,name:"Amy Horton",time:"00:11:46.7",team:"Brighton PS"},
+    {place:6,bib:578,name:"Shayla Connor",time:"00:11:52.7",team:"Grafton"},
+    {place:7,bib:16,name:"Dharma Chantegriel",time:"00:11:59.2",team:"Adam Scott"},
+    {place:8,bib:714,name:"Raina H",time:"00:12:00.2",team:"Duke of Cambridge"},
+    {place:9,bib:506,name:"Alia Smith",time:"00:12:07.5",team:"C.R. Gummow"},
+    {place:10,bib:666,name:"Sadie D",time:"00:12:20.5",team:"Courtice Intermedi"},
+    {place:11,bib:667,name:"Danielle R",time:"00:12:25.3",team:"Courtice Intermedi"},
+    {place:12,bib:715,name:"Cerys C",time:"00:12:30.2",team:"Duke of Cambridge"},
+    {place:13,bib:57,name:"Hailey Good",time:"00:12:30.6",team:"Crestwood"},
+    {place:14,bib:17,name:"Hayden Boxall",time:"00:12:36.8",team:"Adam Scott"},
+    {place:15,bib:174,name:"Claire Chapell",time:"00:12:40.9",team:"North Shore"},
+    {place:16,bib:661,name:"Aishna N",time:"00:12:56.0",team:"Clarington Central"},
+    {place:17,bib:726,name:"Ava S",time:"00:13:01.1",team:"Emily Stowe"},
+    {place:18,bib:274,name:"Ahna McCrae",time:"00:13:04.7",team:"Brighton PS"},
+    {place:19,bib:185,name:"Isla Smith",time:"00:13:10.3",team:"Prince of Wales"},
+    {place:20,bib:536,name:"Mackenzie Fair",time:"00:13:14.2",team:"Dale Road"},
+    {place:21,bib:669,name:"Natalie P",time:"00:13:21.8",team:"Courtice Intermedi"},
+    {place:22,bib:276,name:"Julia Crawford",time:"00:13:24.2",team:"Brighton PS"},
+    {place:23,bib:538,name:"Reese Lewis",time:"00:13:26.9",team:"Dale Road"},
+    {place:24,bib:18,name:"Jocelyn Kang",time:"00:13:27.3",team:"Adam Scott"},
+    {place:25,bib:20,name:"Lila Hansford",time:"00:13:29.8",team:"Adam Scott"},
+    {place:26,bib:539,name:"Aanna Stewart",time:"00:13:30.0",team:"Dale Road"},
+    {place:27,bib:579,name:"Lillian Balcom",time:"00:13:30.4",team:"Grafton"},
+    {place:28,bib:890,name:"Jayden C",time:"00:13:30.8",team:"Ross Tilley"},
+    {place:29,bib:889,name:"Kendall R",time:"00:13:31.2",team:"Ross Tilley"},
+    {place:30,bib:537,name:"Vaida Farr",time:"00:13:34.8",team:"Dale Road"},
+    {place:31,bib:352,name:"Meegin Hobbs",time:"00:13:36.7",team:"Northumberland Hil"},
+    {place:32,bib:19,name:"Teal McInroy",time:"00:13:37.7",team:"Adam Scott"},
+    {place:33,bib:900,name:"Ella F",time:"00:13:39.5",team:"Vincent Massey"},
+    {place:34,bib:175,name:"Violet Vogler",time:"00:13:41.3",team:"North Shore"},
+    {place:35,bib:115,name:"Sarah Forest",time:"00:13:42.0",team:"Kaawaate"},
+    {place:36,bib:22,name:"Celia Soimu",time:"00:13:49.4",team:"Adam Scott"},
+    {place:37,bib:883,name:"Walker B",time:"00:13:50.4",team:"Waverley"},
+    {place:38,bib:716,name:"Ayla S",time:"00:13:51.8",team:"Duke of Cambridge"},
+    {place:39,bib:598,name:"Saffron Costanzo",time:"00:13:53.6",team:"Hawkins"},
+    {place:40,bib:764,name:"Jayde K",time:"00:13:54.2",team:"John M James"},
+    {place:41,bib:275,name:"Lilly Iwan",time:"00:13:54.2",team:"Brighton PS"},
+    {place:42,bib:628,name:"Zahara Toon",time:"00:13:54.5",team:"Roseneath"},
+    {place:43,bib:880,name:"Kiersten L",time:"00:13:56.3",team:"Pines"},
+    {place:44,bib:357,name:"Clara Bult",time:"00:14:04.3",team:"Norwood District I"},
+    {place:45,bib:881,name:"Claire B",time:"00:14:08.7",team:"Pines"},
+    {place:46,bib:186,name:"Esme Rizza",time:"00:14:10.5",team:"Prince of Wales"},
+    {place:47,bib:187,name:"Harlow Bennett",time:"00:14:16.1",team:"Prince of Wales"},
+    {place:48,bib:543,name:"Natalie Hall",time:"00:14:16.1",team:"DRPS"},
+    {place:49,bib:599,name:"Olivia Beattie",time:"00:14:19.0",team:"Hawkins"},
+    {place:50,bib:277,name:"Ruby Rusaw",time:"00:14:28.8",team:"Brighton PS"},
+    {place:51,bib:727,name:"Savanna B",time:"00:14:33.6",team:"Emily Stowe"},
+    {place:52,bib:542,name:"Aliviah Harmon",time:"00:14:38.4",team:"DRPS"},
+    {place:53,bib:718,name:"Holly M",time:"00:14:41.8",team:"Duke of Cambridge"},
+    {place:54,bib:188,name:"Beatrice Cragg",time:"00:14:49.0",team:"Prince of Wales"},
+    {place:55,bib:600,name:"Ruby Sayles",time:"00:14:50.6",team:"Hawkins"},
+    {place:56,bib:356,name:"Oakleigh Sharpe",time:"00:15:03.6",team:"Norwood District I"},
+    {place:57,bib:358,name:"Haylie Jolly-Caines",time:"00:15:03.7",team:"Norwood District I"},
+    {place:58,bib:195,name:"Alexis Coppaway",time:"00:15:19.3",team:"Queen Mary"},
+    {place:59,bib:59,name:"Lily Jones",time:"00:15:35.3",team:"Crestwood"},
+    {place:60,bib:58,name:"Claudia Phillips",time:"00:15:51.1",team:"Crestwood"},
+    {place:61,bib:196,name:"Savannah Walpole",time:"00:15:59.2",team:"Queen Mary"},
+    {place:62,bib:507,name:"Lilyanna Purdy",time:"00:16:08.9",team:"C.R. Gummow"},
+    {place:63,bib:353,name:"Devynn Purdy",time:"00:16:19.1",team:"Northumberland Hil"},
+    {place:64,bib:397,name:"Claire Noce",time:"00:16:38.6",team:"Percy"},
+    {place:65,bib:359,name:"Naomi Van Spronsen",time:"00:16:57.5",team:"Norwood District I"},
+    {place:66,bib:60,name:"Blair Bradley",time:"00:18:18.9",team:"Crestwood"},
+    {place:67,bib:61,name:"Cadence Fisher",time:"00:18:22.5",team:"Crestwood"},
+    {place:68,bib:602,name:"Camille Hall",time:"00:18:32.9",team:"Hawkins"},
+    {place:69,bib:601,name:"Naomi Mckie",time:"00:18:43.9",team:"Hawkins"},
+    {place:70,bib:398,name:"Madeline Lewis",time:"00:18:45.8",team:"Percy"},
+    {place:71,bib:605,name:"Julia Vos",time:"00:21:02.7",team:"Hawkins"}
+  ]},
+  { division: 8, gender: "Male", results: [
+    {place:1,bib:347,name:"Ryder Eddy",time:"00:10:15.3",team:"Northumberland Hil"},
+    {place:2,bib:877,name:"Finn R",time:"00:10:16.4",team:"Pines"},
+    {place:3,bib:194,name:"Quinn Harrald",time:"00:10:28.5",team:"Queen Mary"},
+    {place:4,bib:504,name:"Coulter Watson",time:"00:10:31.3",team:"C.R. Gummow"},
+    {place:5,bib:595,name:"Colby Banks",time:"00:10:33.9",team:"Hawkins"},
+    {place:6,bib:11,name:"Jules Weigh",time:"00:10:38.5",team:"Adam Scott"},
+    {place:7,bib:878,name:"Evan L",time:"00:10:39.0",team:"Pines"},
+    {place:8,bib:43,name:"Griffin Fallis",time:"00:10:39.8",team:"Chemong"},
+    {place:9,bib:392,name:"Avery Forrest",time:"00:10:51.5",team:"Percy"},
+    {place:10,bib:781,name:"Mason M",time:"00:10:53.0",team:"M. J. Hobbs"},
+    {place:11,bib:42,name:"Eli Finney",time:"00:11:00.5",team:"Chemong"},
+    {place:12,bib:782,name:"Westin G",time:"00:11:04.9",team:"M. J. Hobbs"},
+    {place:13,bib:134,name:"Logan Cowey",time:"00:11:05.5",team:"Lakefield"},
+    {place:14,bib:44,name:"Dylan Davis",time:"00:11:05.7",team:"Chemong"},
+    {place:15,bib:573,name:"Hunter Withers",time:"00:11:11.9",team:"Grafton"},
+    {place:16,bib:709,name:"Colby M",time:"00:11:16.7",team:"Duke of Cambridge"},
+    {place:17,bib:642,name:"Blake Lagani",time:"00:11:21.6",team:"Terry Fox"},
+    {place:18,bib:135,name:"Levi Paige",time:"00:11:23.5",team:"Lakefield"},
+    {place:19,bib:762,name:"Gavin S",time:"00:11:26.7",team:"John M James"},
+    {place:20,bib:136,name:"Mason Trayna",time:"00:11:27.1",team:"Lakefield"},
+    {place:21,bib:761,name:"Cameron A",time:"00:11:28.7",team:"John M James"},
+    {place:22,bib:710,name:"Cole G",time:"00:11:30.0",team:"Duke of Cambridge"},
+    {place:23,bib:113,name:"Elias Champagne",time:"00:11:31.3",team:"Kaawaate"},
+    {place:24,bib:350,name:"Nolan Koehler",time:"00:11:33.0",team:"Northumberland Hil"},
+    {place:25,bib:268,name:"Griffin O'Donnell",time:"00:11:33.3",team:"Brighton PS"},
+    {place:26,bib:349,name:"Finley Koehler",time:"00:11:39.4",team:"Northumberland Hil"},
+    {place:27,bib:12,name:"Griffin Eves",time:"00:11:39.9",team:"Adam Scott"},
+    {place:28,bib:96,name:"Kaiden Surphlis",time:"00:11:51.9",team:"James Strath"},
+    {place:29,bib:114,name:"Hunter Jones",time:"00:11:53.0",team:"Kaawaate"},
+    {place:30,bib:13,name:"Isaac Roberts",time:"00:11:54.1",team:"Adam Scott"},
+    {place:31,bib:712,name:"Noah D",time:"00:11:56.4",team:"Duke of Cambridge"},
+    {place:32,bib:97,name:"Maddox McNamara",time:"00:11:56.6",team:"James Strath"},
+    {place:33,bib:56,name:"Ben Thompson",time:"00:11:57.2",team:"Crestwood"},
+    {place:34,bib:436,name:"Will Scoffield",time:"00:11:59.9",team:"Stockdale"},
+    {place:35,bib:887,name:"Dominic D",time:"00:12:02.3",team:"Ross Tilley"},
+    {place:36,bib:45,name:"Sam Meade",time:"00:12:04.1",team:"Chemong"},
+    {place:37,bib:531,name:"Hudson Lynn",time:"00:12:12.0",team:"Dale Road"},
+    {place:38,bib:393,name:"Keane Campbell",time:"00:12:15.3",team:"Percy"},
+    {place:39,bib:530,name:"Macintyre Cameron",time:"00:12:19.1",team:"Dale Road"},
+    {place:40,bib:663,name:"Austin B",time:"00:12:22.2",team:"Courtice Intermedi"},
+    {place:41,bib:15,name:"Simon Brown",time:"00:12:22.3",team:"Adam Scott"},
+    {place:42,bib:14,name:"Jackson Millen",time:"00:12:22.4",team:"Adam Scott"},
+    {place:43,bib:505,name:"Devin Cousins",time:"00:12:26.0",team:"C.R. Gummow"},
+    {place:44,bib:575,name:"Emmett Torrieri",time:"00:12:27.3",team:"Grafton"},
+    {place:45,bib:270,name:"Jacob Leger",time:"00:12:31.5",team:"Brighton PS"},
+    {place:46,bib:576,name:"Hewett Tejnor",time:"00:12:33.1",team:"Grafton"},
+    {place:47,bib:660,name:"Evan D",time:"00:12:35.0",team:"Clarington Central"},
+    {place:48,bib:756,name:"Rory W",time:"00:12:38.0",team:"Harold Longworth"},
+    {place:49,bib:879,name:"Brady A",time:"00:12:40.4",team:"Pines"},
+    {place:50,bib:271,name:"Nash Parks",time:"00:12:46.0",team:"Brighton PS"},
+    {place:51,bib:711,name:"Ben S",time:"00:12:46.0",team:"Duke of Cambridge"},
+    {place:52,bib:269,name:"Maikol Suris",time:"00:12:46.2",team:"Brighton PS"},
+    {place:53,bib:574,name:"Cole Voycey",time:"00:12:51.9",team:"Grafton"},
+    {place:54,bib:899,name:"Travis T",time:"00:12:55.5",team:"Vincent Massey"},
+    {place:55,bib:783,name:"Oliver F",time:"00:12:57.4",team:"M. J. Hobbs"},
+    {place:56,bib:784,name:"Brandon M",time:"00:13:00.1",team:"M. J. Hobbs"},
+    {place:57,bib:763,name:"Luke M",time:"00:13:00.6",team:"John M James"},
+    {place:58,bib:396,name:"Aaron Zhu",time:"00:13:22.0",team:"Percy"},
+    {place:59,bib:419,name:"Landon Matthews",time:"00:13:23.2",team:"Spring Valley PS"},
+    {place:60,bib:351,name:"Liam Proos",time:"00:13:30.2",team:"Northumberland Hil"},
+    {place:61,bib:420,name:"Ashton Kinnear",time:"00:13:32.9",team:"Spring Valley PS"},
+    {place:62,bib:785,name:"Eli M-L",time:"00:14:01.3",team:"M. J. Hobbs"},
+    {place:63,bib:533,name:"Oliver Austin",time:"00:14:03.9",team:"Dale Road"},
+    {place:64,bib:395,name:"Jacob Laver",time:"00:14:17.8",team:"Percy"},
+    {place:65,bib:394,name:"Luc DeBlois",time:"00:14:18.4",team:"Percy"},
+    {place:66,bib:596,name:"Jordan Phillips",time:"00:14:28.9",team:"Hawkins"},
+    {place:67,bib:597,name:"Jesus Maldonado",time:"00:14:32.0",team:"Hawkins"},
+    {place:68,bib:272,name:"Addison Naegeli",time:"00:14:35.1",team:"Brighton PS"},
+    {place:69,bib:435,name:"Charlie Prins",time:"00:14:42.1",team:"Stockdale"},
+    {place:70,bib:534,name:"Reid Schrieber",time:"00:14:44.4",team:"Dale Road"}
+  ]}
+];
+
+function timeToSeconds(t) {
+  const parts = t.split(':');
+  return parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseFloat(parts[2]);
+}
+
+function formatGap(baseSec, curSec) {
+  const diff = curSec - baseSec;
+  if (diff <= 0) return '';
+  if (diff < 60) return `+${diff.toFixed(1)}s`;
+  const m = Math.floor(diff/60), s = (diff%60).toFixed(1);
+  return `+${m}m ${s}s`;
+}
+
+function formatTime(t) {
+  // strip leading zeros from hours
+  const parts = t.split(':');
+  const mm = parts[1], ss = parts[2];
+  return `${mm}:${ss}`;
+}
+
+// Count unique schools
+const allSchools = new Set();
+let totalAthletes = 0;
+let fastestSec = Infinity;
+let fastestTime = '';
+
+rawData.forEach(div => {
+  div.results.forEach(r => {
+    allSchools.add(r.team);
+    totalAthletes++;
+    const s = timeToSeconds(r.time);
+    if (s < fastestSec && s < 3600) {
+      fastestSec = s;
+      fastestTime = formatTime(r.time);
+    }
+  });
+});
+
+// Animate stats
+function animateCount(el, target, suffix='') {
+  let start = 0;
+  const dur = 1200;
+  const step = (ts) => {
+    if (!start) start = ts;
+    const prog = Math.min((ts - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - prog, 3);
+    el.textContent = Math.round(ease * target) + suffix;
+    if (prog < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+setTimeout(() => {
+  animateCount(document.getElementById('stat-athletes'), totalAthletes);
+  animateCount(document.getElementById('stat-schools'), allSchools.size);
+  document.getElementById('stat-fastest').textContent = fastestTime;
+}, 600);
+
+// Build DOM
+const container = document.getElementById('divisions-container');
+
+rawData.forEach((div, idx) => {
+  const genderLabel = div.gender;
+  const winnerSec = timeToSeconds(div.results[0].time);
+  const slowestSec = timeToSeconds(div.results[div.results.length - 1].time);
+  const range = Math.min(slowestSec, winnerSec + 300) - winnerSec;
+
+  const divEl = document.createElement('div');
+  divEl.className = 'division';
+  divEl.dataset.div = div.division;
+  divEl.dataset.gender = div.gender;
+
+  let rowsHTML = '';
+  div.results.forEach(r => {
+    const sec = timeToSeconds(r.time);
+    const pClass = r.place === 1 ? 'place-1' : r.place === 2 ? 'place-2' : r.place === 3 ? 'place-3' : 'place-other';
+    const medalHTML = r.place <= 3
+      ? `<span class="medal medal-${r.place}">${r.place}</span>`
+      : `<span class="${pClass}">${r.place}</span>`;
+    const nameClass = r.place <= 3 ? 'td-name top-3' : 'td-name';
+    const timeClass = r.place === 1 ? 'td-time top-1' : r.place === 2 ? 'td-time top-2' : r.place === 3 ? 'td-time top-3' : 'td-time';
+    const gap = r.place === 1 ? '' : formatGap(winnerSec, sec);
+    const barPct = Math.max(0, Math.min(100, 100 - ((sec - winnerSec) / (range || 1)) * 100));
+    const timeDisplay = sec > 3600 ? r.time : formatTime(r.time);
+    const barColor = r.place <= 3 ? 'var(--accent)' : genderLabel === 'Female' ? 'rgba(255,110,176,0.7)' : 'rgba(91,168,255,0.7)';
+
+    rowsHTML += `
+      <tr class="result-row" data-name="${r.name.toLowerCase()}" data-team="${r.team.toLowerCase()}">
+        <td class="td-place">${medalHTML}</td>
+        <td class="${nameClass}">${r.name}</td>
+        <td class="td-team">${r.team}</td>
+        <td class="${timeClass}">${timeDisplay}</td>
+        <td class="td-gap">${gap}</td>
+        <td class="time-bar-cell">
+          <div class="time-bar-bg"><div class="time-bar-fill" style="width:${barPct}%;background:${barColor}"></div></div>
+        </td>
+        <td class="td-bib">#${r.bib}</td>
+      </tr>`;
+  });
+
+  divEl.innerHTML = `
+    <div class="division-header">
+      <div class="division-name">Grade ${div.division}</div>
+      <span class="division-gender-tag">${div.gender}</span>
+      <div class="division-count">${div.results.length} athletes</div>
+    </div>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th class="right">Place</th>
+          <th>Name</th>
+          <th>School</th>
+          <th class="right">Time</th>
+          <th class="right">Gap</th>
+          <th></th>
+          <th>Bib</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>`;
+
+  container.appendChild(divEl);
+  setTimeout(() => divEl.classList.add('visible'), 100 + idx * 60);
+});
+
+// Filtering
+let activeDiv = 'all';
+let activeGender = 'all';
+let searchTerm = '';
+
+function applyFilters() {
+  const divEls = document.querySelectorAll('.division');
+  let anyVisible = false;
+
+  divEls.forEach(el => {
+    const divMatch = activeDiv === 'all' || el.dataset.div === activeDiv;
+    const genderMatch = activeGender === 'all' || el.dataset.gender === activeGender;
+
+    if (!divMatch || !genderMatch) {
+      el.classList.add('hidden');
+      return;
+    }
+
+    // Apply search within rows
+    let divHasVisible = false;
+    if (searchTerm) {
+      el.querySelectorAll('.result-row').forEach(row => {
+        const nameMatch = row.dataset.name.includes(searchTerm);
+        const teamMatch = row.dataset.team.includes(searchTerm);
+        if (nameMatch || teamMatch) {
+          row.classList.remove('hidden');
+          divHasVisible = true;
+        } else {
+          row.classList.add('hidden');
+        }
+      });
+    } else {
+      el.querySelectorAll('.result-row').forEach(row => row.classList.remove('hidden'));
+      divHasVisible = true;
+    }
+
+    if (divHasVisible) {
+      el.classList.remove('hidden');
+      anyVisible = true;
+    } else {
+      el.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('no-results').style.display = anyVisible ? 'none' : 'block';
+}
+
+document.getElementById('div-filters').addEventListener('click', e => {
+  if (!e.target.matches('.filter-btn')) return;
+  document.querySelectorAll('#div-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeDiv = e.target.dataset.div;
+  applyFilters();
+});
+
+document.getElementById('gender-filters').addEventListener('click', e => {
+  if (!e.target.matches('.filter-btn')) return;
+  document.querySelectorAll('#gender-filters .filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  activeGender = e.target.dataset.gender;
+  applyFilters();
+});
+
+document.getElementById('search-input').addEventListener('input', e => {
+  searchTerm = e.target.value.toLowerCase().trim();
+  applyFilters();
+});
+
+// Scroll to top
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top');
+  btn.classList.toggle('visible', window.scrollY > 400);
+});
+</script>
+</body>
+</html>

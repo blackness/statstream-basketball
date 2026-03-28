@@ -61,7 +61,7 @@ const SplitView = ({
     setFilterTeamId(prev => prev === team.id ? null : team.id);
   };
 
-  const canEdit = (game) => !!user;
+  const canEdit = (game) => isSuperUser || (user && game.user_id === user.id);
   const canEditTeam = (team) => isSuperUser || (user && team.user_id === user.id);
 
   const filteredHistory = filterTeamId
@@ -105,16 +105,11 @@ const SplitView = ({
     return `${top.pts} PTS`;
   };
 
-  const isMyTeamHome = (game) => {
-    const team = teams.find(t => t.id === game.team_id);
-    return team ? game.home_team === team.name : (game.game_settings?.isHome ?? true);
-  };
-
   const getMyScore = (game) =>
-    isMyTeamHome(game) ? (game.home_score || 0) : (game.away_score || 0);
+    game.game_settings?.isHome ? (game.home_score || 0) : (game.away_score || 0);
 
   const getTheirScore = (game) =>
-    isMyTeamHome(game) ? (game.away_score || 0) : (game.home_score || 0);
+    game.game_settings?.isHome ? (game.away_score || 0) : (game.home_score || 0);
 
   const TEAM_GRADIENTS = [
     'from-blue-700 to-blue-500',
@@ -307,54 +302,6 @@ const SplitView = ({
         )}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
-
-          {/* TODAY'S RESULTS BANNER */}
-          {(() => {
-            const today = new Date().toDateString();
-            const todaysCompleted = filteredHistory.filter(g =>
-              g.status === 'completed' &&
-              new Date(g.updated_at || g.created_at).toDateString() === today
-            );
-            if (!todaysCompleted.length) return null;
-            return (
-              <div className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
-                <div className="px-3 py-1.5 border-b border-gray-700 flex items-center gap-1.5">
-                  <Trophy size={10} className="text-yellow-400" />
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Today's Results</span>
-                </div>
-                <div className="divide-y divide-gray-800">
-                  {todaysCompleted.map(game => {
-                    const myScore    = getMyScore(game);
-                    const theirScore = getTheirScore(game);
-                    const isWin      = myScore > theirScore;
-                    const isLoss     = myScore < theirScore;
-                    const myName     = getTeamName(game.team_id);
-                    const isHome     = game.game_settings?.isHome;
-                    const resultColor = isWin ? '#10b981' : isLoss ? '#ef4444' : '#9ca3af';
-                    return (
-                      <div
-                        key={game.id}
-                        onClick={() => onViewStats(game)}
-                        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-800 transition"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[9px] font-black uppercase tracking-wide flex-shrink-0" style={{ color: resultColor }}>
-                            {isWin ? 'W' : isLoss ? 'L' : 'D'}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-300 truncate">
-                            {isHome ? `${myName} vs ${game.opponent}` : `${myName} @ ${game.opponent}`}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-black text-white tabular-nums flex-shrink-0 ml-3">
-                          {myScore}–{theirScore}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
 
           {/* LIVE */}
           {liveGames.length > 0 && (

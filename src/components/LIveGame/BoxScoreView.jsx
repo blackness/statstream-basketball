@@ -63,25 +63,25 @@ const BoxScoreView = ({ team, game, onBack }) => {
     return { ...opStats, totalFGM, totalFGA, reb, fgPct, tpPct, ftPct };
   };
 
-  const playersWithStats = team.roster?.filter(player => {
-    const stats = game.stats?.[player.id];
-    // Show player if they have any stat entry (even if all zeros)
-    return stats !== undefined && stats !== null;
-  }) || [];
-
-  // Sort players by points descending
-  playersWithStats.sort((a, b) => {
-    const aStats = game.stats?.[a.id] || {};
-    const bStats = game.stats?.[b.id] || {};
-    return (bStats.pts || 0) - (aStats.pts || 0);
-  });
+  // Build player list from stats keys — look up names from roster, fallback to _name stored in stats
+  const playersWithStats = Object.entries(game.stats || {})
+    .map(([id, stats]) => {
+      const rosterPlayer = team?.roster?.find(p => p.id === id);
+      return {
+        id,
+        name: rosterPlayer?.name || stats._name || '—',
+        number: rosterPlayer?.number || stats._number || '',
+        stats
+      };
+    })
+    .sort((a, b) => (b.stats.pts || 0) - (a.stats.pts || 0));
 
   const teamStats = calculateTeamStats();
   const opponentStats = calculateOpponentTeamStats();
-  const isHome = game.game_settings?.isHome;
-  const finalScore = isHome 
-    ? `${game.home_score} - ${game.away_score}` 
-    : `${game.away_score} - ${game.home_score}`;
+  const isHome = team ? game.home_team === team.name : (game.game_settings?.isHome ?? true);
+  const myScore    = isHome ? (game.home_score || 0) : (game.away_score || 0);
+  const theirScore = isHome ? (game.away_score || 0) : (game.home_score || 0);
+  const finalScore = `${myScore} - ${theirScore}`;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -107,7 +107,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="text-center mb-4">
             <h2 className="text-3xl font-black text-gray-900 mb-2">
-              {team.name} vs {game.opponent}
+              {team?.name || game.home_team} vs {game.opponent}
             </h2>
             <div className="text-4xl font-black text-blue-600 mb-2">{finalScore}</div>
             <div className="text-sm text-gray-600">
@@ -119,7 +119,7 @@ const BoxScoreView = ({ team, game, onBack }) => {
         {/* Player Stats */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="bg-blue-600 px-6 py-3">
-            <h3 className="font-black text-white text-lg">{team.name} - Player Stats</h3>
+            <h3 className="font-black text-white text-lg">{team?.name || game.home_team} - Player Stats</h3>
           </div>
           
           <div className="overflow-x-auto">
@@ -150,7 +150,9 @@ const BoxScoreView = ({ team, game, onBack }) => {
                     return (
                       <tr key={player.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
-                          <div className="font-bold text-gray-900">#{player.number} {player.name}</div>
+                          <div className="font-bold text-gray-900">
+                            {player.number ? `#${player.number} ` : ''}{player.name}
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center font-bold text-blue-600">{stats.pts || 0}</td>
                         <td className="px-3 py-3 text-center text-sm">{stats.totalFGM || 0}/{stats.totalFGA || 0}</td>

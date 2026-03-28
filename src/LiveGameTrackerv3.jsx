@@ -279,15 +279,6 @@ const LiveGameTracker = ({ user, toast }) => {
         return;
       }
 
-      // If game was completed, reopen it
-      if (freshGame.status === 'completed') {
-        await supabase
-          .from('games')
-          .update({ status: 'in-progress' })
-          .eq('id', freshGame.id);
-        freshGame.status = 'in-progress';
-      }
-
       const team = teams.find(t => t.id === freshGame.team_id);
       if (!team) {
         toast?.error('Team not found');

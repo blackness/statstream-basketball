@@ -104,40 +104,22 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
   }, [game.id, isLive]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
-  const plays      = game.recent_plays || [];
+  const plays = game.recent_plays || [];
   const teamTotals = calcTeamTotals(game);
   const oppTotals  = calcOpponentTotals(game);
 
-  const activePlayers  = game.active_players || [];
-  const periodLength   = game.game_settings?.periodLength || 8;
-  const periodsPlayed  = (game.period || 1) - 1;
-  const clockElapsed   = periodLength * 60 - (game.time_remaining || 0);
-  const totalElapsedMins = Math.round((periodsPlayed * periodLength * 60 + Math.max(0, clockElapsed)) / 60);
-
-  function estimateMins(playerId) {
-    if (activePlayers.includes(playerId)) return totalElapsedMins;
-    return Math.max(1, periodsPlayed * periodLength);
-  }
-
+  // Build player list from stats keys — look up names from roster, fallback to ID
   const statsEntries = Object.entries(game.stats || {})
     .map(([id, stats]) => {
       const rosterPlayer = roster.find(p => p.id === id);
-      const onFloor = activePlayers.includes(id);
       return {
         id,
         name: rosterPlayer?.name || stats._name || '—',
         number: rosterPlayer?.number || stats._number || '',
-        onFloor,
-        mins: estimateMins(id),
         stats
       };
     })
-    .sort((a, b) => {
-      if (a.onFloor !== b.onFloor) return a.onFloor ? -1 : 1;
-      return (b.stats.pts || 0) - (a.stats.pts || 0);
-    });
-
-  const onFloorPlayers = statsEntries.filter(p => p.onFloor);
+    .sort((a, b) => (b.stats.pts || 0) - (a.stats.pts || 0));
 
 
 
@@ -243,7 +225,6 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
               <thead>
                 <tr className="text-[9px] font-black text-white/25 uppercase tracking-wide border-b border-white/5">
                   <th className="px-4 py-2 text-left">Player</th>
-                  <th className="px-2 py-2 text-center">MIN</th>
                   <th className="px-2 py-2 text-center">PTS</th>
                   <th className="px-2 py-2 text-center">FG</th>
                   <th className="px-2 py-2 text-center">3PT</th>
@@ -261,15 +242,10 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
                 {statsEntries.length > 0 ? statsEntries.map(player => {
                   const s = calcPlayerStats(game, player.id);
                   return (
-                    <tr key={player.id} className={`hover:bg-white/3 ${player.onFloor ? 'bg-green-400/5' : ''}`}>
+                    <tr key={player.id} className="hover:bg-white/3">
                       <td className="px-4 py-2.5 font-bold text-white/80 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className={player.onFloor ? 'ring-2 ring-green-400 ring-offset-1 ring-offset-gray-900 rounded-full px-2 py-0.5 text-green-300' : ''}>
-                            {player.number ? `#${player.number} ` : ''}{player.name}
-                          </span>
-                        </div>
+                        {player.number ? `#${player.number} ` : ''}{player.name}
                       </td>
-                      <td className="px-2 py-2.5 text-center text-white/40 tabular-nums">{player.mins}</td>
                       <td className="px-2 py-2.5 text-center font-black text-blue-400 tabular-nums">{s.pts||0}</td>
                       <td className="px-2 py-2.5 text-center text-white/40 tabular-nums">{s.fgm}/{s.fga}</td>
                       <td className="px-2 py-2.5 text-center text-white/40 tabular-nums">{s.tpm||0}/{s.tpa||0}</td>
@@ -287,14 +263,13 @@ const LiveGameDetail = ({ initialGame, team: initialTeam, onBack }) => {
                   );
                 }) : (
                   <tr>
-                    <td colSpan="13" className="px-4 py-8 text-center text-white/20 text-sm">No stats yet</td>
+                    <td colSpan="12" className="px-4 py-8 text-center text-white/20 text-sm">No stats yet</td>
                   </tr>
                 )}
               </tbody>
               <tfoot className="border-t-2 border-white/10 bg-white/3">
                 <tr className="font-black text-[9px] uppercase text-white/40">
                   <td className="px-4 py-2.5">Totals</td>
-                  <td className="px-2 py-2.5 text-center">—</td>
                   <td className="px-2 py-2.5 text-center text-blue-400 tabular-nums">{teamTotals.pts}</td>
                   <td className="px-2 py-2.5 text-center tabular-nums">{teamTotals.fgm}/{teamTotals.fga}</td>
                   <td className="px-2 py-2.5 text-center tabular-nums">{teamTotals.tpm}/{teamTotals.tpa}</td>

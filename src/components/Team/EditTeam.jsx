@@ -48,7 +48,7 @@ const EditTeam = ({ team, onSave, onDelete, onCancel, onManageRoster, toast }) =
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AppHeader title="Edit Team" onBack={onCancel} />
+      <AppHeader title="Edit Team" onDashboard={onCancel} />
 
       <div className="max-w-2xl mx-auto p-4 sm:p-6">
         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-5">

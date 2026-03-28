@@ -356,6 +356,8 @@ const LiveGameView = ({
 
     const result = await manager.recordStat({
       playerId,
+      playerName: player?.name || '',
+      playerNumber: player?.number || '',
       statType,
       points,
       missed,
