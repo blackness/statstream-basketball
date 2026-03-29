@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Zap } from 'lucide-react';
-import { supabase } from '../../../supabase';
+import { supabase } from '@/supabase';
 import PlayByPlay from './PlayByPlay';
 
 // ── Live clock that counts down locally, re-syncs on DB updates ──────────────

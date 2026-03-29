@@ -93,7 +93,7 @@ const ROW_H    = 30;
 const HDR_H    = 26;
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const GameDetail = ({ initialGame, team: initialTeam, onBack }) => {
+const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
   const [game,      setGame]      = useState(initialGame);
   const [roster,    setRoster]    = useState(initialTeam?.roster || []);
   const [activeTab, setActiveTab] = useState('boxscore');
@@ -143,8 +143,10 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack }) => {
   const totalElapsedMins = Math.round((periodsPlayed * periodLength * 60 + Math.max(0, clockElapsed)) / 60);
 
   const estimateMins = (id) => {
-    if (activePlayers.includes(id)) return totalElapsedMins;
-    return Math.max(1, periodsPlayed * periodLength);
+    if (activePlayers.includes(id)) return totalElapsedMins;      // currently on floor
+    if (starterIds.includes(id)) return Math.max(1, periodsPlayed * periodLength); // starter, subbed out
+    if (game.stats?.[id]) return Math.max(1, periodsPlayed * periodLength);        // has stats, played some
+    return 0;  // DNP
   };
 
   const statsEntries = Object.entries(game.stats || {})
@@ -185,6 +187,92 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack }) => {
     .sort((a, b) => (b.stats.pts||0) - (a.stats.pts||0));
 
   const totals = getTeamTotals(game);
+
+  // ── Delete play handler ───────────────────────────────────────────────────
+  const handleDeletePlay = async (play) => {
+    const newPlayLog = (game.play_log || []).filter(p => p.id !== play.id);
+    const newRecentPlays = (game.recent_plays || []).filter(p => p.id !== play.id);
+
+    // Reverse stats
+    const newStats = JSON.parse(JSON.stringify(game.stats || {}));
+    const newPlusMinus = JSON.parse(JSON.stringify(game.plus_minus || {}));
+    let newHomeScore = game.home_score || 0;
+    let newAwayScore = game.away_score || 0;
+
+    if (play.team === 'home' && play.playerId && play.statType) {
+      const ps = newStats[play.playerId];
+      if (ps) {
+        // Reverse the stat
+        const st = play.statType;
+        if (st === 'fgm' || st === 'tpm' || st === 'ftm') {
+          const attemptKey = st.replace('m', 'a');
+          ps[attemptKey] = Math.max(0, (ps[attemptKey] || 0) - 1);
+          if (!play.missed) {
+            ps[st] = Math.max(0, (ps[st] || 0) - 1);
+            ps.pts = Math.max(0, (ps.pts || 0) - (play.points || 0));
+          }
+        } else {
+          ps[st] = Math.max(0, (ps[st] || 0) - 1);
+        }
+        newStats[play.playerId] = ps;
+      }
+      // Reverse score
+      if (play.points > 0) {
+        if (game.home_team !== game.opponent) {
+          newHomeScore = Math.max(0, newHomeScore - play.points);
+        } else {
+          newAwayScore = Math.max(0, newAwayScore - play.points);
+        }
+        // Reverse plus/minus
+        Object.keys(newPlusMinus).forEach(id => {
+          newPlusMinus[id] = (newPlusMinus[id] || 0) - play.points;
+        });
+      }
+    } else if (play.team === 'away' && play.points > 0) {
+      // Reverse opponent score
+      if (game.home_team !== game.opponent) {
+        newAwayScore = Math.max(0, newAwayScore - play.points);
+      } else {
+        newHomeScore = Math.max(0, newHomeScore - play.points);
+      }
+      // Reverse plus/minus
+      Object.keys(newPlusMinus).forEach(id => {
+        newPlusMinus[id] = (newPlusMinus[id] || 0) + play.points;
+      });
+    } else if (play.team === 'home' && play.playerId && !play.statType) {
+      // Legacy play without statType — parse from description
+      const desc = play.description || '';
+      const isHome2 = game.home_team !== game.opponent;
+      if (play.points > 0) {
+        if (isHome2) newHomeScore = Math.max(0, newHomeScore - play.points);
+        else newAwayScore = Math.max(0, newAwayScore - play.points);
+        Object.keys(newPlusMinus).forEach(id => { newPlusMinus[id] = (newPlusMinus[id]||0) - play.points; });
+      }
+    }
+
+    // Save to DB
+    const { error } = await supabase.from('games').update({
+      stats: newStats,
+      play_log: newPlayLog,
+      recent_plays: newRecentPlays,
+      home_score: newHomeScore,
+      away_score: newAwayScore,
+      plus_minus: newPlusMinus,
+      updated_at: new Date().toISOString(),
+    }).eq('id', game.id);
+
+    if (!error) {
+      setGame(prev => ({
+        ...prev,
+        stats: newStats,
+        play_log: newPlayLog,
+        recent_plays: newRecentPlays,
+        home_score: newHomeScore,
+        away_score: newAwayScore,
+        plus_minus: newPlusMinus,
+      }));
+    }
+  };
 
   return (
     <div style={{ position:'fixed', inset:0, display:'flex', justifyContent:'center', background:'#030712', zIndex:50 }}>
@@ -305,7 +393,7 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack }) => {
         {/* ── PLAY BY PLAY ──────────────────────────────────────────────────── */}
         {activeTab === 'playbyplay' && (
           <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-            <PlayByPlay game={game} isDark={true} />
+            <PlayByPlay game={game} isDark={true} onDeletePlay={user?.id === game.user_id ? handleDeletePlay : undefined} />
           </div>
         )}
 

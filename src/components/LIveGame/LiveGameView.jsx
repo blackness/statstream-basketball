@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/supabase';
 import { Play, Pause, RotateCcw, LayoutDashboard, Maximize2, Minimize2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import GameStateManager from '../../services/GameStateManager';
-import { useScoreNotifications, requestNotificationPermission } from '../../hooks/useScoreNotifications';
 
 const LiveGameView = ({ 
   user,
@@ -17,7 +16,7 @@ const LiveGameView = ({
   
   const [team, setTeam] = useState(initialTeam);
   const [gamePhase, setGamePhase] = useState(existingGame ? 'live' : 'selectStarters');
-  const [starters, setStarters] = useState(existingGame?.starters || []);
+  const [starters,  setStarters]  = useState(existingGame?.starters || []);
   const [currentGameId, setCurrentGameId] = useState(existingGame?.id || null);
   const [homeScore, setHomeScore] = useState(existingGame?.home_score || 0);
   const [awayScore, setAwayScore] = useState(existingGame?.away_score || 0);
@@ -50,22 +49,6 @@ const LiveGameView = ({
   const [lastFivePlays, setLastFivePlays] = useState([]);
   const [plusMinus, setPlusMinus] = useState({});
   const [showShotMap, setShowShotMap] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-
-  // Score notifications
-  const { notifyScore } = useScoreNotifications({
-    enabled: notificationsEnabled,
-    homeTeam: gameSettings.isHome ? team.name : gameSettings.opponent,
-    awayTeam: gameSettings.isHome ? gameSettings.opponent : team.name,
-    period: currentPeriod,
-  });
-
-  // Request notification permission on mount
-  useEffect(() => {
-    requestNotificationPermission().then(granted => {
-      setNotificationsEnabled(granted);
-    });
-  }, []);
 
   // Refresh roster
   useEffect(() => {
@@ -212,7 +195,7 @@ const LiveGameView = ({
         } else {
           console.log('Session game no longer exists, clearing session');
           localStorage.removeItem(sessionKey);
-          // Don't auto-create — user will go through starter selection
+          // Don't auto-create — starter selection handles this
         }
       } else if (!currentGameId) {
         // New game — starter selection handles creation
@@ -224,7 +207,7 @@ const LiveGameView = ({
       // Clear initialization flag
       localStorage.removeItem(initFlag);
     };
-    
+
     initializeGame();
   }, []);
 
@@ -362,10 +345,21 @@ const LiveGameView = ({
       time: `${Math.floor(gameTime / 60)}:${(gameTime % 60).toString().padStart(2, '0')}`,
       period: currentPeriod,
       points,
-      team: 'home'
+      missed,
+      team: 'home',
+      playerId,
+      statType,
     };
     const updatedPlays = [newPlay, ...recentPlays].slice(0, 5);
     const updatedPlayLog = [newPlay, ...playLog];
+
+    // Calculate updated plusMinus before saving so DB gets the correct value
+    let updatedPlusMinus = { ...plusMinus };
+    if (points > 0) {
+      activePlayers.forEach(id => {
+        updatedPlusMinus[id] = (updatedPlusMinus[id] || 0) + points;
+      });
+    }
 
     const result = await manager.recordStat({
       playerId,
@@ -385,7 +379,7 @@ const LiveGameView = ({
       timerRunning: isTimerRunning,
       opponentStats,
       activePlayers,
-      plusMinus,
+      plusMinus: updatedPlusMinus,
       gameSettings: {
         ...gameSettings,
         homeFouls,
@@ -406,14 +400,8 @@ const LiveGameView = ({
       setPlayLog(updatedPlayLog);
 
       if (points > 0) {
-        updatePlusMinus(points, true);
+        setPlusMinus(updatedPlusMinus);
         toast?.success(`+${points} ${player?.name}`);
-        notifyScore(
-          player?.name || 'Player',
-          points,
-          result.newHomeScore,
-          result.newAwayScore
-        );
       }
     } else {
       // Check if game doesn't exist (0 rows error)
@@ -495,7 +483,9 @@ const LiveGameView = ({
       time: `${Math.floor(gameTime / 60)}:${(gameTime % 60).toString().padStart(2, '0')}`,
       period: currentPeriod,
       points,
-      team: 'away'
+      missed,
+      team: 'away',
+      statType,
     };
     const updatedOpponentPlays = [opponentPlay, ...recentPlays].slice(0, 5);
     const updatedOpponentPlayLog = [opponentPlay, ...playLog];
@@ -626,6 +616,52 @@ const LiveGameView = ({
     } else {
       toast?.error('Could not undo play');
     }
+  };
+
+  // Delete a specific play from recent plays and reverse its stat
+  const handleDeleteSpecificPlay = async (play) => {
+    const description = play.description || '';
+    const isHomePlay  = play.team === 'home';
+
+    // Remove from recentPlays and playLog
+    setRecentPlays(prev => prev.filter(p => p.id !== play.id));
+    setPlayLog(prev => prev.filter(p => p.id !== play.id));
+
+    if (!isHomePlay) {
+      // Opponent play — just reverse score
+      if ((play.points || 0) > 0) {
+        const newHomeScore = gameSettings.isHome ? homeScore : Math.max(0, homeScore - play.points);
+        const newAwayScore = gameSettings.isHome ? Math.max(0, awayScore - play.points) : awayScore;
+        setHomeScore(newHomeScore);
+        setAwayScore(newAwayScore);
+        const manager = new GameStateManager(currentGameId);
+        await manager.saveGameState({ homeScore: newHomeScore, awayScore: newAwayScore, period: currentPeriod, timeRemaining: gameTime, timerRunning: isTimerRunning, stats: liveStats, opponentStats, activePlayers, plusMinus, gameSettings, recentPlays: recentPlays.filter(p => p.id !== play.id), playLog: playLog.filter(p => p.id !== play.id) });
+      }
+      return;
+    }
+
+    // Use playerId + statType if available (new plays), else parse description
+    if (play.playerId && play.statType) {
+      await undoStat(play.playerId, play.statType, play.points || 0, play.missed || false);
+    } else {
+      // Legacy — parse from description
+      const player = team.roster?.find(p => description.includes(p.name));
+      if (player) {
+        if (description.includes('Made 2PT'))      await undoStat(player.id, 'fgm', 2, false);
+        else if (description.includes('Made 3PT')) await undoStat(player.id, 'tpm', 3, false);
+        else if (description.includes('Made FT'))  await undoStat(player.id, 'ftm', 1, false);
+        else if (description.includes('Missed 2PT')) await undoStat(player.id, 'fgm', 0, true);
+        else if (description.includes('Missed 3PT')) await undoStat(player.id, 'tpm', 0, true);
+        else if (description.includes('Missed FT'))  await undoStat(player.id, 'ftm', 0, true);
+        else if (description.includes('Rebound'))    await undoStat(player.id, description.includes('Off') ? 'oreb' : 'dreb', 0, false);
+        else if (description.includes('Assist'))     await undoStat(player.id, 'ast', 0, false);
+        else if (description.includes('Steal'))      await undoStat(player.id, 'stl', 0, false);
+        else if (description.includes('Block'))      await undoStat(player.id, 'blk', 0, false);
+        else if (description.includes('Turnover'))   await undoStat(player.id, 'to', 0, false);
+        else if (description.includes('Foul'))       await undoStat(player.id, 'pf', 0, false);
+      }
+    }
+    toast?.success('Play deleted');
   };
 
   const undoStat = async (playerId, statType, points, wasMissed) => {
@@ -825,11 +861,8 @@ const LiveGameView = ({
   // ── Starter Selection Screen ─────────────────────────────────────────────
   if (gamePhase === 'selectStarters') {
     const roster = team.roster || [];
-    const toggleStarter = (playerId) => {
-      setStarters(prev =>
-        prev.includes(playerId) ? prev.filter(id => id !== playerId) : [...prev, playerId]
-      );
-    };
+    const toggleStarter = (id) =>
+      setStarters(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
 
     const handleBeginGame = async () => {
       const result = await GameStateManager.createGame({
@@ -1370,7 +1403,16 @@ const LiveGameView = ({
                   {recentPlays.map(play => (
                     <div key={play.id} className="flex items-center justify-between p-1.5 sm:p-2 bg-gray-50 rounded text-xs sm:text-sm">
                       <span className="font-medium text-gray-900 truncate">{play.description}</span>
-                      <span className="text-gray-500 text-xs flex-shrink-0 ml-2">{play.time} - {play.period}Q</span>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <span className="text-gray-500 text-xs">{play.time} - {play.period}Q</span>
+                        <button
+                          onClick={() => handleDeleteSpecificPlay(play)}
+                          className="text-red-400 hover:text-red-600 active:text-red-800 transition p-0.5"
+                          title="Delete play"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -442,6 +442,7 @@ const LiveGameTracker = ({ user, toast }) => {
       <GameDetail
         initialGame={viewingGameDetail}
         team={team}
+        user={user}
         onBack={() => { clearSession(); setViewingGameDetail(null); setViewingBoxScore(null); }}
       />
     );
@@ -453,6 +454,7 @@ const LiveGameTracker = ({ user, toast }) => {
       <GameDetail
         initialGame={viewingBoxScore}
         team={team}
+        user={user}
         onBack={() => { clearSession(); setViewingBoxScore(null); setViewingGameDetail(null); }}
       />
     );
