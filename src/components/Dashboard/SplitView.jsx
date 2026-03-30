@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Trophy, Calendar, Plus, Zap } from 'lucide-react';
+import { Play, Trophy, Calendar, Plus, Zap, MoreVertical, Trash2, Pencil, CheckCircle, RotateCcw } from 'lucide-react';
+import { supabase } from '@/supabase';
 
 // Countdown clock that syncs from DB time_remaining + updated_at drift
 const LiveClock = ({ timeRemaining, updatedAt, timerRunning }) => {
@@ -56,12 +57,16 @@ const SplitView = ({
   toast
 }) => {
   const [filterTeamId, setFilterTeamId] = useState(null);
+  const [gameMenuId,   setGameMenuId]   = useState(null); // which game's menu is open
+  const [editingGame,  setEditingGame]  = useState(null); // game being edited
+  const [editOpponent, setEditOpponent] = useState('');
+  const [editIsHome,   setEditIsHome]   = useState(true);
 
   const handleTeamClick = (team) => {
     setFilterTeamId(prev => prev === team.id ? null : team.id);
   };
 
-  const canEdit = (game) => !!user;
+  const canEdit = (game) => isSuperUser || (user && game.user_id === user.id);
   const canEditTeam = (team) => isSuperUser || (user && team.user_id === user.id);
 
   const filteredHistory = filterTeamId
@@ -105,16 +110,11 @@ const SplitView = ({
     return `${top.pts} PTS`;
   };
 
-  const isMyTeamHome = (game) => {
-    const team = teams.find(t => t.id === game.team_id);
-    return team ? game.home_team === team.name : (game.game_settings?.isHome ?? true);
-  };
-
   const getMyScore = (game) =>
-    isMyTeamHome(game) ? (game.home_score || 0) : (game.away_score || 0);
+    game.game_settings?.isHome ? (game.home_score || 0) : (game.away_score || 0);
 
   const getTheirScore = (game) =>
-    isMyTeamHome(game) ? (game.away_score || 0) : (game.home_score || 0);
+    game.game_settings?.isHome ? (game.away_score || 0) : (game.home_score || 0);
 
   const TEAM_GRADIENTS = [
     'from-blue-700 to-blue-500',
@@ -308,54 +308,6 @@ const SplitView = ({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
 
-          {/* TODAY'S RESULTS BANNER */}
-          {(() => {
-            const today = new Date().toDateString();
-            const todaysCompleted = filteredHistory.filter(g =>
-              g.status === 'completed' &&
-              new Date(g.updated_at || g.created_at).toDateString() === today
-            );
-            if (!todaysCompleted.length) return null;
-            return (
-              <div className="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
-                <div className="px-3 py-1.5 border-b border-gray-700 flex items-center gap-1.5">
-                  <Trophy size={10} className="text-yellow-400" />
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Today's Results</span>
-                </div>
-                <div className="divide-y divide-gray-800">
-                  {todaysCompleted.map(game => {
-                    const myScore    = getMyScore(game);
-                    const theirScore = getTheirScore(game);
-                    const isWin      = myScore > theirScore;
-                    const isLoss     = myScore < theirScore;
-                    const myName     = getTeamName(game.team_id);
-                    const isHome     = game.game_settings?.isHome;
-                    const resultColor = isWin ? '#10b981' : isLoss ? '#ef4444' : '#9ca3af';
-                    return (
-                      <div
-                        key={game.id}
-                        onClick={() => onViewStats(game)}
-                        className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-gray-800 transition"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-[9px] font-black uppercase tracking-wide flex-shrink-0" style={{ color: resultColor }}>
-                            {isWin ? 'W' : isLoss ? 'L' : 'D'}
-                          </span>
-                          <span className="text-[10px] font-bold text-gray-300 truncate">
-                            {isHome ? `${myName} vs ${game.opponent}` : `${myName} @ ${game.opponent}`}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-black text-white tabular-nums flex-shrink-0 ml-3">
-                          {myScore}–{theirScore}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
           {/* LIVE */}
           {liveGames.length > 0 && (
             <div>
@@ -434,6 +386,32 @@ const SplitView = ({
                               End
                             </button>
                           )}
+                          {canEdit(game) && (
+                            <div className="relative">
+                              <button
+                                onClick={e => { e.stopPropagation(); setGameMenuId(gameMenuId === game.id ? null : game.id); }}
+                                className="px-2 py-1 bg-black/20 hover:bg-black/30 text-white/70 rounded font-bold text-[9px] transition"
+                              >
+                                <MoreVertical size={10} />
+                              </button>
+                              {gameMenuId === game.id && (
+                                <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                                  <button
+                                    onClick={e => { e.stopPropagation(); setEditingGame(game); setEditOpponent(game.opponent); setEditIsHome(game.home_team !== game.opponent); setGameMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition"
+                                  >
+                                    <Pencil size={12} /> Edit Game
+                                  </button>
+                                  <button
+                                    onClick={e => { e.stopPropagation(); onDeleteGame(game); setGameMenuId(null); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition"
+                                  >
+                                    <Trash2 size={12} /> Delete Game
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -499,7 +477,7 @@ const SplitView = ({
                         )}
                       </div>
 
-                      <div className="flex border-t border-gray-100">
+                      <div className="flex border-t border-gray-100 relative">
                         <button
                           onClick={() => onViewStats(game)}
                           className="flex-1 py-1.5 text-[9px] font-black text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition uppercase tracking-wide"
@@ -513,6 +491,32 @@ const SplitView = ({
                           >
                             Resume
                           </button>
+                        )}
+                        {canEdit(game) && (
+                          <div className="relative">
+                            <button
+                              onClick={e => { e.stopPropagation(); setGameMenuId(gameMenuId === game.id ? null : game.id); }}
+                              className="px-2 py-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition border-l border-gray-100"
+                            >
+                              <MoreVertical size={12} />
+                            </button>
+                            {gameMenuId === game.id && (
+                              <div className="absolute right-0 bottom-full mb-1 w-40 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                                <button
+                                  onClick={e => { e.stopPropagation(); setEditingGame(game); setEditOpponent(game.opponent); setEditIsHome(game.home_team !== game.opponent); setGameMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition"
+                                >
+                                  <Pencil size={12} /> Edit Game
+                                </button>
+                                <button
+                                  onClick={e => { e.stopPropagation(); onDeleteGame(game); setGameMenuId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition"
+                                >
+                                  <Trash2 size={12} /> Delete Game
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -536,6 +540,73 @@ const SplitView = ({
           </div>
         </div>
       </div>
+
+      {/* Click outside to close menu */}
+      {gameMenuId && (
+        <div className="fixed inset-0 z-40" onClick={() => setGameMenuId(null)} />
+      )}
+
+      {/* Edit Game Modal */}
+      {editingGame && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-black text-gray-900 mb-4">Edit Game</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Opponent</label>
+                <input
+                  type="text"
+                  value={editOpponent}
+                  onChange={e => setEditOpponent(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Opponent name"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Location</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditIsHome(true)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition ${editIsHome ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    Home
+                  </button>
+                  <button
+                    onClick={() => setEditIsHome(false)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition ${!editIsHome ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                  >
+                    Away
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setEditingGame(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const teamName = teams.find(t => t.id === editingGame.team_id)?.name || editingGame.home_team;
+                  const newHomeTeam = editIsHome ? teamName : editOpponent;
+                  const { error } = await supabase.from('games').update({
+                    opponent: editOpponent,
+                    home_team: newHomeTeam,
+                    game_settings: { ...editingGame.game_settings, opponent: editOpponent, isHome: editIsHome }
+                  }).eq('id', editingGame.id);
+                  if (!error) setEditingGame(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-bold text-white transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
