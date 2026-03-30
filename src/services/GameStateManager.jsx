@@ -9,40 +9,21 @@ class GameStateManager {
    * Save current game state to database
    */
   async saveGameState({
-    homeScore,
-    awayScore,
-    period,
-    timeRemaining,
-    timerRunning,
-    stats,
-    opponentStats,
-    activePlayers,
-    plusMinus,
-    gameSettings,
-    recentPlays,
-    playLog
+    homeScore, awayScore, period, timeRemaining, timerRunning,
+    stats, opponentStats, activePlayers, plusMinus, gameSettings,
+    recentPlays, playLog, notPresent
   }) {
     try {
-      const { data, error } = await supabase
-        .from('games')
-        .update({
-          home_score: homeScore,
-          away_score: awayScore,
-          period,
-          time_remaining: timeRemaining,
-          timer_running: timerRunning ?? false,
-          stats,
-          opponent_stats: opponentStats,
-          active_players: activePlayers,
-          plus_minus: plusMinus,
-          game_settings: gameSettings,
-          recent_plays: recentPlays || [],
-          play_log: playLog || [],
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', this.gameId)
-        .select()
-        .single();
+      const update = {
+        home_score: homeScore, away_score: awayScore, period,
+        time_remaining: timeRemaining, timer_running: timerRunning ?? false,
+        stats, opponent_stats: opponentStats, active_players: activePlayers,
+        plus_minus: plusMinus, game_settings: gameSettings,
+        recent_plays: recentPlays || [], play_log: playLog || [],
+        updated_at: new Date().toISOString()
+      };
+      if (notPresent !== undefined) update.not_present = notPresent;
+      const { data, error } = await supabase.from('games').update(update).eq('id', this.gameId).select().single();
 
       if (error) throw error;
 
@@ -165,13 +146,8 @@ class GameStateManager {
    * Create new game
    */
   static async createGame({
-    userId,
-    teamId,
-    teamName,
-    opponent,
-    isHome,
-    periodLength,
-    totalPeriods
+    userId, teamId, teamName, opponent, isHome, periodLength, totalPeriods,
+    starters = [], activePlayers = [], notPresent = []
   }) {
     try {
       const { data, error } = await supabase
@@ -193,15 +169,13 @@ class GameStateManager {
               oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0
             }
           },
-          active_players: [],
+          active_players: activePlayers,
+          starters,
+          not_present: notPresent,
           plus_minus: {},
           game_settings: {
-            isHome,
-            opponent,
-            periodLength,
-            totalPeriods,
-            homeFouls: 0,
-            awayFouls: 0
+            isHome, opponent, periodLength, totalPeriods,
+            homeFouls: 0, awayFouls: 0
           }
         })
         .select()

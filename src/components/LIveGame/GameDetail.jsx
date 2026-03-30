@@ -92,6 +92,158 @@ const NAME_W   = 112;
 const ROW_H    = 30;
 const HDR_H    = 26;
 
+// ── Score Graph ───────────────────────────────────────────────────────────────
+const ScoreGraph = ({ game, isHome, myName, oppName }) => {
+  const [normalized, setNormalized] = useState(false);
+
+  const periodLength = (game.game_settings?.periodLength || 8) * 60;
+  const totalPeriods = game.game_settings?.totalPeriods || 4;
+  const totalTime    = periodLength * totalPeriods;
+
+  const plays = [...(game.play_log || [])].reverse(); // oldest first
+  const scoringPlays = plays.filter(p => (p.points || 0) > 0);
+
+  // Convert period + time remaining to absolute seconds elapsed
+  const toElapsed = (period, timeStr) => {
+    const periodStart = ((period || 1) - 1) * periodLength;
+    if (!timeStr) return periodStart;
+    const parts = timeStr.toString().split(':');
+    const mins = parseInt(parts[0]) || 0;
+    const secs = parseInt(parts[1]) || 0;
+    const remaining = mins * 60 + secs;
+    return periodStart + Math.max(0, periodLength - remaining);
+  };
+
+  // Detect if clock was never run — a play is "untimed" if its time
+  // equals the full period length (clock never started)
+  const isUntimed = (play) => {
+    const parts = (play.time || '').split(':');
+    const remaining = (parseInt(parts[0])||0)*60 + (parseInt(parts[1])||0);
+    return remaining >= periodLength;
+  };
+
+  const untimedCount = scoringPlays.filter(isUntimed).length;
+  const clockNeverRan = untimedCount === scoringPlays.length;
+
+  // Build data points
+  let myRunning  = 0;
+  let oppRunning = 0;
+  const rawPoints = [{ t: 0, my: 0, opp: 0 }];
+
+  scoringPlays.forEach((play, idx) => {
+    let t;
+    if (clockNeverRan) {
+      // Distribute all plays evenly across total game time
+      t = Math.round(((idx + 1) / (scoringPlays.length + 1)) * totalTime);
+    } else if (isUntimed(play)) {
+      // This specific play has no clock — interpolate between neighbours
+      const prev = rawPoints[rawPoints.length - 1]?.t || 0;
+      const next = totalTime;
+      t = Math.round((prev + next) / 2);
+    } else {
+      t = toElapsed(play.period || 1, play.time);
+    }
+    // In play_log, team:'home' always means OUR team's play,
+    // team:'away' always means opponent's play — regardless of isHome
+    const isMyPlay = play.team === 'home';
+    if (isMyPlay) myRunning  += play.points;
+    else          oppRunning += play.points;
+    rawPoints.push({ t, my: myRunning, opp: oppRunning });
+  });
+
+  rawPoints.push({ t: totalTime, my: myRunning, opp: oppRunning });
+
+  // Normalize button — spread all plays evenly regardless
+  const points = normalized ? (() => {
+    const scored = rawPoints.filter((p,i) => i > 0 && (p.my !== rawPoints[i-1]?.my || p.opp !== rawPoints[i-1]?.opp));
+    if (scored.length === 0) return rawPoints;
+    const step = totalTime / (scored.length + 1);
+    let myR = 0, oppR = 0;
+    const norm = [{ t:0, my:0, opp:0 }];
+    scored.forEach((p, i) => {
+      const prev = i === 0 ? { my:0, opp:0 } : scored[i-1];
+      myR  += p.my  - prev.my;
+      oppR += p.opp - prev.opp;
+      norm.push({ t: step * (i+1), my: myR, opp: oppR });
+    });
+    norm.push({ t: totalTime, my: myR, opp: oppR });
+    return norm;
+  })() : rawPoints;
+
+  // SVG dimensions
+  const W = 320, H = 160, PAD = 24;
+  const maxScore = Math.max(...points.map(p => Math.max(p.my, p.opp)), 10);
+  const toX = t  => PAD + (t / totalTime) * (W - PAD * 2);
+  const toY = s  => H - PAD - (s / maxScore) * (H - PAD * 2);
+
+  const myPath  = points.map((p,i) => `${i===0?'M':'L'}${toX(p.t).toFixed(1)},${toY(p.my).toFixed(1)}`).join(' ');
+  const oppPath = points.map((p,i) => `${i===0?'M':'L'}${toX(p.t).toFixed(1)},${toY(p.opp).toFixed(1)}`).join(' ');
+
+  // Period dividers
+  const periods = Array.from({length: totalPeriods - 1}, (_, i) => (i+1) * periodLength);
+
+  return (
+    <div style={{ flex:1, overflow:'auto', padding:'16px', display:'flex', flexDirection:'column', gap:12 }}>
+      {/* Graph */}
+      <div style={{ background:'#0d1526', borderRadius:12, border:'1px solid #1e293b', padding:'12px', overflow:'hidden' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+            <span style={{ fontSize:10, fontWeight:800, color:'#475569', letterSpacing:'0.1em', textTransform:'uppercase' }}>Score Timeline</span>
+            {clockNeverRan && !normalized && <span style={{ fontSize:9, color:'#f97316', fontWeight:700 }}>⚠ Clock not used — points distributed evenly</span>}
+          </div>
+          <button
+            onClick={() => setNormalized(n => !n)}
+            style={{ padding:'3px 10px', borderRadius:6, border:`1px solid ${normalized?'#f97316':'#334155'}`, background: normalized?'#f9731622':'transparent', color: normalized?'#f97316':'#475569', fontSize:10, fontWeight:700, cursor:'pointer' }}
+          >
+            {normalized ? '⚡ Normalized' : 'Normalize Clock'}
+          </button>
+        </div>
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ width:'100%', height:'auto', display:'block' }}>
+          {/* Grid lines */}
+          {[0.25,0.5,0.75,1].map(f => (
+            <line key={f} x1={PAD} x2={W-PAD} y1={toY(maxScore*f)} y2={toY(maxScore*f)} stroke="#1e293b" strokeWidth="1" />
+          ))}
+          {/* Period dividers */}
+          {periods.map(t => (
+            <line key={t} x1={toX(t)} x2={toX(t)} y1={PAD} y2={H-PAD} stroke="#334155" strokeWidth="1" strokeDasharray="3,3" />
+          ))}
+          {/* Opponent line */}
+          <path d={oppPath} fill="none" stroke="#f87171" strokeWidth="2" strokeLinejoin="round" />
+          {/* My team line */}
+          <path d={myPath} fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinejoin="round" />
+          {/* Score labels at end */}
+          <text x={W-PAD+3} y={toY(myRunning)+4}  fill="#60a5fa" fontSize="9" fontWeight="bold">{myRunning}</text>
+          <text x={W-PAD+3} y={toY(oppRunning)+4} fill="#f87171" fontSize="9" fontWeight="bold">{oppRunning}</text>
+          {/* Y axis labels */}
+          {[0,Math.round(maxScore/2),maxScore].map(v => (
+            <text key={v} x={PAD-3} y={toY(v)+3} fill="#334155" fontSize="8" textAnchor="end">{v}</text>
+          ))}
+          {/* X axis period labels */}
+          {Array.from({length:totalPeriods},(_,i)=>(i+0.5)*periodLength).map((t,i) => (
+            <text key={i} x={toX(t)} y={H-6} fill="#334155" fontSize="8" textAnchor="middle">Q{i+1}</text>
+          ))}
+        </svg>
+        {/* Legend */}
+        <div style={{ display:'flex', gap:16, justifyContent:'center', marginTop:6 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+            <div style={{ width:16, height:2.5, background:'#60a5fa', borderRadius:2 }} />
+            <span style={{ fontSize:10, color:'#60a5fa', fontWeight:700 }}>{myName}</span>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+            <div style={{ width:16, height:2.5, background:'#f87171', borderRadius:2 }} />
+            <span style={{ fontSize:10, color:'#f87171', fontWeight:700 }}>{oppName}</span>
+          </div>
+        </div>
+      </div>
+      {normalized && (
+        <div style={{ fontSize:10, color:'#475569', textAlign:'center', padding:'4px 0' }}>
+          Points distributed evenly across game time — actual stat values unchanged
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
   const [game,      setGame]      = useState(initialGame);
@@ -138,31 +290,89 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
   const activePlayers = game.active_players || [];
   const starterIds    = game.starters || [];
   const periodLength  = game.game_settings?.periodLength || 8;
-  const periodsPlayed = (game.period || 1) - 1;
-  const clockElapsed  = periodLength * 60 - (game.time_remaining || 0);
-  const totalElapsedMins = Math.round((periodsPlayed * periodLength * 60 + Math.max(0, clockElapsed)) / 60);
+  const totalPeriods  = game.game_settings?.totalPeriods || 4;
+  const isCompleted   = game.status === 'completed';
+  const periodLenSecs = periodLength * 60;
 
-  const estimateMins = (id) => {
-    if (activePlayers.includes(id)) return totalElapsedMins;      // currently on floor
-    if (starterIds.includes(id)) return Math.max(1, periodsPlayed * periodLength); // starter, subbed out
-    if (game.stats?.[id]) return Math.max(1, periodsPlayed * periodLength);        // has stats, played some
-    return 0;  // DNP
+  // Exact minutes from sub log
+  const calcMinutes = (playerId) => {
+    const toSecs = (period, timeRemaining) =>
+      ((period - 1) * periodLenSecs) + Math.max(0, periodLenSecs - (timeRemaining ?? periodLenSecs));
+
+    const subs = [...(game.play_log || [])].reverse()
+      .filter(p => p.isSub && (p.playerInId || p.playerOutId));
+
+    let intervals = [];
+    let timeIn = null;
+
+    if (starterIds.includes(playerId)) timeIn = 0;
+
+    subs.forEach(sub => {
+      const t = toSecs(sub.period || 1, sub.timeRemaining);
+      if (sub.playerInId === playerId) timeIn = t;
+      else if (sub.playerOutId === playerId && timeIn !== null) {
+        intervals.push({ start: timeIn, end: t });
+        timeIn = null;
+      }
+    });
+
+    // Still on floor at end
+    if (timeIn !== null) {
+      const endSecs = isCompleted
+        ? (game.period || totalPeriods) * periodLenSecs
+        : toSecs(game.period || 1, game.time_remaining || 0);
+      intervals.push({ start: timeIn, end: endSecs });
+    }
+
+    const totalSecs = intervals.reduce((sum, i) => sum + Math.max(0, i.end - i.start), 0);
+    if (totalSecs === 0) {
+      // No sub data — fall back to estimate
+      if (isCompleted) {
+        if (activePlayers.includes(playerId) || starterIds.includes(playerId)) return (game.period || totalPeriods) * periodLength;
+        if (game.stats?.[playerId]) return Math.round((game.period || totalPeriods) * periodLength * 0.6);
+        return 0;
+      }
+      return 0;
+    }
+    return Math.round(totalSecs / 60);
   };
+
+  // Build name lookup from play_log as fallback for unmatched UUIDs
+  const nameFromPlayLog = {};
+  (game.play_log || []).forEach(play => {
+    if (play.playerId && play.description) {
+      const match = play.description.match(/^([^-]+)\s*-/);
+      if (match) nameFromPlayLog[play.playerId] = match[1].trim();
+    }
+  });
+
+  // Build a name→roster lookup for fuzzy matching
+  const rosterByName = {};
+  roster.forEach(p => { rosterByName[p.name.toLowerCase()] = p; });
 
   const statsEntries = Object.entries(game.stats || {})
     .map(([id, stats]) => {
-      const rp = roster.find(p => p.id === id);
+      // Try direct UUID match first
+      let rp = roster.find(p => p.id === id);
+      // Fall back to name match via play_log or _name
+      if (!rp) {
+        const fallbackName = stats._name || nameFromPlayLog[id];
+        if (fallbackName) rp = rosterByName[fallbackName.toLowerCase()];
+      }
+      const name   = rp?.name   || stats._name || nameFromPlayLog[id] || `Player ${id.slice(0,4)}`;
+      const number = rp?.number ?? stats._number ?? '';
       return {
         id,
-        name: rp?.name || stats._name || '—',
-        number: rp?.number || stats._number || '',
-        onFloor: activePlayers.includes(id),
-        isStarter: starterIds.includes(id),
-        mins: estimateMins(id),
+        name,
+        number,
+        onFloor:   activePlayers.includes(id) || (rp && activePlayers.includes(rp.id)),
+        isStarter: starterIds.includes(id)    || (rp && starterIds.includes(rp.id)),
+        mins: calcMinutes(id),
         hasStats: true, stats,
       };
     })
     .reduce((acc, player) => {
+      if (player.name.startsWith('Player ')) return [...acc, player];
       const key = player.name.toLowerCase();
       const ex = acc.find(p => p.name.toLowerCase() === key);
       if (ex) {
@@ -174,12 +384,12 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
 
   const statsNames = new Set(statsEntries.map(p => p.name.toLowerCase()));
   const rosterOnly = roster
-    .filter(p => game.stats?.[p.id] == null && !statsNames.has(p.name.toLowerCase()))
+    .filter(p => !statsNames.has(p.name.toLowerCase()))
     .map(p => ({
       id: p.id, name: p.name, number: p.number || '',
       onFloor: activePlayers.includes(p.id),
       isStarter: starterIds.includes(p.id),
-      mins: estimateMins(p.id),
+      mins: calcMinutes(p.id),
       hasStats: false, stats: {},
     }));
 
@@ -346,6 +556,36 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
             </div>
           </div>
 
+          {/* Fouls row */}
+          {(() => {
+            const homeFouls = game.game_settings?.homeFouls || 0;
+            const awayFouls = game.game_settings?.awayFouls || 0;
+            // homeFouls = home team's fouls, awayFouls = away team's fouls
+            // Left side of scoreboard = away team, right side = home team
+            const leftFouls  = awayFouls;
+            const rightFouls = homeFouls;
+            const FoulDots = ({ count, align }) => (
+              <div style={{ display:'flex', gap:3, justifyContent: align==='right' ? 'flex-end' : 'flex-start' }}>
+                {[1,2,3,4,5].map(i => (
+                  <div key={i} style={{ width:7, height:7, borderRadius:'50%', background: i<=count ? (count>=4?'#fbbf24':'#ef4444') : '#1e293b', transition:'background 0.2s' }} />
+                ))}
+              </div>
+            );
+            return (
+              <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', padding:'4px 14px 6px', gap:6, borderTop:'1px solid #1e293b22' }}>
+                <div>
+                  <div style={{ fontSize:8, color:'#334155', fontWeight:700, letterSpacing:'0.08em', marginBottom:3 }}>FOULS</div>
+                  <FoulDots count={leftFouls} align="left" />
+                </div>
+                <div style={{ width:40 }} />
+                <div style={{ textAlign:'right' }}>
+                  <div style={{ fontSize:8, color:'#334155', fontWeight:700, letterSpacing:'0.08em', marginBottom:3 }}>FOULS</div>
+                  <FoulDots count={rightFouls} align="right" />
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Recent plays ticker — live only */}
           {isLive && (game.recent_plays||[]).length > 0 && (
             <div style={{ borderTop:'1px solid #1e293b', padding:'6px 14px', display:'flex', gap:12, overflowX:'auto' }}>
@@ -380,7 +620,7 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
 
         {/* ── TABS ──────────────────────────────────────────────────────────── */}
         <div style={{ display:'flex', borderBottom:'1px solid #1e293b', background:'#060d1a', flexShrink:0 }}>
-          {[['boxscore','Box Score'],['playbyplay','Play by Play']].map(([tab, label]) => (
+          {[['boxscore','Box Score'],['playbyplay','Play by Play'],['graph','Score Graph']].map(([tab, label]) => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
               flex:1, padding:'9px 0', border:'none', cursor:'pointer', fontSize:11, fontWeight:800,
               letterSpacing:'0.06em', textTransform:'uppercase', background:'transparent',
@@ -395,6 +635,11 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
           <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
             <PlayByPlay game={game} isDark={true} onDeletePlay={user?.id === game.user_id ? handleDeletePlay : undefined} />
           </div>
+        )}
+
+        {/* ── SCORE GRAPH ────────────────────────────────────────────────────── */}
+        {activeTab === 'graph' && (
+          <ScoreGraph game={game} isHome={isHome} myName={myName} oppName={oppName} />
         )}
 
         {/* ── BOX SCORE ─────────────────────────────────────────────────────── */}
@@ -454,6 +699,48 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
                 ))}
               </div>
 
+              {/* Opponent totals — double border */}
+              {(() => {
+                const opp = game.opponent_stats?.team || {};
+                const oppTotals = {
+                  min: 0,
+                  pts:  opp.pts  || 0,
+                  fgm:  (opp.fgm||0)+(opp.tpm||0),
+                  fga:  (opp.fga||0)+(opp.tpa||0),
+                  tpm:  opp.tpm  || 0, tpa: opp.tpa || 0,
+                  ftm:  opp.ftm  || 0, fta: opp.fta || 0,
+                  reb:  (opp.oreb||0)+(opp.dreb||0),
+                  ast:  opp.ast  || 0,
+                  stl:  opp.stl  || 0,
+                  blk:  opp.blk  || 0,
+                  to:   opp.to   || 0,
+                  pf:   opp.pf   || 0,
+                  pm:   0,
+                };
+                const oppColVal = (key) => {
+                  if (key === 'min') return '—';
+                  if (key === 'pm')  return '—';
+                  if (key === 'fg')  return `${oppTotals.fgm}/${oppTotals.fga}`;
+                  if (key === '3pt') return `${oppTotals.tpm}/${oppTotals.tpa}`;
+                  if (key === 'ft')  return `${oppTotals.ftm}/${oppTotals.fta}`;
+                  return oppTotals[key] ?? 0;
+                };
+                return (
+                  <div style={{ display:'flex', height:ROW_H+2, background:'#1a1020', borderTop:'4px double #4a2060' }}>
+                    <div style={{ width:NAME_W, minWidth:NAME_W, flexShrink:0, display:'flex', alignItems:'center', paddingLeft:10, borderRight:'1px solid #4a2060', background:'#1a1020', position:'sticky', left:0, zIndex:1, overflow:'hidden' }}>
+                      <span style={{ fontSize:8, fontWeight:900, color:'#c084fc', letterSpacing:'0.08em', textTransform:'uppercase', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{oppName}</span>
+                    </div>
+                    {COLS.map(col => (
+                      <div key={col.key} style={{ width:col.w, minWidth:col.w, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <span style={{ fontSize:isFrac(col.key)?9:11, fontWeight:800, color: col.key==='pts'?'#f87171':'#94a3b8', fontVariantNumeric:'tabular-nums' }}>
+                          {oppColVal(col.key)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
             </div>
           </div>
         )}
@@ -462,6 +749,7 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
         <div style={{ flexShrink:0, padding:'5px 12px', background:'#060d1a', borderTop:'1px solid #1e293b', display:'flex', gap:14 }}>
           <span style={{ fontSize:8, color:'#1e3a5f', fontWeight:700 }}>* starter</span>
           {isLive && <span style={{ fontSize:8, color:'#1e3a5f', fontWeight:700 }}>● on floor</span>}
+          <span style={{ fontSize:8, color:'#1e3a5f', fontWeight:700 }}>n = Did Not Travel</span>
           <span style={{ fontSize:8, color:'#1e3a5f', fontWeight:700 }}>FG includes 3PT</span>
         </div>
 

@@ -57,9 +57,10 @@ const PlayByPlay = ({ game, isDark = true, onDeletePlay }) => {
           <div style={{ padding:'30px 20px', textAlign:'center', color:textDim, fontSize:12 }}>No plays for {filter}</div>
         ) : (
           filtered.map((play, i) => {
-            const isHome     = play.team === 'home';
-            const isScore    = (play.points || 0) > 0;
-            const accent     = isHome ? '#60a5fa' : '#f87171';
+            const isSub     = play.description?.startsWith('SUB:');
+            const isHome    = play.team === 'home';
+            const isScore   = (play.points || 0) > 0 && !isSub;
+            const accent    = isSub ? '#a78bfa' : isHome ? '#60a5fa' : '#f87171';
             const isConfirm  = confirmId === play.id;
             const isDeleting = deleting === play.id;
 
@@ -71,12 +72,15 @@ const PlayByPlay = ({ game, isDark = true, onDeletePlay }) => {
                   <div style={{ fontSize:10, fontWeight:700, color:textDim, fontVariantNumeric:'tabular-nums' }}>{play.time}</div>
                 </div>
 
-                {/* Team bar */}
-                <div style={{ width:3, height:32, borderRadius:999, background:accent, flexShrink:0, opacity:0.7 }} />
+                {/* Team bar or sub icon */}
+                {isSub
+                  ? <div style={{ width:18, textAlign:'center', flexShrink:0, fontSize:12 }}>⇄</div>
+                  : <div style={{ width:3, height:32, borderRadius:999, background:accent, flexShrink:0, opacity:0.7 }} />
+                }
 
                 {/* Description */}
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, fontWeight:isScore?700:500, color:isScore?text:textDim, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  <div style={{ fontSize:12, fontWeight:isScore?700:isSub?600:500, color:isSub?'#a78bfa':isScore?text:textDim, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                     {play.description}
                   </div>
                 </div>

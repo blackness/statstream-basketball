@@ -15,8 +15,9 @@ const LiveGameView = ({
   const sessionKey = `game-session-${initialTeam.id}`;
   
   const [team, setTeam] = useState(initialTeam);
-  const [gamePhase, setGamePhase] = useState(existingGame ? 'live' : 'selectStarters');
-  const [starters,  setStarters]  = useState(existingGame?.starters || []);
+  const [gamePhase,   setGamePhase]   = useState(existingGame ? 'live' : 'selectStarters');
+  const [starters,    setStarters]    = useState(existingGame?.starters || []);
+  const [notPresent,  setNotPresent]  = useState(existingGame?.not_present || []);
   const [currentGameId, setCurrentGameId] = useState(existingGame?.id || null);
   const [homeScore, setHomeScore] = useState(existingGame?.home_score || 0);
   const [awayScore, setAwayScore] = useState(existingGame?.away_score || 0);
@@ -42,9 +43,15 @@ const LiveGameView = ({
   const [playLog, setPlayLog] = useState([]); // full game log, never truncated
   const [homeFouls, setHomeFouls] = useState(existingGame?.game_settings?.homeFouls || 0);
   const [awayFouls, setAwayFouls] = useState(existingGame?.game_settings?.awayFouls || 0);
-  const [showSubPanel, setShowSubPanel] = useState(false);
-  const [compactMode, setCompactMode] = useState(false);
-  const [showPeriodSummary, setShowPeriodSummary] = useState(false);
+  const [showSubPanel,     setShowSubPanel]     = useState(false);
+  const [compactMode,      setCompactMode]      = useState(false);
+  const [showPeriodSummary,setShowPeriodSummary]= useState(false);
+  const [editingScore,     setEditingScore]     = useState(false);
+  const [editingClock,     setEditingClock]     = useState(false);
+  const [editHomeScore,    setEditHomeScore]    = useState('');
+  const [editAwayScore,    setEditAwayScore]    = useState('');
+  const [editClockMins,    setEditClockMins]    = useState('');
+  const [editClockSecs,    setEditClockSecs]    = useState('');
   const [periodSummaryData, setPeriodSummaryData] = useState(null);
   const [lastFivePlays, setLastFivePlays] = useState([]);
   const [plusMinus, setPlusMinus] = useState({});
@@ -250,7 +257,7 @@ const LiveGameView = ({
       });
     }, 10000);
     return () => clearInterval(autosave);
-  }, [isTimerRunning, currentGameId, gameTime, homeScore, awayScore, currentPeriod, liveStats, opponentStats, activePlayers, plusMinus, homeFouls, awayFouls]);
+  }, [isTimerRunning, currentGameId, gameTime, homeScore, awayScore, currentPeriod, liveStats, opponentStats, activePlayers, plusMinus, homeFouls, awayFouls, recentPlays, playLog]);
 
   const createGame = async () => {
     console.log('Creating game with:', {
@@ -297,6 +304,8 @@ const LiveGameView = ({
     };
     setRecentPlays(prev => [play, ...prev].slice(0, 5));
     setLastFivePlays(prev => [play, ...prev].slice(0, 5));
+    setPlayLog(prev => [play, ...prev]);
+    return play; // return so callers can use it directly
   };
 
   const updatePlusMinus = (points, isTeamScore) => {
@@ -518,17 +527,67 @@ const LiveGameView = ({
     }
   };
 
-  const handleSwapPlayers = (playerOutId, playerInId) => {
-    const newActivePlayers = activePlayers.map(id => 
+  const handleSwapPlayers = async (playerOutId, playerInId) => {
+    const newActivePlayers = activePlayers.map(id =>
       id === playerOutId ? playerInId : id
     );
     setActivePlayers(newActivePlayers);
     setSelectedPlayer(null);
-    
+
     const playerOut = team.roster?.find(p => p.id === playerOutId);
-    const playerIn = team.roster?.find(p => p.id === playerInId);
+    const playerIn  = team.roster?.find(p => p.id === playerInId);
     toast?.success(`${playerIn?.name} in for ${playerOut?.name}`);
-    addRecentPlay(`SUB: ${playerIn?.name} → ${playerOut?.name}`);
+
+    // Build sub play entry directly so we have it for DB save
+    const subPlay = {
+      id: Date.now(),
+      description: `SUB: ${playerIn?.name} → ${playerOut?.name}`,
+      time: `${Math.floor(gameTime / 60)}:${(gameTime % 60).toString().padStart(2, '0')}`,
+      period: currentPeriod,
+      points: 0,
+      team: 'home',
+      isSub: true,
+      playerInId,
+      playerOutId,
+      timeRemaining: gameTime,
+    };
+    const newPlayLog     = [subPlay, ...playLog];
+    const newRecentPlays = [subPlay, ...recentPlays].slice(0, 5);
+    setPlayLog(newPlayLog);
+    setRecentPlays(newRecentPlays);
+    setLastFivePlays(newRecentPlays);
+
+    // Save to DB immediately
+    if (currentGameId) {
+      const manager = new GameStateManager(currentGameId);
+      await manager.saveGameState({
+        homeScore, awayScore, period: currentPeriod, timeRemaining: gameTime,
+        timerRunning: isTimerRunning, stats: liveStats, opponentStats,
+        activePlayers: newActivePlayers, plusMinus, gameSettings,
+        recentPlays: newRecentPlays, playLog: newPlayLog,
+      });
+    }
+  };
+
+  const saveEditedScore = async () => {
+    const newHome = parseInt(editHomeScore);
+    const newAway = parseInt(editAwayScore);
+    if (isNaN(newHome) || isNaN(newAway)) { setEditingScore(false); return; }
+    setHomeScore(newHome);
+    setAwayScore(newAway);
+    setEditingScore(false);
+    const manager = new GameStateManager(currentGameId);
+    await manager.saveGameState({ homeScore: newHome, awayScore: newAway, period: currentPeriod, timeRemaining: gameTime, timerRunning: isTimerRunning, stats: liveStats, opponentStats, activePlayers, plusMinus, gameSettings, recentPlays, playLog });
+  };
+
+  const saveEditedClock = async () => {
+    const mins = parseInt(editClockMins) || 0;
+    const secs = parseInt(editClockSecs) || 0;
+    const newTime = Math.max(0, mins * 60 + secs);
+    setGameTime(newTime);
+    setEditingClock(false);
+    const manager = new GameStateManager(currentGameId);
+    await manager.saveGameState({ homeScore, awayScore, period: currentPeriod, timeRemaining: newTime, timerRunning: isTimerRunning, stats: liveStats, opponentStats, activePlayers, plusMinus, gameSettings, recentPlays, playLog });
   };
 
   const undoLastPlay = async () => {
@@ -815,6 +874,44 @@ const LiveGameView = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Calculate exact minutes played per player from sub log
+  const calcMinutes = (playerId) => {
+    const periodLen = gameSettings.periodLength * 60;
+    const totalPer  = gameSettings.totalPeriods || 4;
+    // Convert period+timeRemaining to absolute seconds elapsed
+    const toSecs = (period, timeRemaining) =>
+      ((period - 1) * periodLen) + Math.max(0, periodLen - timeRemaining);
+
+    // Build sub events oldest-first
+    const subs = [...playLog].reverse().filter(p => p.isSub && (p.playerInId || p.playerOutId));
+
+    let intervals = []; // [{start, end}]
+    let timeIn = null;
+
+    // Was this player a starter?
+    const isStarter = starters.includes(playerId);
+    if (isStarter) timeIn = 0;
+
+    subs.forEach(sub => {
+      const t = toSecs(sub.period || 1, sub.timeRemaining ?? (periodLen - (gameTime || 0)));
+      if (sub.playerInId === playerId) {
+        timeIn = t; // came in
+      } else if (sub.playerOutId === playerId && timeIn !== null) {
+        intervals.push({ start: timeIn, end: t });
+        timeIn = null; // went out
+      }
+    });
+
+    // Still on floor
+    if (timeIn !== null) {
+      const currentSecs = toSecs(currentPeriod, gameTime);
+      intervals.push({ start: timeIn, end: currentSecs });
+    }
+
+    const totalSecs = intervals.reduce((sum, i) => sum + (i.end - i.start), 0);
+    return Math.round(totalSecs / 60);
+  };
+
   const calculateTeamStats = () => {
     const stats = { pts: 0, fgm: 0, fga: 0, tpm: 0, tpa: 0, ftm: 0, fta: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0 };
     Object.values(liveStats).forEach(playerStats => {
@@ -861,10 +958,30 @@ const LiveGameView = ({
   // ── Starter Selection Screen ─────────────────────────────────────────────
   if (gamePhase === 'selectStarters') {
     const roster = team.roster || [];
-    const toggleStarter = (id) =>
-      setStarters(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+
+    // Cycle: Bench → Starter → DNT → Bench
+    const cyclePlayer = (id) => {
+      if (notPresent.includes(id)) {
+        // DNT → Bench
+        setNotPresent(prev => prev.filter(s => s !== id));
+      } else if (starters.includes(id)) {
+        // Starter → DNT
+        setStarters(prev => prev.filter(s => s !== id));
+        setNotPresent(prev => [...prev, id]);
+      } else {
+        // Bench → Starter
+        setStarters(prev => [...prev, id]);
+      }
+    };
+
+    const getPlayerState = (id) => {
+      if (starters.includes(id))   return 'starter';
+      if (notPresent.includes(id)) return 'dnt';
+      return 'bench';
+    };
 
     const handleBeginGame = async () => {
+      const present = roster.filter(p => !notPresent.includes(p.id)).map(p => p.id);
       const result = await GameStateManager.createGame({
         userId: user.id,
         teamId: team.id,
@@ -875,6 +992,7 @@ const LiveGameView = ({
         totalPeriods: gameSettings.totalPeriods,
         starters,
         activePlayers: starters,
+        notPresent,
       });
       if (!result.success) { toast?.error('Failed to start game'); return; }
       setCurrentGameId(result.game.id);
@@ -884,67 +1002,70 @@ const LiveGameView = ({
       toast?.success('Game started!');
     };
 
+    const stateConfig = {
+      starter: { label:'★ Starter',      bg:'bg-blue-50',   border:'border-blue-500',  text:'text-blue-900',  badge:'bg-blue-600',  badgeText:'text-white',  hint:'tap → DNT'    },
+      bench:   { label:'Bench',           bg:'bg-white',     border:'border-gray-200',  text:'text-gray-900',  badge:'bg-gray-100',  badgeText:'text-gray-500', hint:'tap → Starter' },
+      dnt:     { label:'n  Did Not Travel', bg:'bg-gray-50',  border:'border-gray-300',  text:'text-gray-400',  badge:'bg-gray-200',  badgeText:'text-gray-400', hint:'tap → Bench'  },
+    };
+
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={onGoHome} className="p-2 hover:bg-gray-100 rounded-lg transition text-xl">←</button>
-            <h1 className="text-lg font-black text-gray-900">Select Starters</h1>
+            <h1 className="text-lg font-black text-gray-900">Game Setup</h1>
             <div className="w-8" />
           </div>
         </div>
+
         <div className="max-w-2xl mx-auto px-4 py-6">
+          {/* Game info */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
             <div className="flex items-center justify-between mb-1">
               <h2 className="font-black text-gray-900">{team.name} vs {gameSettings.opponent}</h2>
-              <span className={`text-sm font-bold ${starters.length === 5 ? 'text-green-600' : 'text-gray-400'}`}>
-                {starters.length}/5
-              </span>
+              <span className="text-sm font-bold text-blue-600">{starters.length} starters</span>
             </div>
-            <p className="text-sm text-gray-500">Tap players to select starters. All players appear in the box score.</p>
+            <p className="text-sm text-gray-500">Tap to cycle: Bench → ★ Starter → n DNT</p>
           </div>
-          <div className="space-y-2 mb-6">
+
+          {/* Player list */}
+          <div className="space-y-2 mb-4">
             {roster.map(player => {
-              const isStarter = starters.includes(player.id);
+              const state  = getPlayerState(player.id);
+              const config = stateConfig[state];
               return (
                 <button
                   key={player.id}
-                  onClick={() => toggleStarter(player.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition text-left ${
-                    isStarter ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
+                  onClick={() => cyclePlayer(player.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition text-left ${config.bg} ${config.border}`}
                 >
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 ${
-                    isStarter ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {player.number || '—'}
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 ${config.badge} ${config.badgeText}`}>
+                    {state === 'starter' ? '★' : state === 'dnt' ? 'n' : player.number || '—'}
                   </div>
                   <div className="flex-1">
-                    <div className={`font-bold ${isStarter ? 'text-blue-900' : 'text-gray-900'}`}>
-                      {player.name}
-                      {isStarter && <span className="ml-1.5 text-blue-400 text-xs">★ STARTER</span>}
-                    </div>
+                    <div className={`font-bold ${config.text}`}>{player.name}</div>
                     {player.position && <div className="text-xs text-gray-400">{player.position}</div>}
                   </div>
-                  {isStarter && (
-                    <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-black">✓</span>
-                    </div>
-                  )}
+                  <div className="text-right">
+                    <div className={`text-xs font-bold ${config.text}`}>{config.label}</div>
+                    <div className="text-xs text-gray-400">{config.hint}</div>
+                  </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Legend */}
+          <div className="flex gap-4 mb-6 px-1">
+            <span className="text-xs text-gray-400">★ = Starter</span>
+            <span className="text-xs text-gray-400">n = Did Not Travel</span>
+          </div>
+
           <button
             onClick={handleBeginGame}
-            disabled={starters.length === 0}
-            className={`w-full py-4 rounded-xl font-black text-lg uppercase tracking-wide transition ${
-              starters.length > 0
-                ? 'bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
+            className="w-full py-4 rounded-xl font-black text-lg uppercase tracking-wide transition bg-green-600 hover:bg-green-700 active:bg-green-800 text-white shadow-sm"
           >
-            {starters.length === 0 ? 'Select Starters to Begin' : `Start Game — ${starters.length} Starters`}
+            Start Game
           </button>
         </div>
       </div>
@@ -1001,9 +1122,25 @@ const LiveGameView = ({
         {/* SCOREBOARD */}
         <div className="sticky top-0 z-10 bg-white rounded-xl shadow-lg p-2 sm:p-4 mb-4 border-2 border-gray-200">
           <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center mb-2 sm:mb-3">
+            {/* Away score */}
             <div className="text-center">
               <div className="text-xs font-bold text-gray-600 uppercase mb-1">{awayTeamName}</div>
-              <div className="text-3xl sm:text-5xl font-black text-red-600">{awayScore}</div>
+              {editingScore ? (
+                <input
+                  type="number" min="0"
+                  value={editAwayScore}
+                  onChange={e => setEditAwayScore(e.target.value)}
+                  onBlur={saveEditedScore}
+                  onKeyDown={e => e.key === 'Enter' && saveEditedScore()}
+                  className="w-20 text-3xl sm:text-5xl font-black text-red-600 text-center border-b-2 border-red-400 bg-transparent outline-none"
+                  autoFocus
+                />
+              ) : (
+                <div
+                  className="text-3xl sm:text-5xl font-black text-red-600 cursor-pointer"
+                  onClick={() => { setEditAwayScore(String(awayScore)); setEditHomeScore(String(homeScore)); setEditingScore(true); }}
+                >{awayScore}</div>
+              )}
               <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Fouls:</span>
                 <span className="sm:hidden">F:</span>
@@ -1014,9 +1151,24 @@ const LiveGameView = ({
               </div>
             </div>
 
+            {/* Clock */}
             <div className="text-center">
               <div className="text-xs sm:text-sm font-bold text-gray-600 uppercase">Period {currentPeriod}</div>
-              <div className="text-2xl sm:text-3xl font-black text-gray-900 mb-1 sm:mb-2">{formatTime(gameTime)}</div>
+              {editingClock ? (
+                <div className="flex items-center justify-center gap-1 my-1">
+                  <input type="number" min="0" max="99" value={editClockMins} onChange={e => setEditClockMins(e.target.value)}
+                    className="w-10 text-xl font-black text-gray-900 text-center border-b-2 border-gray-400 bg-transparent outline-none" autoFocus />
+                  <span className="text-xl font-black">:</span>
+                  <input type="number" min="0" max="59" value={editClockSecs} onChange={e => setEditClockSecs(e.target.value)}
+                    onBlur={saveEditedClock} onKeyDown={e => e.key === 'Enter' && saveEditedClock()}
+                    className="w-10 text-xl font-black text-gray-900 text-center border-b-2 border-gray-400 bg-transparent outline-none" />
+                </div>
+              ) : (
+                <div
+                  className="text-2xl sm:text-3xl font-black text-gray-900 mb-1 sm:mb-2 cursor-pointer"
+                  onClick={() => { const m = Math.floor(gameTime/60); const s = gameTime%60; setEditClockMins(String(m)); setEditClockSecs(String(s).padStart(2,'0')); setEditingClock(true); }}
+                >{formatTime(gameTime)}</div>
+              )}
               {momentum && (
                 <div className={`text-xs font-bold ${momentum.color} mb-1 sm:mb-2 flex items-center justify-center gap-1`}>
                   {momentum.team === 'home' ? <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" /> : <TrendingDown size={12} className="sm:w-3.5 sm:h-3.5" />}
@@ -1025,18 +1177,30 @@ const LiveGameView = ({
                 </div>
               )}
               <div className="flex gap-1 sm:gap-2 justify-center">
-                <button
-                  onClick={handleTimerToggle}
-                  className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
-                >
+                <button onClick={handleTimerToggle} className="p-1.5 sm:p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
                   {isTimerRunning ? <Pause size={16} className="sm:w-5 sm:h-5" /> : <Play size={16} className="sm:w-5 sm:h-5" />}
                 </button>
               </div>
             </div>
 
+            {/* Home score */}
             <div className="text-center">
               <div className="text-xs font-bold text-gray-600 uppercase mb-1">{homeTeamName}</div>
-              <div className="text-3xl sm:text-5xl font-black text-blue-600">{homeScore}</div>
+              {editingScore ? (
+                <input
+                  type="number" min="0"
+                  value={editHomeScore}
+                  onChange={e => setEditHomeScore(e.target.value)}
+                  onBlur={saveEditedScore}
+                  onKeyDown={e => e.key === 'Enter' && saveEditedScore()}
+                  className="w-20 text-3xl sm:text-5xl font-black text-blue-600 text-center border-b-2 border-blue-400 bg-transparent outline-none"
+                />
+              ) : (
+                <div
+                  className="text-3xl sm:text-5xl font-black text-blue-600 cursor-pointer"
+                  onClick={() => { setEditAwayScore(String(awayScore)); setEditHomeScore(String(homeScore)); setEditingScore(true); }}
+                >{homeScore}</div>
+              )}
               <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1 sm:gap-2">
                 <span className="hidden sm:inline">Fouls:</span>
                 <span className="sm:hidden">F:</span>
@@ -1150,33 +1314,71 @@ const LiveGameView = ({
                 </div>
 
                 {/* Substitution Panel - below active players */}
-                {showSubPanel && team.roster?.filter(p => !activePlayers.includes(p.id)).length > 0 && (
+                {showSubPanel && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <p className="text-xs font-bold text-gray-700 uppercase mb-2">
                       Sub out {selectedPlayer ? team.roster?.find(p => p.id === selectedPlayer)?.name : 'Select player'}
                     </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {team.roster?.filter(p => !activePlayers.includes(p.id)).map(player => (
-                        <button
-                          key={player.id}
-                          onClick={() => {
-                            if (selectedPlayer && activePlayers.includes(selectedPlayer)) {
-                              handleSwapPlayers(selectedPlayer, player.id);
-                              setShowSubPanel(false);
-                            }
-                          }}
-                          disabled={!selectedPlayer || !activePlayers.includes(selectedPlayer)}
-                          className={`p-2 rounded-lg font-bold text-left transition-all ${
-                            !selectedPlayer || !activePlayers.includes(selectedPlayer)
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              : 'bg-orange-100 hover:bg-orange-200 text-gray-900 active:scale-95'
-                          }`}
-                        >
-                          <div className="text-xs text-gray-600">#{player.number}</div>
-                          <div className="text-sm font-black truncate">{player.name}</div>
-                        </button>
-                      ))}
-                    </div>
+                    {/* Bench players */}
+                    {team.roster?.filter(p => !activePlayers.includes(p.id) && !notPresent.includes(p.id)).length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 mb-2">
+                        {team.roster?.filter(p => !activePlayers.includes(p.id) && !notPresent.includes(p.id)).map(player => (
+                          <button
+                            key={player.id}
+                            onClick={() => {
+                              if (selectedPlayer && activePlayers.includes(selectedPlayer)) {
+                                handleSwapPlayers(selectedPlayer, player.id);
+                                setShowSubPanel(false);
+                              }
+                            }}
+                            disabled={!selectedPlayer || !activePlayers.includes(selectedPlayer)}
+                            className={`p-2 rounded-lg font-bold text-left transition-all ${
+                              !selectedPlayer || !activePlayers.includes(selectedPlayer)
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-orange-100 hover:bg-orange-200 text-gray-900 active:scale-95'
+                            }`}
+                          >
+                            <div className="text-xs text-gray-600">#{player.number}</div>
+                            <div className="text-sm font-black truncate">{player.name}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* DNT late arrivals */}
+                    {notPresent.filter(id => team.roster?.find(p => p.id === id)).length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase mb-1.5">Late Arrival</p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {notPresent.map(id => {
+                            const player = team.roster?.find(p => p.id === id);
+                            if (!player) return null;
+                            return (
+                              <button
+                                key={player.id}
+                                onClick={() => {
+                                  if (selectedPlayer && activePlayers.includes(selectedPlayer)) {
+                                    // Remove from notPresent first
+                                    setNotPresent(prev => prev.filter(i => i !== id));
+                                    handleSwapPlayers(selectedPlayer, player.id);
+                                    setShowSubPanel(false);
+                                  }
+                                }}
+                                disabled={!selectedPlayer || !activePlayers.includes(selectedPlayer)}
+                                className={`p-2 rounded-lg font-bold text-left transition-all border border-dashed ${
+                                  !selectedPlayer || !activePlayers.includes(selectedPlayer)
+                                    ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed'
+                                    : 'bg-yellow-50 border-yellow-300 hover:bg-yellow-100 text-gray-900 active:scale-95'
+                                }`}
+                              >
+                                <div className="text-xs text-gray-400">#{player.number}</div>
+                                <div className="text-sm font-black truncate">{player.name}</div>
+                                <div className="text-xs text-yellow-600 font-bold">DNT</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1441,9 +1643,12 @@ const LiveGameView = ({
                       <div key={playerId} className="text-xs">
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold">#{player.number} {player.name.split(' ')[0]}</span>
-                          <span className={`font-bold ${pm > 0 ? 'text-green-600' : pm < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                            {pm > 0 ? '+' : ''}{pm}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400">{calcMinutes(playerId)}m</span>
+                            <span className={`font-bold ${pm > 0 ? 'text-green-600' : pm < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                              {pm > 0 ? '+' : ''}{pm}
+                            </span>
+                          </div>
                         </div>
                         <div className="grid grid-cols-3 gap-1 text-gray-600">
                           <span>{stats.pts || 0} PTS</span>
@@ -1502,6 +1707,7 @@ const LiveGameView = ({
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-[10px] font-black text-gray-500 uppercase tracking-wide">
                   <th className="px-3 py-2 text-left">Player</th>
+                  <th className="px-2 py-2 text-center">MIN</th>
                   <th className="px-2 py-2 text-center">PTS</th>
                   <th className="px-2 py-2 text-center">FG</th>
                   <th className="px-2 py-2 text-center">3PT</th>
@@ -1533,6 +1739,7 @@ const LiveGameView = ({
                             <span className="ml-1 w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
                           )}
                         </td>
+                        <td className="px-2 py-2 text-center tabular-nums text-gray-500">{calcMinutes(player.id)}</td>
                         <td className="px-2 py-2 text-center font-black text-blue-600 tabular-nums">{s.pts || 0}</td>
                         <td className="px-2 py-2 text-center tabular-nums text-gray-600">{fgm}/{fga}</td>
                         <td className="px-2 py-2 text-center tabular-nums text-gray-600">{s.tpm || 0}/{s.tpa || 0}</td>
@@ -1567,10 +1774,13 @@ const LiveGameView = ({
                   to: acc.to + (s.to || 0),
                   pf: acc.pf + (s.pf || 0),
                 }), { pts:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0,reb:0,ast:0,stl:0,blk:0,to:0,pf:0 });
+                const opp = opponentStats?.team || {};
+                const oppReb = (opp.oreb || 0) + (opp.dreb || 0);
                 return (
-                  <tfoot className="bg-gray-50 border-t-2 border-gray-300">
-                    <tr className="font-black text-[10px] uppercase">
+                  <tfoot>
+                    <tr className="bg-gray-50 border-t-2 border-gray-300 font-black text-[10px] uppercase">
                       <td className="px-3 py-2 text-gray-700">Totals</td>
+                      <td className="px-2 py-2 text-center text-gray-400 tabular-nums">—</td>
                       <td className="px-2 py-2 text-center text-blue-600 tabular-nums">{totals.pts}</td>
                       <td className="px-2 py-2 text-center tabular-nums text-gray-600">{totals.fgm}/{totals.fga}</td>
                       <td className="px-2 py-2 text-center tabular-nums text-gray-600">{totals.tpm}/{totals.tpa}</td>
@@ -1581,6 +1791,22 @@ const LiveGameView = ({
                       <td className="px-2 py-2 text-center tabular-nums">{totals.blk}</td>
                       <td className="px-2 py-2 text-center tabular-nums">{totals.to}</td>
                       <td className="px-2 py-2 text-center tabular-nums">{totals.pf}</td>
+                      <td className="px-2 py-2 text-center text-gray-400">—</td>
+                    </tr>
+                    {/* Opponent totals — double border separator */}
+                    <tr className="bg-red-50 border-t-4 border-double border-gray-400 font-black text-[10px] uppercase">
+                      <td className="px-3 py-2 text-red-700 truncate max-w-[80px]">{gameSettings.opponent}</td>
+                      <td className="px-2 py-2 text-center text-gray-400">—</td>
+                      <td className="px-2 py-2 text-center text-red-600 tabular-nums">{opp.pts || 0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums text-gray-600">{(opp.fgm||0)+((opp.tpm)||0)}/{(opp.fga||0)+((opp.tpa)||0)}</td>
+                      <td className="px-2 py-2 text-center tabular-nums text-gray-600">{opp.tpm||0}/{opp.tpa||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums text-gray-600">{opp.ftm||0}/{opp.fta||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{oppReb}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{opp.ast||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{opp.stl||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{opp.blk||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{opp.to||0}</td>
+                      <td className="px-2 py-2 text-center tabular-nums">{opp.pf||0}</td>
                       <td className="px-2 py-2 text-center text-gray-400">—</td>
                     </tr>
                   </tfoot>
