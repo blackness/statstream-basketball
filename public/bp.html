@@ -1,0 +1,393 @@
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);padding:20px 16px 60px;background:transparent}
+h2{font-size:22px;font-weight:500;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--color-text-secondary);margin-bottom:24px}
+.tabs{display:flex;gap:6px;margin-bottom:20px}
+.tab{padding:7px 18px;font-size:13px;font-weight:500;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:all .15s}
+.tab.active{background:var(--color-background-primary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.tab:hover:not(.active){background:var(--color-background-secondary)}
+.panel{display:none}.panel.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px 12px}
+.metric-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:6px}
+.metric-val{font-size:22px;font-weight:500}
+.metric-sub{font-size:11px;color:var(--color-text-secondary);margin-top:3px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px;margin-bottom:16px}
+.chart-wrap{position:relative;width:100%}
+.section-title{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:12px;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+.legend{display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary)}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.date-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.date-row label{font-size:12px;color:var(--color-text-secondary)}
+input[type=date]{font-family:var(--font-sans);font-size:14px;flex:1}
+.readings-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;align-items:end;gap:6px;margin-bottom:18px}
+.r-block{text-align:center}
+.r-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
+.r-input{font-size:2.4rem;font-weight:500;width:100%;text-align:center;border:none;border-bottom:2px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);outline:none;padding:4px 0;-moz-appearance:textfield;font-family:var(--font-sans)}
+.r-input::-webkit-inner-spin-button,.r-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.r-input:focus{border-color:#378add}
+.r-sep{font-size:2rem;color:var(--color-border-secondary);text-align:center;padding-bottom:6px}
+.save-btn{width:100%;padding:13px;font-size:14px;font-weight:500;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-text-primary);color:var(--color-background-primary);cursor:pointer;transition:opacity .15s}
+.save-btn:hover{opacity:.85}
+.save-btn:active{transform:scale(.98)}
+.day-header{font-size:12px;color:var(--color-text-secondary);padding:10px 0 4px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between}
+.entry{display:flex;justify-content:space-between;align-items:center;padding:7px 0 7px 12px}
+.entry-vals{font-size:14px}
+.e-sys{color:#e24b4a;font-weight:500}
+.e-pulse{font-size:12px;color:#1d9e75}
+.del-btn{background:none;border:none;color:var(--color-border-secondary);cursor:pointer;font-size:16px;padding:4px 8px;transition:color .15s}
+.del-btn:hover{color:#e24b4a}
+.empty{text-align:center;color:var(--color-text-secondary);font-size:13px;padding:20px 0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1d9e75;color:#fff;padding:9px 22px;border-radius:100px;font-size:13px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;z-index:99}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.insight-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px}
+.insight-val{font-size:18px;font-weight:500;margin-bottom:2px}
+.insight-lbl{font-size:12px;color:var(--color-text-secondary)}
+.trend-up{color:#e24b4a}.trend-ok{color:#1d9e75}.trend-warn{color:#ba7517}
+.range-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.range-bar-label{width:70px;color:var(--color-text-secondary);flex-shrink:0}
+.range-bar-track{flex:1;height:6px;background:var(--color-border-tertiary);border-radius:3px;position:relative}
+.range-bar-fill{height:100%;border-radius:3px;position:absolute;top:0}
+.range-bar-val{width:36px;text-align:right;color:var(--color-text-primary);font-weight:500}
+</style>
+
+<h2>Blood Pressure</h2>
+<p class="subtitle">personal tracker · all readings</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('log')">Log</button>
+  <button class="tab" onclick="switchTab('charts')">Charts</button>
+  <button class="tab" onclick="switchTab('insights')">Insights</button>
+  <button class="tab" onclick="switchTab('history')">History</button>
+</div>
+
+<div id="tab-log" class="panel active">
+  <div class="metrics" id="sumMetrics"></div>
+  <div class="card">
+    <div class="section-title">New reading</div>
+    <div class="date-row">
+      <label>Date</label>
+      <input type="date" id="entryDate">
+    </div>
+    <div class="readings-row">
+      <div class="r-block"><div class="r-label">Systolic</div><input class="r-input" type="number" id="sys" value="115" min="60" max="250"></div>
+      <div class="r-sep">/</div>
+      <div class="r-block"><div class="r-label">Diastolic</div><input class="r-input" type="number" id="dia" value="65" min="40" max="150"></div>
+      <div class="r-sep" style="color:var(--color-border-tertiary)">·</div>
+      <div class="r-block"><div class="r-label" style="color:#1d9e75">Pulse</div><input class="r-input" type="number" id="pulse" value="60" min="30" max="220" style="color:#1d9e75"></div>
+    </div>
+    <button class="save-btn" onclick="saveEntry()">+ Save reading</button>
+  </div>
+</div>
+
+<div id="tab-charts" class="panel">
+  <div class="card">
+    <div class="section-title">Systolic &amp; diastolic over time</div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#e24b4a"></span>Systolic</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#378add"></span>Diastolic</span>
+    </div>
+    <div class="chart-wrap" style="height:240px"><canvas id="chartBP"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Pulse over time</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="chartPulse"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="section-title">Daily averages — systolic distribution</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="chartDist"></canvas></div>
+  </div>
+</div>
+
+<div id="tab-insights" class="panel">
+  <div class="card" id="insightContent"></div>
+</div>
+
+<div id="tab-history" class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-size:13px;color:var(--color-text-secondary)" id="histCount"></span>
+    <button class="del-btn" style="font-size:13px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:5px 12px" onclick="clearAll()">Clear all</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SEED=[
+  {date:'2023-05-04',readings:[[112,65,null],[103,73,55]]},
+  {date:'2023-05-10',readings:[[108,67,63],[109,69,61]]},
+  {date:'2023-06-14',readings:[[119,66,62],[114,71,59]]},
+  {date:'2023-06-29',readings:[[120,66,61],[118,66,63]]},
+  {date:'2023-07-06',readings:[[130,71,56],[121,66,58],[119,72,58]]},
+  {date:'2023-11-21',readings:[[122,77,null],[126,80,null],[119,77,null]]},
+  {date:'2024-01-09',readings:[[112,71,58],[111,77,55]]},
+  {date:'2024-03-09',readings:[[121,73,69],[113,73,66]]},
+  {date:'2024-03-25',readings:[[120,70,68]]},
+  {date:'2024-06-05',readings:[[124,69,null]]},
+  {date:'2024-07-12',readings:[[111,61,71]]},
+  {date:'2024-07-30',readings:[[106,62,61],[108,61,61]]},
+  {date:'2024-10-15',readings:[[121,73,68],[118,71,66]]},
+  {date:'2024-11-19',readings:[[114,73,58],[115,72,55],[117,73,59]]},
+  {date:'2024-12-12',readings:[[128,69,65],[120,68,65]]},
+  {date:'2025-01-12',readings:[[132,74,69],[114,71,68]]},
+  {date:'2025-02-14',readings:[[122,79,68],[129,73,64],[124,79,67]]},
+  {date:'2025-03-23',readings:[[129,76,65],[125,72,63],[118,77,63]]},
+  {date:'2025-05-24',readings:[[130,78,64],[125,71,63],[120,71,61]]},
+  {date:'2025-06-29',readings:[[120,66,63],[117,65,62],[119,70,62]]},
+  {date:'2025-08-08',readings:[[118,70,57],[112,75,56]]},
+  {date:'2025-09-19',readings:[[115,66,59]]},
+  {date:'2025-09-26',readings:[[121,77,57],[123,70,57]]},
+  {date:'2025-11-09',readings:[[125,70,58],[116,67,58],[115,66,57]]},
+  {date:'2025-12-07',readings:[[123,73,57],[115,70,56],[117,65,60]]},
+  {date:'2026-01-15',readings:[[126,75,73]]},
+  {date:'2026-02-25',readings:[[127,72,57],[113,71,57],[121,68,57]]},
+  {date:'2026-04-07',readings:[[126,71,57],[111,65,56],[115,63,54]]},
+];
+
+const STORE_KEY='bp-entries-v2';
+let ALL=[];
+let charts={};
+
+async function load(){
+  try{const r=await window.storage.get(STORE_KEY);return r?JSON.parse(r.value):null;}catch{return null;}
+}
+async function persist(){
+  try{await window.storage.set(STORE_KEY,JSON.stringify(ALL));}catch(e){console.error(e);}
+}
+function uid(){return Date.now()+'_'+Math.random().toString(36).slice(2);}
+function today(){return new Date().toISOString().split('T')[0];}
+function fmtDate(d){
+  const [y,m,day]=d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+parseInt(day)+', '+y;
+}
+function avg(arr){return arr.length?Math.round(arr.reduce((s,v)=>s+v,0)/arr.length):null;}
+
+async function init(){
+  document.getElementById('entryDate').value=today();
+  let stored=await load();
+  if(!stored){
+    stored=[];
+    for(const day of SEED)
+      for(const[s,d,p]of day.readings)
+        stored.push({id:uid(),date:day.date,sys:s,dia:d,pulse:p});
+    stored.sort((a,b)=>b.date.localeCompare(a.date));
+  }
+  ALL=stored;
+  renderAll();
+}
+
+function dayGroups(){
+  const g={};
+  for(const e of ALL){if(!g[e.date])g[e.date]=[];g[e.date].push(e);}
+  return g;
+}
+
+function dayAvgs(){
+  const g=dayGroups();
+  return Object.keys(g).sort().map(date=>{
+    const es=g[date];
+    return{
+      date,
+      sys:avg(es.map(e=>e.sys)),
+      dia:avg(es.map(e=>e.dia)),
+      pulse:avg(es.map(e=>e.pulse).filter(p=>p!=null))
+    };
+  });
+}
+
+function renderAll(){
+  renderMetrics();
+  renderHistory();
+  if(document.getElementById('tab-charts').classList.contains('active')) buildCharts();
+  if(document.getElementById('tab-insights').classList.contains('active')) renderInsights();
+}
+
+function renderMetrics(){
+  const avgs=dayAvgs();
+  const allSys=ALL.map(e=>e.sys);
+  const allDia=ALL.map(e=>e.dia);
+  const allPulse=ALL.map(e=>e.pulse).filter(p=>p!=null);
+  const recent=avgs.slice(-6);
+  const older=avgs.slice(-12,-6);
+  const rSys=avg(recent.map(d=>d.sys));
+  const oSys=avg(older.map(d=>d.sys));
+  const trend=rSys&&oSys?rSys-oSys:null;
+  const trendStr=trend!=null?(trend>2?'▲ +'+trend:trend<-2?'▼ '+trend:'→ stable'):'';
+  const trendCol=trend!=null?(trend>2?'#e24b4a':trend<-2?'#1d9e75':'#888780'):'';
+  document.getElementById('sumMetrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Avg systolic</div><div class="metric-val" style="color:#e24b4a">${avg(allSys)||'—'}</div><div class="metric-sub">${ALL.length} readings</div></div>
+    <div class="metric"><div class="metric-label">Avg diastolic</div><div class="metric-val">${avg(allDia)||'—'}</div></div>
+    <div class="metric"><div class="metric-label">Avg pulse</div><div class="metric-val" style="color:#1d9e75">${avg(allPulse)||'—'}</div></div>
+    <div class="metric"><div class="metric-label">6-visit trend</div><div class="metric-val" style="font-size:16px;color:${trendCol}">${trendStr||'—'}</div></div>
+  `;
+}
+
+function buildCharts(){
+  const avgs=dayAvgs();
+  const labels=avgs.map(d=>{const[y,m,dy]=d.date.split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+dy});
+  const isDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridCol=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)';
+  const textCol=isDark?'#aaa':'#888';
+
+  const baseOpts={
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+    scales:{
+      x:{grid:{color:gridCol},ticks:{color:textCol,maxRotation:45,autoSkip:true,maxTicksLimit:12,font:{size:11}}},
+      y:{grid:{color:gridCol},ticks:{color:textCol,font:{size:11}}}
+    }
+  };
+
+  if(charts.bp){charts.bp.destroy();}
+  charts.bp=new Chart(document.getElementById('chartBP'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Systolic',data:avgs.map(d=>d.sys),borderColor:'#e24b4a',backgroundColor:'rgba(226,75,74,.1)',tension:.3,pointRadius:3,pointHoverRadius:5,fill:false},
+        {label:'Diastolic',data:avgs.map(d=>d.dia),borderColor:'#378add',backgroundColor:'rgba(55,138,221,.1)',tension:.3,pointRadius:3,pointHoverRadius:5,fill:false}
+      ]
+    },
+    options:{...baseOpts,scales:{...baseOpts.scales,y:{...baseOpts.scales.y,min:50,max:160}}}
+  });
+
+  const pulseData=avgs.filter(d=>d.pulse!=null);
+  const pulseLabels=pulseData.map(d=>{const[y,m,dy]=d.date.split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+dy});
+  if(charts.pulse){charts.pulse.destroy();}
+  charts.pulse=new Chart(document.getElementById('chartPulse'),{
+    type:'line',
+    data:{labels:pulseLabels,datasets:[{label:'Pulse',data:pulseData.map(d=>d.pulse),borderColor:'#1d9e75',backgroundColor:'rgba(29,158,117,.1)',tension:.3,pointRadius:3,fill:true}]},
+    options:{...baseOpts,scales:{...baseOpts.scales,y:{...baseOpts.scales.y,min:45,max:85}}}
+  });
+
+  const sysVals=avgs.map(d=>d.sys);
+  const bands=[
+    {label:'< 110',count:sysVals.filter(v=>v<110).length,color:'#5dcaa5'},
+    {label:'110–119',count:sysVals.filter(v=>v>=110&&v<120).length,color:'#378add'},
+    {label:'120–129',count:sysVals.filter(v=>v>=120&&v<130).length,color:'#ef9f27'},
+    {label:'130+',count:sysVals.filter(v=>v>=130).length,color:'#e24b4a'},
+  ];
+  if(charts.dist){charts.dist.destroy();}
+  charts.dist=new Chart(document.getElementById('chartDist'),{
+    type:'bar',
+    data:{labels:bands.map(b=>b.label),datasets:[{data:bands.map(b=>b.count),backgroundColor:bands.map(b=>b.color),borderRadius:4}]},
+    options:{...baseOpts,scales:{...baseOpts.scales,y:{...baseOpts.scales.y,ticks:{...baseOpts.scales.y.ticks,stepSize:1}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+' visits'}}}}
+  });
+}
+
+function renderInsights(){
+  const avgs=dayAvgs();
+  const allSys=ALL.map(e=>e.sys);
+  const allDia=ALL.map(e=>e.dia);
+  const allPulse=ALL.map(e=>e.pulse).filter(p=>p!=null);
+  const maxSys=Math.max(...allSys), minSys=Math.min(...allSys);
+  const maxDia=Math.max(...allDia), minDia=Math.min(...allDia);
+  const maxPulse=Math.max(...allPulse), minPulse=Math.min(...allPulse);
+  const maxDay=ALL.find(e=>e.sys===maxSys);
+  const minDay=ALL.find(e=>e.sys===minSys);
+  const recentAvg=avg(avgs.slice(-3).map(d=>d.sys));
+  const overallAvg=avg(allSys);
+  const pct=(val,min,max)=>Math.round((val-min)/(max-min)*100);
+
+  const catSys=overallAvg<120?'Normal':overallAvg<130?'Elevated':overallAvg<140?'High Stage 1':'High Stage 2';
+  const catCol=overallAvg<120?'#1d9e75':overallAvg<130?'#ef9f27':'#e24b4a';
+
+  document.getElementById('insightContent').innerHTML=`
+    <div class="section-title">Health context</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">
+      <span style="font-size:28px;font-weight:500;color:${catCol}">${overallAvg}/${avg(allDia)}</span>
+      <span style="font-size:13px;color:${catCol};font-weight:500">${catSys}</span>
+    </div>
+    <div class="section-title" style="margin-bottom:10px">Systolic range</div>
+    ${['Optimal (<120)','Normal (120–129)','Elevated (130–139)','High (140+)'].map((l,i)=>{
+      const thresholds=[[0,120],[120,130],[130,140],[140,200]];
+      const [lo,hi]=thresholds[i];
+      const cnt=avgs.filter(d=>d.sys>=lo&&d.sys<hi).length;
+      const pct2=Math.round(cnt/avgs.length*100);
+      const cols=['#1d9e75','#5dcaa5','#ef9f27','#e24b4a'];
+      return `<div class="range-bar"><span class="range-bar-label">${l.split('(')[0].trim()}</span><div class="range-bar-track"><div class="range-bar-fill" style="width:${pct2}%;background:${cols[i]}"></div></div><span class="range-bar-val">${pct2}%</span></div>`;
+    }).join('')}
+    <div style="margin-top:18px" class="insight-grid">
+      <div class="insight-card"><div class="insight-val trend-up">${maxSys}/${maxDay?ALL.find(e=>e.sys===maxSys&&e.date===maxDay.date)?.dia||'':''}</div><div class="insight-lbl">Highest reading · ${maxDay?fmtDate(maxDay.date):''}</div></div>
+      <div class="insight-card"><div class="insight-val trend-ok">${minSys}/${minDay?ALL.find(e=>e.sys===minSys&&e.date===minDay.date)?.dia||'':''}</div><div class="insight-lbl">Lowest reading · ${minDay?fmtDate(minDay.date):''}</div></div>
+      <div class="insight-card"><div class="insight-val">${recentAvg}</div><div class="insight-lbl">Recent avg systolic (last 3 visits)</div></div>
+      <div class="insight-card"><div class="insight-val" style="color:#1d9e75">${minPulse}–${maxPulse}</div><div class="insight-lbl">Pulse range · avg ${avg(allPulse)}</div></div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:0.5px solid var(--color-border-tertiary);font-size:12px;color:var(--color-text-secondary)">
+      Based on ${ALL.length} readings across ${avgs.length} visits since ${fmtDate(avgs[0]?.date||'')}. Not medical advice.
+    </div>
+  `;
+}
+
+function renderHistory(){
+  const g=dayGroups();
+  const dates=Object.keys(g).sort((a,b)=>b.localeCompare(a));
+  document.getElementById('histCount').textContent=ALL.length+' readings · '+dates.length+' visits';
+  if(!dates.length){document.getElementById('historyList').innerHTML='<div class="empty">No readings yet.</div>';return;}
+  let html='';
+  for(const date of dates){
+    const es=g[date];
+    const as=avg(es.map(e=>e.sys)),ad=avg(es.map(e=>e.dia));
+    const ap=avg(es.map(e=>e.pulse).filter(p=>p!=null));
+    const multi=es.length>1?`<span style="color:#e24b4a">${as}/${ad}</span>${ap?` · <span style="color:#1d9e75">${ap}</span>`:''} avg`:'';
+    html+=`<div class="day-header"><span>${fmtDate(date)}</span><span style="font-size:11px">${multi}</span></div>`;
+    for(const e of es){
+      html+=`<div class="entry"><div class="entry-vals"><span class="e-sys">${e.sys}</span><span style="color:var(--color-text-secondary)"> / </span><span>${e.dia}</span>${e.pulse?`<span class="e-pulse"> · ${e.pulse} bpm</span>`:''}</div><button class="del-btn" onclick="deleteEntry('${e.id}')">×</button></div>`;
+    }
+  }
+  document.getElementById('historyList').innerHTML=html;
+}
+
+async function saveEntry(){
+  const sys=parseInt(document.getElementById('sys').value);
+  const dia=parseInt(document.getElementById('dia').value);
+  const pulse=parseInt(document.getElementById('pulse').value)||null;
+  const date=document.getElementById('entryDate').value;
+  if(!sys||!dia||!date)return;
+  ALL.unshift({id:uid(),date,sys,dia,pulse});
+  ALL.sort((a,b)=>b.date.localeCompare(a.date));
+  await persist();
+  renderAll();
+  showToast();
+  document.getElementById('sys').value=115;
+  document.getElementById('dia').value=65;
+  document.getElementById('pulse').value=60;
+  document.getElementById('entryDate').value=today();
+}
+
+async function deleteEntry(id){
+  ALL=ALL.filter(e=>e.id!==id);
+  await persist();
+  renderAll();
+}
+
+async function clearAll(){
+  if(!confirm('Delete all readings?'))return;
+  ALL=[];
+  await persist();
+  renderAll();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['log','charts','insights','history'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='charts')buildCharts();
+  if(name==='insights')renderInsights();
+}
+
+function showToast(){
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+document.querySelectorAll('.r-input').forEach(i=>i.addEventListener('click',e=>e.target.select()));
+init();
+</script>

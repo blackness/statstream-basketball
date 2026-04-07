@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equity Research Terminal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+ <style>
+    /* ─── Design tokens ─────────────────────────────────── */
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #13161d;
+      --border:   #1f2330;
+      --accent:   #00d4aa;
+      --accent2:  #4f7fff;
+      --danger:   #ff4d6d;
+      --muted:    #5a6278;
+      --text:     #e2e8f0;
+      --text-dim: #8892a4;
+      --font-mono: 'Courier New', monospace;
+      --radius:   6px;
+      --header-h: 60px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden; /* Prevent body scroll */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Fixed Header ───────────────────────────────────── */
+    header {
+      height: var(--header-h);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    header .logo {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 2px 8px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    .api-status { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+
+    /* ─── Layout ─────────────────────────────────────────── */
+    main { 
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 20px 32px; 
+      max-width: 1600px; 
+      width: 100%;
+      margin: 0 auto; 
+    }
+
+    /* ─── API & Navigation (Sticky) ──────────────────────── */
+    .sticky-controls {
+      position: sticky;
+      top: -20px; 
+      background: var(--bg);
+      padding-bottom: 15px;
+      z-index: 5;
+    }
+
+    .api-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    .api-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      outline: none;
+    }
+
+    .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+    .tab {
+      background: none; border: none; color: var(--muted);
+      font-family: var(--font-mono); font-size: 12px; padding: 10px 5px;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      text-transform: uppercase; transition: 0.2s;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ─── Dashboard Components ───────────────────────────── */
+    .search-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+    .search-row input {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 8px 12px; color: var(--text); border-radius: var(--radius); width: 200px;
+    }
+
+    /* Grid for Fundamentals */
+    .fundamentals-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+    }
+    
+    @media (max-width: 1000px) {
+        .fundamentals-layout { grid-template-columns: 1fr; }
+    }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card h2 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .kpi { background: var(--bg); padding: 12px; border-radius: 4px; border: 1px solid var(--border); }
+    .kpi-label { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .kpi-value { font-family: var(--font-mono); font-size: 16px; font-weight: bold; }
+
+    .ticker-hero { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    .symbol { font-size: 28px; font-weight: 800; color: var(--accent); font-family: var(--font-mono); }
+
+    .chart-wrap { height: 450px; width: 100%; }
+
+    .btn {
+      background: var(--accent2); color: white; border: none; padding: 8px 20px;
+      border-radius: var(--radius); cursor: pointer; font-family: var(--font-mono); font-size: 12px;
+    }
+
+    /* Utilities */
+    .up { color: var(--accent); }
+    .down { color: var(--danger); }
+    .hidden { display: none !important; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .api-bar.hidden { display: none !important;
+}
+</style>
+
+<body>
+
+<header>
+  <span class="logo">ERT</span>
+  <h1>Equity Research Terminal</h1>
+  <div class="api-status" style="cursor:pointer" onclick="toggleApiBar()" title="Click to edit API Key">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">no key set</span>
+  </div>
+</header>
+
+<main>
+  <div class="sticky-controls">
+      <div class="api-bar">
+        <input type="password" id="apiKeyInput" placeholder="Enter Alpha Vantage API Key..." />
+        <button class="btn" style="background:var(--accent); color:#000" onclick="saveKey()">Update Key</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('fundamentals', this)">Fundamentals</button>
+        <button class="tab" onclick="switchTab('chart', this)">Technical Chart</button>
+        <button class="tab" onclick="switchTab('compare', this)">Peer Analysis</button>
+      </div>
+  </div>
+
+  <div class="panel active" id="panel-fundamentals">
+    <div class="search-row">
+      <input type="text" id="fundTicker" placeholder="Ticker (e.g. MSFT)" />
+      <button class="btn" onclick="loadFundamentals()">Load Data</button>
+    </div>
+    <div id="fundResult">
+       <div class="msg">Ready for query...</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-chart">
+    <div class="search-row">
+      <input type="text" id="chartTicker" placeholder="Ticker" />
+      <select id="chartInterval" style="background:var(--surface); color:white; border:1px solid var(--border); padding:8px; border-radius:4px;">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <button class="btn" onclick="loadChart()">Update Chart</button>
+    </div>
+    <div class="card">
+      <h2 id="chartTitle">Price History</h2>
+      <div class="chart-wrap">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-compare">
+    <div class="search-row">
+      <input type="text" id="compareTicker" placeholder="Add Ticker..." />
+      <button class="btn" onclick="addPeer()">Add to Group</button>
+    </div>
+    <div class="peer-controls" id="peerTags" style="margin-bottom:15px; display:flex; gap:10px;"></div>
+    <div id="compareResult"></div>
+  </div>
+</main>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let apiKey = localStorage.getItem('av_key') || '';
+let priceChart = null;
+const peers = [];
+
+/* ══════════════════════════════════════════
+   API KEY
+══════════════════════════════════════════ */
+function saveKey() {
+  const input = document.getElementById('apiKeyInput');
+  apiKey = input.value.trim();
+  
+  if (!apiKey) return alert('Please enter a key.');
+  
+  localStorage.setItem('av_key', apiKey);
+  updateStatus(true);
+  
+  // Hide the bar after saving
+  document.querySelector('.api-bar').classList.add('hidden');
+}
+function toggleApiBar() {
+    const bar = document.querySelector('.api-bar');
+    bar.classList.toggle('hidden');
+}
+function updateStatus(ok) {
+  document.getElementById('statusDot').style.background = ok ? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('statusText').textContent = ok ? 'key saved' : 'no key set';
+}
+
+// Restore key on load AND hide if exists
+if (apiKey) {
+  document.getElementById('apiKeyInput').value = apiKey;
+  updateStatus(true);
+  // Hide immediately if we already have a key
+  document.querySelector('.api-bar').classList.add('hidden');
+}
+
+function updateStatus(ok) {
+  document.getElementById('statusDot').style.background = ok ? 'var(--accent)' : 'var(--muted)';
+  document.getElementById('statusText').textContent = ok ? 'key saved' : 'no key set';
+}
+
+// Restore key on load
+if (apiKey) {
+  document.getElementById('apiKeyInput').value = apiKey;
+  updateStatus(true);
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function requireKey() {
+  if (!apiKey) { alert('Save your Alpha Vantage API key first.'); return false; }
+  return true;
+}
+
+async function avFetch(params) {
+  const qs = new URLSearchParams({ ...params, apikey: apiKey });
+  const res = await fetch(`https://www.alphavantage.co/query?${qs}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data['Note'] || data['Information']) {
+    throw new Error('API rate limit reached. Alpha Vantage free tier allows 25 req/day. Try again later.');
+  }
+  return data;
+}
+
+function fmt(val, prefix='', suffix='') {
+  if (!val || val === 'None' || val === '-') return '—';
+  const n = parseFloat(val);
+  if (isNaN(n)) return val;
+  if (Math.abs(n) >= 1e12) return prefix + (n/1e12).toFixed(2) + 'T' + suffix;
+  if (Math.abs(n) >= 1e9)  return prefix + (n/1e9).toFixed(2) + 'B' + suffix;
+  if (Math.abs(n) >= 1e6)  return prefix + (n/1e6).toFixed(2) + 'M' + suffix;
+  return prefix + n.toLocaleString(undefined, {maximumFractionDigits: 2}) + suffix;
+}
+
+function fmtPct(val) {
+  if (!val || val === 'None' || val === '-') return '—';
+  return (parseFloat(val) * 100).toFixed(2) + '%';
+}
+
+function loading(id) {
+  document.getElementById(id).innerHTML = `<div class="msg"><span class="loader"></span>Fetching data…</div>`;
+}
+
+function showError(id, msg) {
+  document.getElementById(id).innerHTML = `<div class="msg error-msg"><div class="icon">⚠️</div>${msg}</div>`;
+}
+
+/* ══════════════════════════════════════════
+   FUNDAMENTALS
+══════════════════════════════════════════ */
+async function loadFundamentals() {
+  if (!requireKey()) return;
+  const ticker = document.getElementById('fundTicker').value.trim().toUpperCase();
+  if (!ticker) return alert('Enter a ticker.');
+  loading('fundResult');
+
+  try {
+    const [overview, quote] = await Promise.all([
+      avFetch({ function: 'OVERVIEW', symbol: ticker }),
+      avFetch({ function: 'GLOBAL_QUOTE', symbol: ticker })
+    ]);
+
+    if (!overview.Symbol) throw new Error(`No data found for "${ticker}". Check the ticker symbol.`);
+
+    const q = quote['Global Quote'] || {};
+    const price = parseFloat(q['05. price'] || 0);
+    const change = parseFloat(q['09. change'] || 0);
+    const changePct = q['10. change percent'] || '0%';
+    const isUp = change >= 0;
+
+// ... inside loadFundamentals() replace the const html block:
+const html = `
+    <div class="fundamentals-layout">
+        <div class="card">
+            <div class="ticker-hero">
+                <div class="symbol">${overview.Symbol}</div>
+                <div style="font-size:12px; color:var(--text-dim)">${overview.Name}</div>
+                <div style="font-size:20px; margin-top:10px" class="${isUp ? 'up' : 'down'}">
+                    $${price.toFixed(2)} 
+                    <span style="font-size:14px">(${changePct})</span>
+                </div>
+            </div>
+            <h2>About</h2>
+            <p style="font-size:12px; line-height:1.6; color:var(--text-dim)">
+                ${overview.Description ? overview.Description.slice(0, 450) + '...' : 'No description available.'}
+            </p>
+        </div>
+        <div class="card">
+            <h2>Key Metrics</h2>
+            <div class="kpi-grid">
+                ${kpi('Mkt Cap', fmt(overview.MarketCapitalization, '$'))}
+                ${kpi('P/E', fmt(overview.PERatio))}
+                ${kpi('ROE', fmtPct(overview.ReturnOnEquityTTM))}
+                ${kpi('Div Yield', fmtPct(overview.DividendYield))}
+                ${kpi('EPS', fmt(overview.EPS, '$'))}
+                ${kpi('Rev TTM', fmt(overview.RevenueTTM, '$'))}
+                ${kpi('P/S', fmt(overview.PriceToSalesRatioTTM))}
+                ${kpi('P/B', fmt(overview.PriceToBookRatio))}
+                ${kpi('Profit Margin', fmtPct(overview.ProfitMargin))}
+                ${kpi('Beta', fmt(overview.Beta))}
+                ${kpi('52W High', fmt(overview['52WeekHigh'], '$'))}
+                ${kpi('52W Low', fmt(overview['52WeekLow'], '$'))}
+            </div>
+        </div>
+    </div>`;
+    document.getElementById('fundResult').innerHTML = html;
+  } catch(e) {
+    showError('fundResult', e.message);
+  }
+}
+
+function kpi(label, value) {
+  return `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div></div>`;
+}
+
+/* ══════════════════════════════════════════
+   PRICE CHART
+══════════════════════════════════════════ */
+async function loadChart() {
+  if (!requireKey()) return;
+  const ticker = document.getElementById('chartTicker').value.trim().toUpperCase();
+  const interval = document.getElementById('chartInterval').value;
+  if (!ticker) return alert('Enter a ticker.');
+
+  document.getElementById('chartTitle').textContent = `${ticker} — Loading…`;
+  if (priceChart) { priceChart.destroy(); priceChart = null; }
+
+  const fnMap = { daily: 'TIME_SERIES_DAILY', weekly: 'TIME_SERIES_WEEKLY', monthly: 'TIME_SERIES_MONTHLY' };
+  const keyMap = { daily: 'Time Series (Daily)', weekly: 'Weekly Time Series', monthly: 'Monthly Time Series' };
+
+  try {
+    const data = await avFetch({ function: fnMap[interval], symbol: ticker, outputsize: 'compact' });
+    const series = data[keyMap[interval]];
+    if (!series) throw new Error(`No price data for "${ticker}".`);
+
+    const dates  = Object.keys(series).sort();
+    const closes = dates.map(d => parseFloat(series[d]['4. close']));
+    const opens  = dates.map(d => parseFloat(series[d]['1. open']));
+
+    // Color gradient based on trend
+    const first = closes[0], last = closes[closes.length - 1];
+    const trendColor = last >= first ? '#00d4aa' : '#ff4d6d';
+
+    document.getElementById('chartTitle').textContent = `${ticker} · ${interval.charAt(0).toUpperCase()+interval.slice(1)} Close Price`;
+
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 360);
+    grad.addColorStop(0, trendColor + '33');
+    grad.addColorStop(1, trendColor + '00');
+
+    priceChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: ticker + ' Close',
+          data: closes,
+          borderColor: trendColor,
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          backgroundColor: grad,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#8892a4', font: { family: 'Courier New', size: 12 } } },
+          tooltip: {
+            backgroundColor: '#13161d',
+            borderColor: '#1f2330',
+            borderWidth: 1,
+            titleColor: '#00d4aa',
+            bodyColor: '#e2e8f0',
+            callbacks: {
+              label: ctx => ` $${ctx.parsed.y.toFixed(2)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#5a6278', font: { family: 'Courier New', size: 10 }, maxTicksLimit: 8 },
+            grid: { color: '#1f2330' }
+          },
+          y: {
+            ticks: { color: '#5a6278', font: { family: 'Courier New', size: 11 },
+              callback: v => '$' + v.toLocaleString() },
+            grid: { color: '#1f2330' }
+          }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('chartTitle').textContent = 'Error';
+    alert(e.message);
+  }
+}
+
+/* ══════════════════════════════════════════
+   PEER COMPARISON
+══════════════════════════════════════════ */
+async function addPeer() {
+  if (!requireKey()) return;
+  const input = document.getElementById('compareTicker');
+  const ticker = input.value.trim().toUpperCase();
+  if (!ticker) return;
+  if (peers.includes(ticker)) { input.value = ''; return; }
+  if (peers.length >= 6) return alert('Max 6 tickers for comparison.');
+
+  peers.push(ticker);
+  input.value = '';
+  renderPeerTags();
+  await runComparison();
+}
+
+function removePeer(ticker) {
+  const idx = peers.indexOf(ticker);
+  if (idx > -1) peers.splice(idx, 1);
+  renderPeerTags();
+  runComparison();
+}
+
+function renderPeerTags() {
+  const wrap = document.getElementById('peerTags');
+  wrap.innerHTML = peers.map(t =>
+    `<span class="peer-tag">${t} <button onclick="removePeer('${t}')" title="Remove">✕</button></span>`
+  ).join('');
+}
+
+async function runComparison() {
+  if (peers.length < 1) {
+    document.getElementById('compareResult').innerHTML =
+      '<div class="msg"><div class="icon">🔍</div>Add 2+ tickers to compare them side-by-side.</div>';
+    return;
+  }
+  document.getElementById('compareResult').innerHTML =
+    `<div class="msg"><span class="loader"></span>Fetching ${peers.length} ticker(s)…</div>`;
+
+  try {
+    const results = await Promise.all(peers.map(async t => {
+      try {
+        const [ov, q] = await Promise.all([
+          avFetch({ function: 'OVERVIEW', symbol: t }),
+          avFetch({ function: 'GLOBAL_QUOTE', symbol: t })
+        ]);
+        return { ticker: t, ov, quote: q['Global Quote'] || {}, error: null };
+      } catch(e) {
+        return { ticker: t, error: e.message };
+      }
+    }));
+
+    const metrics = ['PERatio','EPS','MarketCapitalization','ProfitMargin','DividendYield','Beta','RevenueTTM','ReturnOnEquityTTM'];
+    const labels  = ['P/E','EPS','Mkt Cap','Profit Margin','Div Yield','Beta','Revenue TTM','ROE'];
+    const fmtFns  = [
+      v=>fmt(v), v=>fmt(v,'$'), v=>fmt(v,'$'), v=>fmtPct(v),
+      v=>fmtPct(v), v=>fmt(v), v=>fmt(v,'$'), v=>fmtPct(v)
+    ];
+
+    // Build rows
+    const rows = results.map(r => {
+      if (r.error) return { ticker: r.ticker, values: metrics.map(()=>null), price: null, change: null, error: r.error };
+      const price = parseFloat(r.quote['05. price'] || 0);
+      const change = parseFloat(r.quote['09. change'] || 0);
+      return {
+        ticker: r.ticker,
+        name: r.ov.Name || '',
+        sector: r.ov.Sector || '—',
+        price, change,
+        values: metrics.map(m => r.ov[m] && r.ov[m] !== 'None' ? parseFloat(r.ov[m]) : null),
+        raw: r.ov,
+        error: null
+      };
+    });
+
+    // Find best/worst per metric (higher = better for most, lower for P/E & Beta)
+    const lowerIsBetter = [true, false, false, false, false, true, false, false];
+    const highlights = metrics.map((_, mi) => {
+      const vals = rows.map(r => r.values[mi]).filter(v => v !== null);
+      if (vals.length < 2) return { best: null, worst: null };
+      const best  = lowerIsBetter[mi] ? Math.min(...vals) : Math.max(...vals);
+      const worst = lowerIsBetter[mi] ? Math.max(...vals) : Math.min(...vals);
+      return { best, worst };
+    });
+
+    let html = `
+      <div class="card">
+        <h2>Peer Comparison — ${peers.join(' · ')}</h2>
+        <div style="overflow-x:auto">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Name</th>
+              <th>Sector</th>
+              <th>Price</th>
+              <th>Change</th>
+              ${labels.map(l=>`<th>${l}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    rows.forEach(r => {
+      if (r.error) {
+        html += `<tr><td class="ticker-cell">${r.ticker}</td><td colspan="100" style="color:var(--danger)">${r.error}</td></tr>`;
+        return;
+      }
+      const isUp = r.change >= 0;
+      html += `<tr>
+        <td class="ticker-cell">${r.ticker}</td>
+        <td style="color:var(--text-dim);font-size:12px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</td>
+        <td style="font-size:12px;color:var(--text-dim)">${r.sector}</td>
+        <td>$${r.price.toFixed(2)}</td>
+        <td class="${isUp?'up':'down'}">${isUp?'+':''}${r.change.toFixed(2)}</td>`;
+      r.values.forEach((v, mi) => {
+        const display = v !== null ? fmtFns[mi](v) : '—';
+        const h = highlights[mi];
+        let cls = '';
+        if (v !== null && h.best !== null) {
+          if (v === h.best)  cls = 'best';
+          if (v === h.worst) cls = 'worst';
+        }
+        html += `<td class="${cls}">${display}</td>`;
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>
+      <p style="margin-top:12px;font-size:11px;color:var(--muted);font-family:var(--font-mono)">
+        ▲ Green = best in peer group &nbsp;|&nbsp; ▼ Red = worst in peer group
+      </p>
+      </div>`;
+    document.getElementById('compareResult').innerHTML = html;
+
+  } catch(e) {
+    showError('compareResult', e.message);
+  }
+}
+
+/* Enter key support */
+document.getElementById('fundTicker').addEventListener('keydown', e => e.key==='Enter' && loadFundamentals());
+document.getElementById('chartTicker').addEventListener('keydown', e => e.key==='Enter' && loadChart());
+document.getElementById('compareTicker').addEventListener('keydown', e => e.key==='Enter' && addPeer());
+</script>
+</body>
+</html>

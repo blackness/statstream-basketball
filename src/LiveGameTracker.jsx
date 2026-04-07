@@ -63,6 +63,15 @@ const LiveGameTracker = ({ user, toast }) => {
     return () => supabase.removeChannel(channel);
   }, []);
 
+  // Deep link: ?game=uuid opens that game's box score directly
+useEffect(() => {
+  if (loading || !gameHistory.length) return
+  const params = new URLSearchParams(window.location.search)
+  const gameId = params.get('game')
+  if (!gameId) return
+  const game = gameHistory.find(g => g.id === gameId)
+  if (game) handleViewStats(game)
+}, [loading, gameHistory])
   const loadTeamsAndGames = async () => {
     try {
       setLoading(true);
