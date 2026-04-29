@@ -9,3 +9,10 @@ export default {
   },
   plugins: [],
 }
+theme: {
+  extend: {
+    screens: {
+      landscape: { raw: '(orientation: landscape)' },
+    },
+  },
+},

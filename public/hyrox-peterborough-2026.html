@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HYROX PETERBOROUGH — APRIL 19, 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Archivo:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-2: #111114;
+    --bg-3: #1a1a1f;
+    --line: #26262d;
+    --text: #f5f5f0;
+    --dim: #888892;
+    --accent: #d4ff00;     /* electric lime */
+    --accent-2: #ff3d2e;   /* hyrox-red */
+    --gold: #ffc83d;
+    --silver: #c8c8d0;
+    --bronze: #d97f3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Archivo', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(212,255,0,0.06), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(255,61,46,0.05), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 28px 80px;
+  }
+
+  /* HEADER */
+  header.hero {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .meta-row .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent-2);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,61,46,0.5); }
+    50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(255,61,46,0); }
+  }
+
+  h1.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 12vw, 180px);
+    line-height: 0.85;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin: 0;
+  }
+  h1.title .accent { color: var(--accent); }
+  h1.title .strike {
+    -webkit-text-stroke: 1.5px var(--text);
+    color: transparent;
+  }
+
+  .subtitle {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .subtitle .stat-num {
+    display: block;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    color: var(--text);
+    letter-spacing: 0;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .subtitle .stat-num.lime { color: var(--accent); }
+  .subtitle .stat-num.red { color: var(--accent-2); }
+
+  /* CATEGORY NAV */
+  .cat-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 36px;
+  }
+  .cat-nav button {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--dim);
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .cat-nav button:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .cat-nav button.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* CATEGORY SECTION */
+  .category {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .category.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .cat-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .cat-header h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(38px, 6vw, 64px);
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+  .cat-header .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+
+  /* PODIUM */
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .podium-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 22px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  .podium-card:hover { transform: translateY(-3px); }
+  .podium-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .podium-card.gold::before { background: var(--gold); }
+  .podium-card.silver::before { background: var(--silver); }
+  .podium-card.bronze::before { background: var(--bronze); }
+
+  .podium-card.gold {
+    background: linear-gradient(180deg, rgba(255,200,61,0.08), transparent 60%), var(--bg-2);
+    transform: translateY(-12px);
+  }
+  .podium-card.gold:hover { transform: translateY(-15px); }
+
+  .podium-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    line-height: 0.85;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .podium-card.gold .podium-rank { color: var(--gold); font-size: 96px; }
+  .podium-card.silver .podium-rank { color: var(--silver); }
+  .podium-card.bronze .podium-rank { color: var(--bronze); }
+
+  .podium-medal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    color: var(--dim);
+  }
+  .podium-card.gold .podium-medal { color: var(--gold); }
+  .podium-card.silver .podium-medal { color: var(--silver); }
+  .podium-card.bronze .podium-medal { color: var(--bronze); }
+
+  .podium-name {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    line-height: 1.15;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: -0.005em;
+  }
+  .podium-name.partner {
+    font-size: 14px;
+    color: var(--dim);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .podium-time {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .podium-card.gold .podium-time { color: var(--gold); font-size: 32px; }
+
+  .podium-bib {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+  }
+
+  /* RESULTS TABLE */
+  .table-shell {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-3);
+  }
+  .table-toolbar h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+  .table-toolbar .legend {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+  }
+  .table-toolbar .legend span.lime-tag {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .scroll-x {
+    overflow-x: auto;
+  }
+  .scroll-x::-webkit-scrollbar { height: 8px; }
+  .scroll-x::-webkit-scrollbar-track { background: var(--bg-3); }
+  .scroll-x::-webkit-scrollbar-thumb { background: var(--line); }
+  .scroll-x::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  table.results {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    min-width: 1200px;
+  }
+  table.results thead th {
+    background: var(--bg-3);
+    color: var(--dim);
+    font-weight: 500;
+    text-align: left;
+    padding: 12px 10px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  table.results thead th:hover {
+    color: var(--text);
+    background: #1f1f25;
+  }
+  table.results thead th .sort-ind {
+    display: inline-block;
+    margin-left: 6px;
+    color: var(--line);
+    font-size: 9px;
+    transition: color 0.15s ease;
+  }
+  table.results thead th:hover .sort-ind {
+    color: var(--dim);
+  }
+  table.results thead th.sorted {
+    color: var(--accent);
+    background: #1f1f25;
+    border-bottom: 1px solid var(--accent);
+  }
+  table.results thead th.sorted .sort-ind {
+    color: var(--accent);
+  }
+  table.results tbody td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    color: var(--text);
+  }
+  table.results tbody tr:hover { background: rgba(212,255,0,0.04); }
+
+  table.results .place {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--text);
+    width: 50px;
+  }
+  table.results tr.top-1 .place { color: var(--gold); }
+  table.results tr.top-2 .place { color: var(--silver); }
+  table.results tr.top-3 .place { color: var(--bronze); }
+
+  table.results .name-cell {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  table.results .name-cell.partner {
+    font-weight: 500;
+    color: var(--dim);
+    font-size: 12px;
+  }
+
+  table.results .total {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  table.results tr.top-1 .total { color: var(--gold); }
+  table.results .bib {
+    color: var(--dim);
+    width: 45px;
+  }
+
+  /* Highlight fastest split per column */
+  table.results td.fastest {
+    color: var(--accent);
+    font-weight: 700;
+    background: rgba(212,255,0,0.06);
+  }
+
+  .pair-row td {
+    border-bottom: none !important;
+  }
+  .pair-row + .pair-row td {
+    border-bottom: 1px solid var(--line) !important;
+    padding-top: 4px;
+    padding-bottom: 12px;
+  }
+  .pair-row.first td {
+    padding-top: 12px;
+    padding-bottom: 4px;
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  footer .ascii {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .subtitle { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .podium { grid-template-columns: 1fr; }
+    .podium-card.gold { transform: none; }
+    .podium-card.gold:hover { transform: translateY(-3px); }
+    .cat-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+    footer { flex-direction: column; gap: 10px; align-items: flex-start; }
+  }
+
+  /* tag stripe */
+  .tag-stripe {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .tag-stripe.red { background: var(--accent-2); color: var(--text); }
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HERO HEADER -->
+  <header class="hero">
+    <div class="meta-row">
+      <div><span class="dot"></span>RESULTS / OFFICIAL / FINAL</div>
+      <div>PETERBOROUGH · APRIL 19 · 2026</div>
+    </div>
+
+    <h1 class="title">
+      HY<span class="accent">R</span>OX
+      <span class="strike"> - PETERBOROUGH</span>
+    </h1>
+
+    <div class="subtitle">
+      <div>
+        <span class="stat-num lime">89</span>
+        TOTAL ATHLETES
+      </div>
+      <div>
+        <span class="stat-num">5</span>
+        CATEGORIES
+      </div>
+      <div>
+        <span class="stat-num red">8</span>
+        STATIONS
+      </div>
+      <div>
+        <span class="stat-num">1:00:24</span>
+        FASTEST FINISH
+      </div>
+    </div>
+  </header>
+
+  <!-- CATEGORY TABS -->
+  <nav class="cat-nav" id="catNav">
+    <button class="active" data-cat="men-solo">Men's Solo</button>
+    <button data-cat="women-solo">Women's Solo</button>
+    <button data-cat="male-pairs">Male Pairs</button>
+    <button data-cat="female-pairs">Female Pairs</button>
+    <button data-cat="mixed-pairs">Mixed Pairs</button>
+  </nav>
+
+  <!-- CATEGORIES -->
+  <main id="categories"></main>
+
+  <footer>
+    <div>HYROX PETERBOROUGH 2026 · ALL TIMES IN HH:MM:SS</div>
+    <div class="ascii">[ FITNESS / FORGED / FINISHED ]</div>
+  </footer>
+
+</div>
+
+<script>
+// ============ DATA ============
+const STATIONS = [
+  "1st K", "Ski Erg", "2nd K", "Sled Push", "3rd K", "Sled Pull",
+  "4th K", "Burpees", "5th K", "Row", "6th K", "Farmer", 
+  "7th K", "Lunges", "8th K", "Wall Ball"
+];
+
+const data = {
+  "men-solo": {
+    title: "Men's Solo",
+    type: "solo",
+    athletes: [
+      { place:1, name:"JOHN MARTIN", bib:32, total:"01:07:20", splits:["00:04:05","00:04:13","00:04:22","00:01:35","00:04:23","00:04:03","00:04:30","00:04:53","00:04:22","00:04:55","00:04:27","00:02:33","00:04:30","00:04:44","00:04:25","00:05:00"] },
+      { place:2, name:"IAN GRABILL", bib:31, total:"01:12:37", splits:["00:04:50","00:04:27","00:04:59","00:01:20","00:05:03","00:02:48","00:04:56","00:05:10","00:05:31","00:04:43","00:05:15","00:03:01","00:05:04","00:05:16","00:05:03","00:05:00"] },
+      { place:3, name:"TODD POTTLE", bib:40, total:"01:17:45", splits:["00:04:44","00:04:29","00:05:02","00:01:46","00:05:06","00:04:11","00:05:13","00:05:35","00:05:35","00:05:16","00:05:37","00:02:50","00:05:25","00:06:08","00:05:10","00:05:31"] },
+      { place:4, name:"RUKKY RANYO", bib:80, total:"01:23:30", splits:["00:05:22","00:04:39","00:05:36","00:01:48","00:05:43","00:05:03","00:05:34","00:04:59","00:05:48","00:05:32","00:05:46","00:02:24","00:05:41","00:06:23","00:05:36","00:06:45"] },
+      { place:5, name:"RYAN HIGHES", bib:17, total:"01:31:54", splits:["00:05:24","00:05:17","00:05:31","00:02:57","00:05:40","00:04:23","00:05:35","00:07:49","00:06:15","00:05:48","00:06:17","00:04:15","00:06:03","00:07:36","00:06:01","00:07:45"] },
+      { place:6, name:"COLIN MATHESON", bib:89, total:"01:37:23", splits:["00:04:39","00:05:18","00:05:20","00:01:50","00:05:18","00:04:25","00:05:05","00:06:28","00:06:24","00:07:16","00:05:25","00:08:48","00:03:34","00:06:33","00:18:24","00:07:40"] },
+      { place:7, name:"AMAN SANSHU", bib:24, total:"01:42:26", splits:["00:06:16","00:04:37","00:06:35","00:02:34","00:07:25","00:05:45","00:07:02","00:08:44","00:07:41","00:05:08","00:06:41","00:03:25","00:06:51","00:08:29","00:06:52","00:08:13"] }
+    ]
+  },
+  "women-solo": {
+    title: "Women's Solo",
+    type: "solo",
+    athletes: [
+      { place:1, name:"SHANNON SHILLINGLAW", bib:1, total:"01:12:19", splits:["00:04:12","00:04:57","00:04:18","00:01:04","00:05:09","00:03:44","00:05:10","00:06:19","00:05:00","00:05:02","00:04:57","00:03:04","00:04:05","00:04:40","00:04:56","00:05:16"] },
+      { place:2, name:"KAYLA MARTIN", bib:85, total:"01:14:33", splits:["00:04:57","00:04:37","00:05:28","00:01:22","00:05:42","00:03:44","00:05:28","00:04:39","00:05:50","00:04:53","00:05:48","00:02:18","00:05:32","00:04:22","00:05:27","00:04:15"] },
+      { place:3, name:"MANDY SPAHN", bib:76, total:"01:15:08", splits:["00:04:29","00:05:01","00:04:37","00:01:59","00:05:04","00:04:27","00:04:58","00:05:26","00:05:00","00:05:23","00:04:54","00:02:28","00:04:56","00:05:32","00:04:52","00:05:52"] },
+      { place:4, name:"ALLISON LAINEY", bib:90, total:"01:16:34", splits:["00:04:38","00:05:20","00:04:44","00:01:44","00:04:46","00:04:34","00:04:53","00:06:25","00:04:58","00:05:13","00:04:56","00:02:47","00:04:53","00:05:39","00:04:51","00:06:05"] },
+      { place:5, name:"EMILY CLIMPSON", bib:79, total:"01:16:45", splits:["00:04:13","00:04:45","00:05:36","00:01:14","00:05:34","00:04:55","00:05:08","00:03:45","00:05:39","00:05:20","00:05:23","00:02:40","00:05:18","00:06:42","00:05:28","00:04:56"] },
+      { place:6, name:"BRENDA MURRAY", bib:37, total:"01:17:01", splits:["00:04:33","00:05:06","00:04:51","00:01:33","00:04:52","00:05:57","00:04:57","00:07:56","00:05:02","00:04:57","00:04:57","00:02:26","00:04:56","00:05:42","00:04:59","00:04:08"] },
+      { place:7, name:"QUINN WILSON", bib:38, total:"01:19:44", splits:["00:04:24","00:05:29","00:04:38","00:01:49","00:04:55","00:08:29","00:05:06","00:06:30","00:05:12","00:05:49","00:04:49","00:03:06","00:04:46","00:04:36","00:04:50","00:04:45"] },
+      { place:8, name:"CLARE JOHNSTON", bib:18, total:"01:20:13", splits:["00:05:17","00:04:50","00:05:32","00:01:35","00:05:40","00:04:22","00:05:46","00:05:44","00:05:36","00:05:14","00:05:34","00:02:42","00:05:36","00:05:39","00:05:25","00:05:35"] },
+      { place:9, name:"KYLE BURKE", bib:28, total:"01:21:18", splits:["00:05:08","00:04:46","00:05:05","00:01:23","00:05:44","00:03:52","00:05:30","00:03:52","00:05:46","00:05:21","00:05:40","00:03:45","00:05:20","00:06:41","00:05:53","00:07:24"] },
+      { place:10, name:"MAGGIE LAMARCHE", bib:6, total:"01:24:51", splits:["00:05:14","00:04:50","00:06:05","00:02:10","00:06:18","00:04:14","00:06:15","00:05:46","00:06:34","00:05:10","00:06:22","00:02:38","00:06:15","00:04:41","00:06:23","00:05:48"] },
+      { place:11, name:"EMILY DOWNIE", bib:21, total:"01:25:37", splits:["00:05:32","00:05:39","00:05:59","00:01:18","00:05:29","00:06:05","00:05:08","00:06:54","00:05:24","00:05:33","00:05:20","00:03:01","00:05:52","00:05:56","00:05:13","00:07:11"] },
+      { place:12, name:"DANIELLE NEWALL", bib:63, total:"01:26:38", splits:["00:04:55","00:05:20","00:05:22","00:01:20","00:05:45","00:05:08","00:05:46","00:07:15","00:06:21","00:05:09","00:07:04","00:02:49","00:06:02","00:05:22","00:06:16","00:06:34"] },
+      { place:13, name:"STEPH WALKER", bib:15, total:"01:27:15", splits:["—","00:05:29","00:05:59","00:01:49","00:05:45","00:05:10","00:05:51","00:05:49","00:06:21","00:05:33","00:06:08","00:02:42","00:06:15","00:06:28","00:07:02","00:06:51"] },
+      { place:14, name:"KRISTINE MCCRACKEN", bib:5, total:"01:34:48", splits:["00:05:14","00:05:01","00:05:53","00:02:23","00:06:14","00:06:34","00:05:51","00:05:35","00:06:02","00:08:07","00:05:49","00:03:43","00:06:01","00:06:51","00:06:17","00:09:07"] },
+      { place:15, name:"KAYLEE LEDREW HOWIE", bib:60, total:"01:35:48", splits:["00:05:17","00:04:42","00:06:39","00:02:14","00:06:57","00:07:11","00:07:32","00:06:47","00:06:22","00:05:15","00:07:25","00:03:04","00:06:54","00:06:01","00:06:45","00:05:37"] },
+      { place:16, name:"BECCA CZERNIAWSKI", bib:36, total:"01:35:57", splits:["00:05:31","00:04:54","00:05:54","00:01:27","00:06:43","00:06:43","00:06:39","00:10:53","00:07:01","00:05:40","00:06:35","00:02:47","00:06:47","00:05:27","00:06:45","00:06:02"] },
+      { place:17, name:"TRISTLYN SPANGER", bib:57, total:"01:41:12", splits:["00:06:01","00:05:11","00:06:27","00:01:32","00:07:14","00:08:06","00:07:22","00:07:44","00:07:26","00:05:42","00:07:01","00:03:21","00:06:42","00:08:10","00:06:52","00:06:17"] },
+      { place:18, name:"DAYNA DRURY", bib:2, total:"01:42:08", splits:["00:06:06","00:05:04","00:07:38","00:01:15","00:08:39","00:04:51","00:08:27","00:06:54","00:08:08","00:05:55","00:07:28","00:02:52","00:08:09","00:04:11","00:08:20","00:08:04"] },
+      { place:19, name:"JENNY MCCOY", bib:44, total:"01:43:34", splits:["00:05:08","00:05:04","00:05:47","00:02:07","00:06:19","00:07:38","00:06:12","00:12:49","00:06:38","00:06:05","00:07:14","00:03:30","00:06:46","00:08:18","00:06:54","00:06:56"] },
+      { place:20, name:"LESLIE GRAND", bib:16, total:"01:45:36", splits:["00:04:52","00:05:41","00:05:23","00:02:42","00:05:30","00:06:46","00:05:37","00:14:14","00:06:02","00:06:24","00:05:59","00:04:23","00:05:53","00:07:51","00:06:13","00:11:59"] },
+      { place:21, name:"VAL YEO", bib:52, total:"01:54:20", splits:["00:05:23","00:05:35","00:07:08","00:01:52","00:08:07","00:06:19","00:08:33","00:12:03","00:08:40","00:05:53","00:07:25","00:02:33","00:08:14","00:10:29","00:08:55","00:06:49"] },
+      { place:22, name:"EVANGELINE BARBADILLO", bib:45, total:"02:01:13", splits:["00:06:32","00:05:54","00:07:22","00:02:00","00:08:05","00:10:33","00:07:47","00:10:19","00:08:43","00:06:32","00:08:29","00:04:01","00:08:32","00:08:14","00:08:36","00:09:27"] },
+      { place:23, name:"MELISSA HOWARD", bib:43, total:"02:06:22", splits:["00:06:42","00:05:53","00:07:12","00:02:04","00:07:59","00:07:44","00:09:16","00:12:17","00:09:14","00:06:06","00:09:25","00:03:42","00:10:15","00:10:11","00:10:54","00:07:21"] }
+    ]
+  },
+  "male-pairs": {
+    title: "Male Pairs",
+    type: "pair",
+    athletes: [
+      { place:1, total:"01:00:24", members: [
+        { name:"LIAM WEBSTER", bib:82, total:"01:00:24", splits:["00:03:57","00:03:47","00:04:22","00:01:05","00:04:43","00:02:32","00:04:31","00:02:37","00:04:57","00:04:24","00:04:39","00:01:56","00:04:34","00:03:39","00:04:44","00:03:41"] },
+        { name:"ANTOINE AUDIC", bib:81, total:"01:00:25", splits:["00:03:57","00:03:48","00:04:22","00:01:05","00:04:43","00:02:33","00:04:29","00:02:44","00:04:50","00:04:25","00:04:38","00:01:56","00:04:34","00:03:36","00:04:47","00:03:42"] }
+      ]},
+      { place:2, total:"01:10:02", members: [
+        { name:"JEFF STEWART", bib:26, total:"01:10:02", splits:["00:05:07","00:04:20","00:04:59","00:01:37","00:05:00","00:02:51","00:05:09","00:03:19","00:05:14","00:04:36","00:05:12","00:02:37","00:05:06","00:05:32","00:05:05","00:04:11"] },
+        { name:"TOMMY COOKSON", bib:25, total:"01:10:04", splits:["00:05:07","00:04:21","00:04:58","00:01:37","00:05:00","00:02:52","00:05:07","00:03:19","00:05:19","00:04:26","00:05:17","00:02:36","00:05:05","00:05:29","00:05:09","00:04:12"] }
+      ]},
+      { place:3, total:"01:12:07", members: [
+        { name:"TIM PRITCHARD", bib:83, total:"01:12:07", splits:["00:04:54","00:04:02","00:05:33","00:00:46","00:06:00","00:03:31","00:06:02","00:02:43","00:06:16","00:04:44","00:05:58","00:02:23","00:05:52","00:03:55","00:05:47","00:03:33"] },
+        { name:"BRADEN TOKARSKI", bib:84, total:"01:12:08", splits:["00:04:53","00:04:01","00:05:32","00:00:46","00:06:02","00:03:31","00:06:01","00:02:44","00:06:17","00:04:40","00:06:01","00:02:24","00:05:53","00:03:54","00:05:47","00:03:35"] }
+      ]},
+      { place:4, total:"01:13:14", members: [
+        { name:"RYAN PALARO", bib:70, total:"01:13:14", splits:["00:05:20","00:04:07","00:05:59","00:00:58","00:06:11","00:02:29","00:06:10","00:03:05","00:06:32","00:04:47","00:06:28","00:02:10","00:05:35","00:03:22","00:05:17","00:04:34"] },
+        { name:"WILL RIOPELLE", bib:71, total:"01:13:17", splits:["00:05:19","00:04:07","00:06:00","00:00:58","00:06:11","00:02:30","00:06:10","00:03:04","00:06:33","00:04:47","00:06:28","00:02:09","00:05:36","00:03:22","00:05:17","00:04:38"] }
+      ]},
+      { place:5, total:"01:14:14", members: [
+        { name:"MIKE HANLEY", bib:66, total:"01:14:14", splits:["00:05:11","00:03:56","00:05:29","00:01:00","00:06:00","00:02:49","00:05:52","00:04:39","00:05:49","00:04:31","00:05:50","00:02:22","00:06:04","00:04:29","00:05:54","00:04:11"] },
+        { name:"JOHN O'BRIEN", bib:67, total:"01:14:14", splits:["00:05:09","00:03:58","00:05:25","00:01:01","00:06:01","00:02:52","00:05:49","00:04:44","00:05:45","00:04:37","00:05:44","00:02:24","00:06:02","00:04:32","00:05:51","00:04:13"] }
+      ]},
+      { place:6, total:"01:30:48", members: [
+        { name:"SHRAWAN KUMAAR KANNAN", bib:64, total:"01:30:48", splits:["00:06:02","00:04:47","00:06:29","00:08:34","00:05:20","00:06:46","00:04:41","00:07:10","00:05:17","00:06:54","00:02:53","00:06:50","00:04:12","00:07:06","00:04:15","00:03:21"] },
+        { name:"ISH DAVE", bib:65, total:"01:30:48", splits:["00:06:03","00:04:47","00:06:28","00:08:35","00:05:18","00:06:47","00:04:39","00:07:13","00:05:19","00:06:50","00:02:57","00:06:47","00:04:09","00:07:09","00:04:18","00:03:20"] }
+      ]}
+    ]
+  },
+  "female-pairs": {
+    title: "Female Pairs",
+    type: "pair",
+    athletes: [
+      { place:1, total:"01:05:29", members: [
+        { name:"LAURA SPENCER", bib:75, total:"01:05:29", splits:["00:04:28","00:04:25","00:04:40","00:01:03","00:05:16","00:03:07","00:05:06","00:02:39","00:05:01","00:04:48","00:04:57","00:02:02","00:05:06","00:04:07","00:04:48","00:03:44"] },
+        { name:"LINDSAY HENDERSON", bib:74, total:"01:05:30", splits:["00:04:28","00:04:25","00:04:39","00:01:03","00:05:15","00:03:08","00:05:07","00:02:39","00:05:00","00:04:49","00:04:59","00:02:01","00:05:06","00:04:07","00:04:48","00:03:46"] }
+      ]},
+      { place:2, total:"01:08:20", members: [
+        { name:"RACHEL VAN DER WALT", bib:19, total:"01:08:20", splits:["00:04:56","00:04:37","00:04:58","00:00:51","00:05:17","00:03:02","00:05:16","00:03:01","00:05:37","00:04:58","00:05:41","00:02:13","00:05:33","00:03:18","00:05:22","00:03:33"] },
+        { name:"LINDSAY HOMER", bib:20, total:"01:08:20", splits:["00:04:56","00:04:37","00:04:58","00:00:51","00:05:17","00:03:02","00:05:16","00:03:01","00:05:37","00:05:04","00:05:35","00:02:11","00:05:35","00:03:19","00:05:21","00:03:32"] }
+      ]},
+      { place:3, total:"01:12:29", members: [
+        { name:"BRYANNA HALE", bib:73, total:"01:12:29", splits:["00:04:56","00:04:20","00:05:25","00:01:09","00:06:25","00:02:37","00:05:42","00:02:19","00:06:01","00:04:25","00:06:11","00:02:05","00:06:15","00:04:21","00:06:15","00:03:52"] },
+        { name:"HAYLEY HILL", bib:72, total:"01:12:48", splits:["00:04:55","00:04:19","00:05:23","00:01:09","00:06:25","00:02:39","00:05:40","00:02:16","00:06:04","00:04:25","00:06:10","00:02:07","00:06:14","00:04:18","00:06:18","00:04:12"] }
+      ]},
+      { place:4, total:"01:16:51", members: [
+        { name:"CHRISTINA GOODE", bib:87, total:"01:16:51", splits:["00:05:33","00:04:44","00:05:44","00:01:14","00:06:01","00:03:56","00:05:58","00:03:47","00:06:00","00:05:03","00:06:12","00:02:22","00:06:05","00:04:06","00:06:07","00:03:50"] },
+        { name:"ALI HERLINEY", bib:88, total:"01:16:52", splits:["00:05:33","00:04:44","00:05:44","00:01:14","00:06:01","00:03:56","00:05:58","00:03:47","00:06:00","00:05:03","00:06:12","00:02:22","00:06:05","00:04:06","00:06:08","00:03:51"] }
+      ]},
+      { place:5, total:"01:19:44", members: [
+        { name:"PAULINE KASHTELYAN", bib:77, total:"01:19:44", splits:["00:05:09","00:04:41","00:05:59","00:01:07","00:06:14","00:03:49","00:06:06","00:04:52","00:06:48","00:05:08","00:06:03","00:02:09","00:06:25","00:04:30","00:06:04","00:04:33"] },
+        { name:"TASHA RUZNISKY", bib:78, total:"01:19:44", splits:["00:05:10","00:04:40","00:06:00","00:01:07","00:06:14","00:03:47","00:06:07","00:04:52","00:06:50","00:05:06","00:06:03","00:02:10","00:06:25","00:04:28","00:06:05","00:04:33"] }
+      ]},
+      { place:6, total:"01:22:36", members: [
+        { name:"SHANNON HANLEY", bib:34, total:"01:22:36", splits:["00:05:36","00:05:19","00:05:47","00:01:21","00:05:56","00:04:19","00:05:59","00:05:33","00:06:03","00:05:11","00:05:57","00:02:50","00:06:13","00:06:26","00:05:50","00:04:07"] },
+        { name:"KAREN SALTMASH", bib:35, total:"01:22:37", splits:["00:05:36","00:05:18","00:05:47","00:01:21","00:05:56","00:04:19","00:05:51","00:05:27","00:06:09","00:05:12","00:05:57","00:02:51","00:06:19","00:06:19","00:05:51","00:04:06"] }
+      ]},
+      { place:7, total:"01:28:23", members: [
+        { name:"LIV SABOURIN", bib:61, total:"01:28:23", splits:["00:06:14","00:05:06","00:06:32","00:01:43","00:05:57","00:04:13","00:07:12","00:04:20","00:07:12","00:05:04","00:07:31","00:02:42","00:06:43","00:05:39","00:06:43","00:04:41"] },
+        { name:"EMILY JARVIS", bib:62, total:"01:28:23", splits:["00:06:16","00:05:06","00:06:33","00:01:43","00:05:57","00:04:14","00:07:12","00:04:19","00:07:14","00:05:06","00:07:27","00:02:42","00:06:42","00:05:41","00:06:42","00:04:40"] }
+      ]},
+      { place:8, total:"01:29:28", members: [
+        { name:"SHERI HEDMAN", bib:91, total:"01:29:28", splits:["00:06:04","00:04:41","00:06:55","00:00:59","00:07:59","00:04:18","00:07:06","00:05:23","00:07:23","00:05:11","00:07:15","00:02:25","00:07:38","00:04:34","00:07:16","00:04:10"] },
+        { name:"ANNIE TURCOTTE", bib:92, total:"01:29:29", splits:["00:06:05","00:04:41","00:06:55","00:00:59","00:07:59","00:04:18","00:07:06","00:05:22","00:07:24","00:05:11","00:07:14","00:02:25","00:07:37","00:04:34","00:07:16","00:04:10"] }
+      ]},
+      { place:9, total:"01:30:02", members: [
+        { name:"MICHELLE CRONE", bib:22, total:"01:30:02", splits:["00:06:14","00:04:53","00:06:19","00:01:18","00:06:50","00:03:13","00:06:58","00:05:32","00:07:38","00:05:37","00:07:31","00:03:28","00:07:15","00:05:14","00:07:33","00:04:22"] },
+        { name:"MICHELLE PEON", bib:23, total:"01:30:07", splits:["00:06:15","00:11:12","00:06:19","00:01:18","00:06:50","00:03:13","00:06:59","00:05:31","00:07:39","00:05:40","00:07:30","00:03:25","00:07:16","00:05:19","00:07:29","00:04:26"] }
+      ]},
+      { place:10, total:"01:30:57", members: [
+        { name:"NINA ALLWANG", bib:59, total:"01:30:57", splits:["00:05:59","00:05:57","00:05:48","00:01:36","00:05:45","00:05:57","00:05:50","00:07:43","00:06:20","00:06:59","00:06:04","00:02:54","00:06:08","00:05:38","00:05:58","00:06:26"] },
+        { name:"KATHY WARNER", bib:58, total:"01:31:00", splits:["00:06:02","00:05:57","00:05:45","00:01:36","00:05:45","00:05:57","00:05:51","00:07:36","00:06:27","00:06:55","00:06:07","00:02:53","00:06:08","00:05:38","00:05:58","00:06:26"] }
+      ]},
+      { place:11, total:"01:31:00", members: [
+        { name:"SARAH HARRIS", bib:55, total:"01:31:01", splits:["00:05:26","00:04:33","00:07:04","00:00:50","00:07:47","00:03:57","00:08:14","00:04:55","00:08:23","00:02:15","00:08:49","00:05:00","00:07:52","00:04:18","00:07:33","00:03:56"] },
+        { name:"JENNA HARRIS", bib:56, total:"01:31:00", splits:["00:05:26","00:04:32","00:07:06","00:00:50","00:07:47","00:03:55","00:08:17","00:04:52","00:08:26","00:02:11","00:08:53","00:04:58","00:07:54","00:04:18","00:07:33","00:03:55"] }
+      ]},
+      { place:12, total:"01:37:40", members: [
+        { name:"MICHELLE BOYER", bib:46, total:"01:37:40", splits:["00:06:16","00:05:19","00:06:43","00:01:34","00:07:14","00:04:29","00:07:22","00:06:16","00:07:50","00:05:53","00:07:43","00:03:14","00:07:49","00:07:02","00:07:53","00:05:00"] },
+        { name:"MEGAN DOHERTY", bib:47, total:"01:37:42", splits:["00:06:16","00:05:19","00:06:43","00:01:34","00:07:14","00:04:29","00:07:21","00:06:22","00:07:47","00:05:51","00:07:43","00:03:13","00:07:51","00:07:05","00:07:51","00:04:59"] }
+      ]},
+      { place:13, total:"01:38:04", members: [
+        { name:"LAINE KELLY", bib:8, total:"01:38:04", splits:["00:05:36","00:05:00","00:06:23","00:01:47","00:07:06","00:03:58","00:06:13","00:04:32","00:06:24","00:06:01","00:06:12","00:02:45","00:06:01","00:04:57","00:06:10","00:04:40"] },
+        { name:"DONNA RUSSELLE", bib:7, total:"01:38:04", splits:["00:05:36","00:05:00","00:06:23","00:01:47","00:07:06","00:03:59","00:06:12","00:04:32","00:06:27","00:05:59","00:06:11","00:02:39","00:06:09","00:04:56","00:06:15","00:04:33"] }
+      ]},
+      { place:14, total:"01:46:36", members: [
+        { name:"CATHERINE MOORE", bib:3, total:"01:46:36", splits:["00:05:37","00:05:33","00:06:26","00:02:00","00:06:46","00:04:46","00:08:37","00:05:38","00:08:51","00:05:35","00:09:25","00:03:05","00:09:10","00:07:41","00:10:01","00:05:09"] },
+        { name:"WENDY BLANCO", bib:4, total:"01:49:14", splits:["00:05:38","00:05:33","00:06:26","00:02:00","00:06:46","00:04:46","00:08:39","00:05:38","00:08:51","00:05:36","00:09:19","00:03:09","00:09:11","00:07:32","00:10:13","00:05:05"] }
+      ]},
+      { place:15, total:"01:59:04", members: [
+        { name:"CHANTALL GAGNON", bib:49, total:"01:59:04", splits:["00:08:29","00:05:13","00:08:52","00:02:21","00:08:08","00:04:45","00:09:18","00:09:10","00:09:45","00:06:23","00:09:39","00:02:59","00:09:53","00:08:29","00:10:16","00:05:17"] },
+        { name:"LAUREN NEWBURY", bib:48, total:"01:59:06", splits:["00:08:32","00:05:12","00:08:52","00:02:21","00:08:08","00:04:53","00:09:09","00:09:04","00:09:51","00:06:25","00:09:33","00:03:07","00:09:50","00:08:34","00:10:10","00:05:19"] }
+      ]}
+    ]
+  },
+  "mixed-pairs": {
+    title: "Mixed Pairs",
+    type: "pair",
+    athletes: [
+      { place:1, total:"01:18:14", members: [
+        { name:"ANNA MCGILLEN", bib:10, total:"01:18:14", splits:["00:05:13","00:05:59","00:05:42","00:01:18","00:05:43","00:02:56","00:05:43","00:04:13","00:06:11","00:05:39","00:05:40","00:02:38","00:06:01","00:06:01","00:06:02","00:04:49"] },
+        { name:"BRANDON BLACK", bib:9, total:"01:18:15", splits:["00:05:12","00:05:59","00:05:42","00:01:17","00:05:42","00:02:56","00:05:43","00:04:25","00:05:59","00:05:40","00:05:41","00:02:37","00:06:01","00:06:02","00:06:02","00:04:49"] }
+      ]},
+      { place:2, total:"01:20:00", members: [
+        { name:"RACHEL BEMROSE", bib:11, total:"01:20:00", splits:["00:05:20","00:04:15","00:05:45","00:01:56","00:05:18","00:03:03","00:06:13","00:04:03","00:06:41","00:04:18","00:06:22","00:02:32","00:06:18","00:06:33","00:06:19","00:04:50"] },
+        { name:"GEOFF BEMROSE", bib:12, total:"01:20:00", splits:["00:05:17","00:04:15","00:05:17","00:01:56","00:05:18","00:03:04","00:06:07","00:04:08","00:06:32","00:04:30","00:06:22","00:02:32","00:06:08","00:06:44","00:06:02","00:05:06"] }
+      ]},
+      { place:3, total:"01:24:22", members: [
+        { name:"JAMI VON RODEN", bib:41, total:"01:24:22", splits:["00:05:19","00:10:28","00:06:03","00:01:30","00:06:35","00:03:32","00:06:40","00:05:12","00:07:04","00:04:45","00:06:59","00:02:31","00:06:55","00:05:28","00:06:36","00:04:43"] },
+        { name:"SHAUN VON RODEN", bib:42, total:"01:24:23", splits:["00:05:18","00:04:22","00:06:03","00:01:30","00:06:35","00:03:32","00:06:40","00:05:27","00:06:49","00:04:55","00:06:57","00:02:33","00:06:56","00:05:30","00:06:36","00:04:43"] }
+      ]},
+      { place:4, total:"01:26:49", members: [
+        { name:"KIM CHEBOTT", bib:29, total:"01:26:49", splits:["00:06:00","00:04:39","00:06:01","00:01:29","00:06:19","00:04:16","00:06:08","00:05:03","00:06:23","00:05:17","00:06:11","00:03:02","00:06:06","00:08:25","00:06:03","00:05:24"] },
+        { name:"JEFF CHEBOTT", bib:30, total:"01:27:26", splits:["00:06:01","00:04:39","00:06:02","00:01:29","00:06:19","00:04:15","00:06:08","00:05:10","00:06:17","00:05:21","00:06:09","00:02:59","00:06:09","00:08:25","00:06:02","00:06:02"] }
+      ]},
+      { place:5, total:"01:29:46", members: [
+        { name:"LYDIA KNOTT", bib:53, total:"01:29:46", splits:["00:05:13","00:04:30","00:06:10","00:00:58","00:08:21","00:04:16","00:08:16","00:03:30","00:08:23","00:05:16","00:07:05","00:02:42","00:08:03","00:04:29","00:08:20","00:05:03"] },
+        { name:"DANTE KULAS", bib:54, total:"01:29:47", splits:["00:05:12","00:04:31","00:06:07","00:00:58","00:08:22","00:04:17","00:08:20","00:03:27","00:08:21","00:05:21","00:06:58","00:02:49","00:08:01","00:04:34","00:08:12","00:05:08"] }
+      ]},
+      { place:6, total:"01:38:05", members: [
+        { name:"SCOTT RAMSAY", bib:69, total:"01:38:05", splits:["00:25:34","00:06:43","00:09:25","00:04:56","00:07:20","00:04:09","00:07:57","00:05:46","00:07:39","00:05:04","00:07:36","00:03:03","00:07:52","00:07:00","00:08:23","00:05:01"] },
+        { name:"COURTNEY RAMSAY", bib:68, total:"01:38:07", splits:["00:25:34","00:06:42","00:09:26","00:04:56","00:07:21","00:04:10","00:07:57","00:05:44","00:07:41","00:05:03","00:07:36","00:03:04","00:07:53","00:06:58","00:08:23","00:05:03"] }
+      ]},
+      { place:7, total:"01:38:44", members: [
+        { name:"NIGEL EDWARDS", bib:51, total:"01:38:44", splits:["00:06:01","00:04:48","00:06:34","00:02:04","00:07:00","00:05:17","00:07:40","00:05:07","00:07:50","00:05:46","00:07:44","00:03:28","00:08:07","00:08:17","00:07:40","00:05:17"] },
+        { name:"DARREN DEOSARAN", bib:50, total:"01:38:45", splits:["00:06:00","00:04:48","00:06:36","00:02:04","00:07:00","00:05:19","00:07:36","00:05:06","00:07:52","00:05:46","00:07:42","00:03:38","00:07:58","00:08:16","00:07:39","00:05:18"] }
+      ]},
+      { place:8, total:"01:39:00", members: [
+        { name:"EDDIE JONES", bib:13, total:"01:39:00", splits:["00:05:38","00:11:59","00:06:54","00:01:39","00:06:50","00:03:53","00:07:40","00:05:14","00:09:15","00:05:26","00:08:09","00:03:04","00:08:33","00:06:30","00:08:32","00:05:32"] },
+        { name:"DEB WHEELER", bib:14, total:"01:39:07", splits:["00:05:35","00:05:05","00:06:54","00:01:39","00:06:51","00:03:58","00:07:33","00:05:22","00:09:08","00:05:26","00:08:09","00:03:07","00:08:32","00:06:34","00:08:30","00:05:36"] }
+      ]}
+    ]
+  }
+};
+
+// ============ HELPERS ============
+function timeToSeconds(t) {
+  if (!t || t === "—") return Infinity;
+  const parts = t.split(":").map(Number);
+  if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+  return parts[0]*60 + parts[1];
+}
+
+function findFastestPerStation(athletes, type) {
+  const fastest = STATIONS.map(() => Infinity);
+  const allRows = [];
+  if (type === "solo") {
+    athletes.forEach(a => allRows.push(a.splits));
+  } else {
+    athletes.forEach(p => p.members.forEach(m => allRows.push(m.splits)));
+  }
+  allRows.forEach(splits => {
+    splits.forEach((s, i) => {
+      const sec = timeToSeconds(s);
+      if (sec < fastest[i]) fastest[i] = sec;
+    });
+  });
+  return fastest;
+}
+
+// Track sort state per category. Default: sort by Total ascending.
+// columnKey values: "place", "name", "bib", "total", "split-0" .. "split-15"
+const sortState = {};
+
+// Build column metadata: identifies how to extract a sortable value
+const COLUMNS = [
+  { key: "place", label: "#",        type: "number" },
+  { key: "name",  label: "Athlete",  type: "string" },
+  { key: "bib",   label: "Bib",      type: "number" },
+  { key: "total", label: "Total",    type: "time"   },
+  ...STATIONS.map((s, i) => ({ key: `split-${i}`, label: s, type: "time", splitIndex: i }))
+];
+
+// For pair categories: extract the value used to sort the *team* by a given column.
+// We pick the BEST (fastest / smallest) value among both members for time/number cols,
+// and the alphabetically-first name for string cols. This keeps partners grouped.
+function teamSortValue(team, col) {
+  if (col.key === "place") return team.place;
+  if (col.key === "total") return timeToSeconds(team.total);
+  if (col.key === "name")  return team.members.map(m => m.name).sort()[0];
+  if (col.key === "bib")   return Math.min(...team.members.map(m => m.bib));
+  if (col.key.startsWith("split-")) {
+    const i = col.splitIndex;
+    return Math.min(...team.members.map(m => timeToSeconds(m.splits[i])));
+  }
+  return 0;
+}
+
+function soloSortValue(athlete, col) {
+  if (col.key === "place") return athlete.place;
+  if (col.key === "total") return timeToSeconds(athlete.total);
+  if (col.key === "name")  return athlete.name;
+  if (col.key === "bib")   return athlete.bib;
+  if (col.key.startsWith("split-")) return timeToSeconds(athlete.splits[col.splitIndex]);
+  return 0;
+}
+
+function compareValues(a, b, dir) {
+  let cmp;
+  if (typeof a === "string" || typeof b === "string") {
+    cmp = String(a).localeCompare(String(b));
+  } else {
+    cmp = a - b;
+  }
+  return dir === "asc" ? cmp : -cmp;
+}
+
+function getSortedAthletes(cat, sortKey, sortDir) {
+  const col = COLUMNS.find(c => c.key === sortKey);
+  if (!col) return cat.athletes;
+  const valueFn = cat.type === "solo" ? soloSortValue : teamSortValue;
+  return [...cat.athletes].sort((a, b) =>
+    compareValues(valueFn(a, col), valueFn(b, col), sortDir)
+  );
+}
+
+function renderTable(key, cat) {
+  const state = sortState[key];
+  const fastest = findFastestPerStation(cat.athletes, cat.type);
+  const sortedAthletes = getSortedAthletes(cat, state.key, state.dir);
+
+  // Header with sort indicators
+  const headerRow = `
+    <tr>
+      ${COLUMNS.map(col => {
+        const isSorted = col.key === state.key;
+        const arrow = isSorted ? (state.dir === "asc" ? "▲" : "▼") : "↕";
+        return `<th data-key="${col.key}" class="${isSorted ? 'sorted' : ''}">${col.label}<span class="sort-ind">${arrow}</span></th>`;
+      }).join("")}
+    </tr>
+  `;
+
+  // Rows
+  const rowsHTML = sortedAthletes.map(a => {
+    const topClass = a.place <= 3 ? `top-${a.place}` : '';
+    if (cat.type === "solo") {
+      const splitCells = a.splits.map((s, i) => {
+        const sec = timeToSeconds(s);
+        const cls = sec === fastest[i] && sec !== Infinity ? "fastest" : "";
+        return `<td class="${cls}">${s}</td>`;
+      }).join("");
+      return `
+        <tr class="${topClass}">
+          <td class="place">${String(a.place).padStart(2,"0")}</td>
+          <td class="name-cell">${a.name}</td>
+          <td class="bib">#${a.bib}</td>
+          <td class="total">${a.total}</td>
+          ${splitCells}
+        </tr>
+      `;
+    } else {
+      return a.members.map((m, mi) => {
+        const splitCells = m.splits.map((s, i) => {
+          const sec = timeToSeconds(s);
+          const cls = sec === fastest[i] && sec !== Infinity ? "fastest" : "";
+          return `<td class="${cls}">${s}</td>`;
+        }).join("");
+        const isFirst = mi === 0;
+        return `
+          <tr class="${topClass} pair-row ${isFirst ? 'first' : ''}">
+            <td class="place">${isFirst ? String(a.place).padStart(2,"0") : ""}</td>
+            <td class="name-cell ${!isFirst ? 'partner' : ''}">${isFirst ? '' : '+ '}${m.name}</td>
+            <td class="bib">#${m.bib}</td>
+            <td class="total">${isFirst ? a.total : ''}</td>
+            ${splitCells}
+          </tr>
+        `;
+      }).join("");
+    }
+  }).join("");
+
+  return `
+    <table class="results">
+      <thead>${headerRow}</thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+  `;
+}
+
+function renderCategory(key, cat) {
+  // Init sort state if missing
+  if (!sortState[key]) sortState[key] = { key: "place", dir: "asc" };
+
+  // Podium (always reflects original placings — never re-sorted)
+  const podiumPlaces = ["gold", "silver", "bronze"];
+  const medalLabels = ["1st · GOLD", "2nd · SILVER", "3rd · BRONZE"];
+  const ranks = ["01", "02", "03"];
+
+  const top3 = cat.athletes.slice(0, 3);
+  const podiumOrder = top3.length === 3 ? [1, 0, 2] : top3.map((_,i)=>i);
+
+  const podiumHTML = `
+    <div class="podium">
+      ${podiumOrder.map(idx => {
+        const a = top3[idx];
+        if (!a) return '';
+        const placeClass = podiumPlaces[idx];
+        if (cat.type === "solo") {
+          return `
+            <div class="podium-card ${placeClass}">
+              <div class="podium-bib">#${a.bib}</div>
+              <div class="podium-rank">${ranks[idx]}</div>
+              <div class="podium-medal">${medalLabels[idx]}</div>
+              <div class="podium-name">${a.name}</div>
+              <div class="podium-time">${a.total}</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="podium-card ${placeClass}">
+              <div class="podium-bib">#${a.members[0].bib}/${a.members[1].bib}</div>
+              <div class="podium-rank">${ranks[idx]}</div>
+              <div class="podium-medal">${medalLabels[idx]}</div>
+              <div class="podium-name">${a.members[0].name}</div>
+              <div class="podium-name partner">+ ${a.members[1].name}</div>
+              <div class="podium-time">${a.total}</div>
+            </div>
+          `;
+        }
+      }).join("")}
+    </div>
+  `;
+
+  return `
+    <section class="category" id="cat-${key}">
+      <span class="tag-stripe">CATEGORY · ${cat.type === "solo" ? "INDIVIDUAL" : "TEAM"}</span>
+      <div class="cat-header">
+        <h2>${cat.title}</h2>
+        <div class="count">${cat.athletes.length} ${cat.type === "solo" ? "ATHLETES" : "TEAMS"} · CLICK ANY HEADER TO SORT</div>
+      </div>
+      ${podiumHTML}
+      <div class="table-shell">
+        <div class="table-toolbar">
+          <h3>Full Results · All Stations</h3>
+          <div class="legend"><span class="lime-tag">■</span> FASTEST SPLIT IN STATION · CLICK COLUMN TO SORT</div>
+        </div>
+        <div class="scroll-x" id="scroll-${key}">
+          ${renderTable(key, cat)}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// Render all categories
+const main = document.getElementById("categories");
+main.innerHTML = Object.entries(data).map(([key, cat]) => renderCategory(key, cat)).join("");
+
+// Show first by default
+document.getElementById("cat-men-solo").classList.add("active");
+
+// Tab switching
+document.querySelectorAll("#catNav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#catNav button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".category").forEach(c => c.classList.remove("active"));
+    document.getElementById(`cat-${btn.dataset.cat}`).classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+
+// Sort handler — delegated
+document.getElementById("categories").addEventListener("click", (e) => {
+  const th = e.target.closest("th[data-key]");
+  if (!th) return;
+  const section = th.closest("section.category");
+  if (!section) return;
+  const key = section.id.replace("cat-", "");
+  const cat = data[key];
+  const colKey = th.dataset.key;
+
+  const cur = sortState[key];
+  if (cur.key === colKey) {
+    cur.dir = cur.dir === "asc" ? "desc" : "asc";
+  } else {
+    cur.key = colKey;
+    cur.dir = "asc"; // ascending default — fastest times first, A→Z for names
+  }
+
+  // Preserve scroll position
+  const scrollEl = document.getElementById(`scroll-${key}`);
+  const prevScrollLeft = scrollEl.scrollLeft;
+  scrollEl.innerHTML = renderTable(key, cat);
+  scrollEl.scrollLeft = prevScrollLeft;
+});
+</script>
+
+</body>
+</html>

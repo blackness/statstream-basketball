@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FMP Finance Dashboard</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f3; --bg3: #efefed;
+  --text: #1a1a1a; --text2: #6b6b6b; --text3: #999;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.2);
+  --green: #1a7a4a; --green-bg: #eaf3de;
+  --red: #b92c2c; --red-bg: #fceaea;
+  --blue: #185fa5; --blue-bg: #e6f1fb;
+  --radius: 8px; --radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+    --text: #f0ede8; --text2: #aaa9a4; --text3: #6b6b6b;
+    --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+    --green: #5dbf88; --green-bg: #0d2a1a;
+    --red: #e87070; --red-bg: #2a0d0d;
+    --blue: #6ab0f5; --blue-bg: #0a1f36;
+  }
+}
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+.app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 1.25rem; }
+h1 span { color: var(--text2); font-weight: 400; }
+.nav { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.nav-btn { padding: 7px 16px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: 100px; cursor: pointer; background: var(--bg); color: var(--text2); transition: all 0.15s; }
+.nav-btn.active { background: var(--text); color: var(--bg); border-color: transparent; }
+.nav-btn:hover:not(.active) { background: var(--bg2); color: var(--text); }
+.tab { display: none; }
+.tab.active { display: block; }
+.api-bar { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+input, select { border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; background: var(--bg); color: var(--text); outline: none; }
+input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(24,95,165,0.15); }
+.btn { padding: 7px 16px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); cursor: pointer; background: var(--bg); color: var(--text); transition: all 0.15s; }
+.btn:hover { background: var(--bg2); }
+.btn-primary { background: var(--text); color: var(--bg); border-color: transparent; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.card h3 { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.metric { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.metric-value { font-size: 20px; font-weight: 500; }
+.metric-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+table { width: 100%; font-size: 13px; border-collapse: collapse; }
+th { text-align: left; font-weight: 500; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
+td { padding: 8px 4px 8px 0; border-bottom: 0.5px solid var(--border); color: var(--text); font-size: 13px; }
+td:last-child, th:last-child { text-align: right; }
+tr:last-child td { border-bottom: none; }
+.status { font-size: 13px; color: var(--text2); padding: 0.75rem 0; }
+.err { color: var(--red); font-size: 13px; padding: 0.5rem 0; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+.section-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; margin: 1rem 0 0.5rem; }
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.slider-row label { font-size: 13px; color: var(--text2); min-width: 170px; }
+.slider-row input[type=range] { flex: 1; }
+.slider-val { font-size: 13px; font-weight: 500; min-width: 60px; text-align: right; }
+.big-result { font-size: 28px; font-weight: 600; margin: 0.5rem 0 0.25rem; }
+.result-sub { font-size: 13px; color: var(--text2); }
+.portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.holding-card { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+.holding-ticker { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+.holding-name { font-size: 11px; color: var(--text2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.holding-row { display: flex; justify-content: space-between; font-size: 12px; margin-top: 5px; }
+.add-holding { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.screener-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; }
+.filter-group input, .filter-group select { width: 100%; }
+.overflow-x { overflow-x: auto; }
+.divider { height: 0.5px; background: var(--border); margin: 12px 0; }
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.profile-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+.profile-header img { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; border: 0.5px solid var(--border); background: var(--bg2); }
+.tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.tag-blue { background: var(--blue-bg); color: var(--blue); }
+.tag-green { background: var(--green-bg); color: var(--green); }
+.tag-red { background: var(--red-bg); color: var(--red); }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>FMP Finance Dashboard <span>powered by Financial Modeling Prep</span></h1>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showTab('screener',this)">Stock Screener</button>
+    <button class="nav-btn" onclick="showTab('portfolio',this)">Portfolio Tracker</button>
+    <button class="nav-btn" onclick="showTab('dcf',this)">DCF Valuation</button>
+    <button class="nav-btn" onclick="showTab('fundamentals',this)">Fundamentals</button>
+    <button class="nav-btn" onclick="showTab('calculators',this)">Calculators</button>
+  </div>
+
+  <!-- SCREENER -->
+  <div id="tab-screener" class="tab active">
+    <div class="api-bar">
+      <input type="text" id="screener-key" placeholder="FMP API Key" style="width:200px;" />
+      <button class="btn btn-primary" onclick="runScreener()">Run Screener</button>
+    </div>
+    <div class="screener-filters">
+      <div class="filter-group"><label>Sector</label>
+        <select id="s-sector"><option value="">Any</option><option>Technology</option><option>Healthcare</option><option>Financial Services</option><option>Consumer Cyclical</option><option>Industrials</option><option>Energy</option><option>Utilities</option><option>Real Estate</option><option>Communication Services</option><option>Consumer Defensive</option></select>
+      </div>
+      <div class="filter-group"><label>Market Cap</label>
+        <select id="s-mktcap"><option value="">Any</option><option value="mega">Mega (&gt;$200B)</option><option value="large">Large ($10B–$200B)</option><option value="mid">Mid ($2B–$10B)</option><option value="small">Small (&lt;$2B)</option></select>
+      </div>
+      <div class="filter-group"><label>Max P/E Ratio</label><input type="number" id="s-pe" placeholder="e.g. 30" /></div>
+      <div class="filter-group"><label>Min Dividend Yield %</label><input type="number" id="s-div" placeholder="e.g. 2" step="0.1" /></div>
+      <div class="filter-group"><label>Min Beta (volatility)</label><input type="number" id="s-beta-min" placeholder="e.g. 0.5" step="0.1" /></div>
+      <div class="filter-group"><label>Max Beta</label><input type="number" id="s-beta-max" placeholder="e.g. 1.5" step="0.1" /></div>
+      <div class="filter-group"><label>Exchange</label>
+        <select id="s-exchange"><option value="NASDAQ">NASDAQ</option><option value="NYSE">NYSE</option><option value="">Both</option></select>
+      </div>
+      <div class="filter-group"><label>Max Results</label>
+        <select id="s-limit"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select>
+      </div>
+    </div>
+    <div id="screener-status" class="status">Enter your API key and click Run Screener.</div>
+    <div class="overflow-x"><div id="screener-table"></div></div>
+  </div>
+
+  <!-- PORTFOLIO -->
+  <div id="tab-portfolio" class="tab">
+    <div class="api-bar">
+      <input type="text" id="port-key" placeholder="FMP API Key" style="width:200px;" />
+      <button class="btn btn-primary" onclick="refreshPortfolio()">Refresh Prices</button>
+      <button class="btn" onclick="clearPortfolio()">Clear All</button>
+    </div>
+    <div class="add-holding">
+      <input type="text" id="p-ticker" placeholder="Ticker" style="width:90px;" />
+      <input type="number" id="p-shares" placeholder="Shares" step="0.01" style="width:90px;" />
+      <input type="number" id="p-cost" placeholder="Avg Cost $" step="0.01" style="width:110px;" />
+      <button class="btn btn-primary" onclick="addHolding()">+ Add Holding</button>
+    </div>
+    <div class="metrics" id="port-metrics"></div>
+    <div class="portfolio-grid" id="portfolio-cards"></div>
+    <div id="port-status" class="status">Add holdings above, then refresh prices with your API key.</div>
+  </div>
+
+  <!-- DCF -->
+  <div id="tab-dcf" class="tab">
+    <div class="api-bar">
+      <input type="text" id="dcf-key" placeholder="FMP API Key" style="width:200px;" />
+      <input type="text" id="dcf-ticker" placeholder="Ticker (e.g. AAPL)" style="width:140px;" />
+      <button class="btn btn-primary" onclick="runDCF()">Auto-Load &amp; Value</button>
+    </div>
+    <div id="dcf-status" class="status">Enter a ticker to auto-load FCF data, or adjust sliders manually.</div>
+    <div class="two-col">
+      <div>
+        <p class="section-label">Assumptions</p>
+        <div class="slider-row"><label>Base Free Cash Flow ($M)</label><input type="range" min="100" max="200000" step="100" value="5000" id="d-fcf" oninput="calcDCF()"><span class="slider-val" id="d-fcf-v">$5,000M</span></div>
+        <div class="slider-row"><label>Growth Rate Yr 1–5 (%)</label><input type="range" min="-10" max="40" step="1" value="10" id="d-g1" oninput="calcDCF()"><span class="slider-val" id="d-g1-v">10%</span></div>
+        <div class="slider-row"><label>Growth Rate Yr 6–10 (%)</label><input type="range" min="-10" max="30" step="1" value="7" id="d-g2" oninput="calcDCF()"><span class="slider-val" id="d-g2-v">7%</span></div>
+        <div class="slider-row"><label>Terminal Growth Rate (%)</label><input type="range" min="0" max="5" step="0.1" value="2.5" id="d-tg" oninput="calcDCF()"><span class="slider-val" id="d-tg-v">2.5%</span></div>
+        <div class="slider-row"><label>Discount Rate / WACC (%)</label><input type="range" min="4" max="20" step="0.1" value="10" id="d-wacc" oninput="calcDCF()"><span class="slider-val" id="d-wacc-v">10.0%</span></div>
+        <div class="slider-row"><label>Shares Outstanding (M)</label><input type="range" min="10" max="30000" step="10" value="1000" id="d-shares" oninput="calcDCF()"><span class="slider-val" id="d-shares-v">1,000M</span></div>
+        <div class="slider-row"><label>Net Debt ($M)</label><input type="range" min="-200000" max="500000" step="100" value="0" id="d-debt" oninput="calcDCF()"><span class="slider-val" id="d-debt-v">$0M</span></div>
+      </div>
+      <div>
+        <p class="section-label">Valuation Output</p>
+        <div class="card">
+          <div class="metric-label">Intrinsic Value per Share</div>
+          <div class="big-result" id="dcf-iv">—</div>
+          <div class="result-sub" id="dcf-cmp"></div>
+          <div class="divider"></div>
+          <table>
+            <tr><td style="color:var(--text2);">PV of FCFs (Yr 1–10)</td><td id="dcf-pv">—</td></tr>
+            <tr><td style="color:var(--text2);">Terminal Value (PV)</td><td id="dcf-tv">—</td></tr>
+            <tr><td style="color:var(--text2);">Enterprise Value</td><td id="dcf-ev">—</td></tr>
+            <tr><td style="color:var(--text2);">Equity Value</td><td id="dcf-eq">—</td></tr>
+          </table>
+        </div>
+        <div id="dcf-margin-card" class="card" style="display:none;">
+          <div class="metric-label">Margin of Safety vs Current Price</div>
+          <div class="big-result" id="dcf-margin">—</div>
+          <div class="result-sub" id="dcf-margin-sub"></div>
+        </div>
+        <div class="card">
+          <h3>DCF Sensitivity (WACC vs Growth)</h3>
+          <div id="dcf-sensitivity" style="font-size:12px;color:var(--text2);">Adjust sliders to see output above.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FUNDAMENTALS -->
+  <div id="tab-fundamentals" class="tab">
+    <div class="api-bar">
+      <input type="text" id="fund-key" placeholder="FMP API Key" style="width:200px;" />
+      <input type="text" id="fund-ticker" placeholder="Ticker (e.g. MSFT)" style="width:140px;" />
+      <button class="btn btn-primary" onclick="loadFundamentals()">Load</button>
+    </div>
+    <div id="fund-status" class="status">Enter a ticker to load financials and key ratios.</div>
+    <div id="fund-content"></div>
+  </div>
+
+  <!-- CALCULATORS -->
+  <div id="tab-calculators" class="tab">
+    <div class="calc-grid">
+      <div class="card">
+        <h3>CAGR Calculator</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Start Value ($)</label><input type="number" id="cagr-start" value="10000" oninput="calcCAGR()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>End Value ($)</label><input type="number" id="cagr-end" value="25000" oninput="calcCAGR()" /></div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>Years</label><input type="number" id="cagr-yrs" value="10" oninput="calcCAGR()" /></div>
+        <div class="metric-label">CAGR</div><div class="big-result" id="cagr-result">9.6%</div>
+        <div class="result-sub" id="cagr-sub"></div>
+      </div>
+      <div class="card">
+        <h3>Reverse CAGR</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Solve For</label>
+          <select id="rcagr-mode" onchange="calcRCAGR()" style="width:100%;">
+            <option value="end">End Value (given start, rate, years)</option>
+            <option value="start">Start Value (given end, rate, years)</option>
+            <option value="years">Years to Reach Target</option>
+          </select>
+        </div>
+        <div class="filter-group" style="margin-bottom:8px;" id="rcagr-start-wrap"><label>Start Value ($)</label><input type="number" id="rcagr-start" value="10000" oninput="calcRCAGR()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;" id="rcagr-end-wrap"><label>Target / End Value ($)</label><input type="number" id="rcagr-end" value="50000" oninput="calcRCAGR()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Annual Growth Rate (%)</label><input type="number" id="rcagr-rate" value="10" step="0.1" oninput="calcRCAGR()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:12px;" id="rcagr-years-wrap"><label>Years</label><input type="number" id="rcagr-years" value="15" oninput="calcRCAGR()" style="width:100%;" /></div>
+        <div class="metric-label" id="rcagr-label">End Value</div>
+        <div class="big-result" id="rcagr-result">—</div>
+        <div class="result-sub" id="rcagr-sub"></div>
+      </div>
+      <div class="card">
+        <h3>DRIP Calculator</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Initial Investment ($)</label><input type="number" id="drip-init" value="10000" oninput="calcDRIP()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Annual Dividend Yield (%)</label><input type="number" id="drip-yield" value="3" step="0.1" oninput="calcDRIP()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Annual Price Growth (%)</label><input type="number" id="drip-ap" value="7" step="0.1" oninput="calcDRIP()" /></div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>Years</label><input type="number" id="drip-yrs" value="20" oninput="calcDRIP()" /></div>
+        <div class="metric-label">Final Portfolio Value</div><div class="big-result" id="drip-result">—</div>
+        <div class="result-sub" id="drip-sub"></div>
+      </div>
+      <div class="card">
+        <h3>Fair Value Estimator</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>EPS ($)</label><input type="number" id="pe-eps" value="5" step="0.01" oninput="calcPE()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Growth Rate (%)</label><input type="number" id="pe-g" value="15" step="1" oninput="calcPE()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Method</label>
+          <select id="pe-method" onchange="updatePEMethod();calcPE();">
+            <option value="graham">Graham (√22.5 × EPS × BV)</option>
+            <option value="peg">PEG Ratio (P/E = Growth)</option>
+            <option value="historical">Historical Avg P/E × EPS</option>
+          </select>
+        </div>
+        <div class="filter-group" style="margin-bottom:12px;" id="pe-extra-wrap"><label id="pe-extra-label">Book Value per Share ($)</label><input type="number" id="pe-extra" value="30" step="0.01" oninput="calcPE()" /></div>
+        <div class="metric-label">Fair Value Estimate</div><div class="big-result" id="pe-result">—</div>
+        <div class="result-sub" id="pe-sub"></div>
+      </div>
+      <div class="card">
+        <h3>Margin of Safety</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Intrinsic Value ($)</label><input type="number" id="mos-iv" value="150" step="0.01" oninput="calcMOS()" /></div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>Current Market Price ($)</label><input type="number" id="mos-price" value="110" step="0.01" oninput="calcMOS()" /></div>
+        <div class="metric-label">Margin of Safety</div><div class="big-result" id="mos-result">—</div>
+        <div class="result-sub" id="mos-sub"></div>
+      </div>
+      <div class="card">
+        <h3>Dividend Yield & Payout</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Annual Dividend per Share ($)</label><input type="number" id="dy-div" value="2" step="0.01" oninput="calcDY()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Stock Price ($)</label><input type="number" id="dy-price" value="50" step="0.01" oninput="calcDY()" /></div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>EPS ($) — for payout ratio</label><input type="number" id="dy-eps" value="4" step="0.01" oninput="calcDY()" /></div>
+        <div class="metrics" style="grid-template-columns:1fr 1fr;">
+          <div class="metric"><div class="metric-label">Yield</div><div class="metric-value" id="dy-yield">—</div></div>
+          <div class="metric"><div class="metric-label">Payout Ratio</div><div class="metric-value" id="dy-payout">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>EV / EBITDA Estimator</h3>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Market Cap ($B)</label><input type="number" id="ev-mktcap" value="100" step="0.1" oninput="calcEV()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Total Debt ($B)</label><input type="number" id="ev-debt" value="20" step="0.1" oninput="calcEV()" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Cash &amp; Equivalents ($B)</label><input type="number" id="ev-cash" value="10" step="0.1" oninput="calcEV()" /></div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>EBITDA ($B)</label><input type="number" id="ev-ebitda" value="15" step="0.1" oninput="calcEV()" /></div>
+        <div class="metrics" style="grid-template-columns:1fr 1fr;">
+          <div class="metric"><div class="metric-label">Enterprise Value</div><div class="metric-value" id="ev-result">—</div></div>
+          <div class="metric"><div class="metric-label">EV/EBITDA</div><div class="metric-value" id="ev-multiple">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://financialmodelingprep.com/api/v3';
+let holdings = JSON.parse(localStorage.getItem('fmp_holdings') || '[]');
+let currentPrice = null;
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+function getKey(id) { return (document.getElementById(id).value || '').trim(); }
+function fmtB(n) {
+  if (n == null) return '—';
+  const a = Math.abs(n);
+  const s = n < 0 ? '-' : '';
+  if (a >= 1e12) return s + '$' + (a/1e12).toFixed(2) + 'T';
+  if (a >= 1e9) return s + '$' + (a/1e9).toFixed(2) + 'B';
+  if (a >= 1e6) return s + '$' + (a/1e6).toFixed(1) + 'M';
+  return s + '$' + Math.round(a).toLocaleString();
+}
+function fmtBM(n) { // n is in millions
+  if (n == null) return '—';
+  const a = Math.abs(n);
+  const s = n < 0 ? '-' : '';
+  if (a >= 1e6) return s + '$' + (a/1e6).toFixed(2) + 'T';
+  if (a >= 1e3) return s + '$' + (a/1e3).toFixed(2) + 'B';
+  return s + '$' + Math.round(a).toLocaleString() + 'M';
+}
+function setStatus(id, msg, isErr) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = isErr ? 'err' : 'status';
+}
+async function apiFetch(endpoint, key) {
+  const sep = endpoint.includes('?') ? '&' : '?';
+  const r = await fetch(BASE + endpoint + sep + 'apikey=' + key);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d['Error Message']) throw new Error(d['Error Message']);
+  return d;
+}
+
+// --- SCREENER ---
+async function runScreener() {
+  const key = getKey('screener-key');
+  if (!key) { setStatus('screener-status','Enter your API key.',true); return; }
+  setStatus('screener-status','Fetching results…');
+  document.getElementById('screener-table').innerHTML = '';
+  try {
+    let url = '/stock-screener?limit=' + document.getElementById('s-limit').value;
+    const sector = document.getElementById('s-sector').value;
+    const mktcap = document.getElementById('s-mktcap').value;
+    const pe = document.getElementById('s-pe').value;
+    const div = document.getElementById('s-div').value;
+    const betaMin = document.getElementById('s-beta-min').value;
+    const betaMax = document.getElementById('s-beta-max').value;
+    const exch = document.getElementById('s-exchange').value;
+    if (sector) url += '&sector=' + encodeURIComponent(sector);
+    if (exch) url += '&exchange=' + exch;
+    if (mktcap === 'mega') url += '&marketCapMoreThan=200000000000';
+    else if (mktcap === 'large') url += '&marketCapMoreThan=10000000000&marketCapLessThan=200000000000';
+    else if (mktcap === 'mid') url += '&marketCapMoreThan=2000000000&marketCapLessThan=10000000000';
+    else if (mktcap === 'small') url += '&marketCapLessThan=2000000000';
+    if (pe) url += '&peRatioLowerThan=' + pe;
+    if (div) url += '&dividendMoreThan=' + div;
+    if (betaMin) url += '&betaMoreThan=' + betaMin;
+    if (betaMax) url += '&betaLowerThan=' + betaMax;
+    const data = await apiFetch(url, key);
+    if (!data.length) { setStatus('screener-status','No results. Try relaxing your filters.'); return; }
+    setStatus('screener-status', data.length + ' stocks found');
+    let html = '<table><thead><tr><th>Ticker</th><th>Company</th><th>Price</th><th>Mkt Cap</th><th>P/E</th><th>Beta</th><th>Div Yield</th><th>Sector</th></tr></thead><tbody>';
+    data.forEach(s => {
+      html += `<tr>
+        <td style="font-weight:600;">${s.symbol}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.companyName||'—'}</td>
+        <td>$${(s.price||0).toFixed(2)}</td>
+        <td>${fmtB(s.marketCap)}</td>
+        <td>${s.peRatio ? s.peRatio.toFixed(1) : '—'}</td>
+        <td>${s.beta ? s.beta.toFixed(2) : '—'}</td>
+        <td>${s.lastAnnualDividend ? (s.lastAnnualDividend/(s.price||1)*100).toFixed(1)+'%' : '—'}</td>
+        <td style="font-size:12px;color:var(--text2);">${s.sector||'—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('screener-table').innerHTML = html;
+  } catch(e) { setStatus('screener-status','Error: ' + e.message, true); }
+}
+
+// --- PORTFOLIO ---
+function saveHoldings() { localStorage.setItem('fmp_holdings', JSON.stringify(holdings)); }
+function addHolding() {
+  const ticker = (document.getElementById('p-ticker').value||'').trim().toUpperCase();
+  const shares = parseFloat(document.getElementById('p-shares').value);
+  const cost = parseFloat(document.getElementById('p-cost').value);
+  if (!ticker || isNaN(shares) || isNaN(cost)) { setStatus('port-status','Fill all fields.',true); return; }
+  const i = holdings.findIndex(h => h.ticker === ticker);
+  const entry = { ticker, shares, cost, price: i >= 0 ? holdings[i].price : null, name: i >= 0 ? holdings[i].name : '' };
+  if (i >= 0) holdings[i] = entry; else holdings.push(entry);
+  saveHoldings(); renderPortfolio();
+  ['p-ticker','p-shares','p-cost'].forEach(id => document.getElementById(id).value = '');
+}
+function removeHolding(ticker) { holdings = holdings.filter(h => h.ticker !== ticker); saveHoldings(); renderPortfolio(); }
+function renderPortfolio() {
+  const cards = document.getElementById('portfolio-cards');
+  const metrics = document.getElementById('port-metrics');
+  if (!holdings.length) { cards.innerHTML = ''; metrics.innerHTML = ''; setStatus('port-status','No holdings yet.'); return; }
+  setStatus('port-status','');
+  let totalCost = 0, totalVal = 0, hasPrice = false;
+  let html = '';
+  holdings.forEach(h => {
+    const hasPx = h.price != null;
+    const val = hasPx ? h.price * h.shares : null;
+    const costBasis = h.cost * h.shares;
+    const pnl = hasPx ? val - costBasis : null;
+    const pnlPct = hasPx && costBasis ? (pnl / costBasis) * 100 : null;
+    totalCost += costBasis;
+    if (hasPx) { totalVal += val; hasPrice = true; }
+    html += `<div class="holding-card">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div><div class="holding-ticker">${h.ticker}</div><div class="holding-name">${h.name||'—'}</div></div>
+        <button onclick="removeHolding('${h.ticker}')" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:18px;padding:0;line-height:1;">&times;</button>
+      </div>
+      <div class="holding-row"><span style="color:var(--text2);">Shares</span><span>${h.shares}</span></div>
+      <div class="holding-row"><span style="color:var(--text2);">Avg Cost</span><span>$${h.cost.toFixed(2)}</span></div>
+      <div class="holding-row"><span style="color:var(--text2);">Price</span><span>${hasPx ? '$'+h.price.toFixed(2) : '—'}</span></div>
+      <div class="holding-row"><span style="color:var(--text2);">Value</span><span>${hasPx ? '$'+val.toLocaleString('en',{maximumFractionDigits:0}) : '—'}</span></div>
+      <div class="holding-row"><span style="color:var(--text2);">P&amp;L</span>
+        <span class="${pnl != null && pnl >= 0 ? 'pos' : 'neg'}">${hasPx ? (pnl >= 0 ? '+' : '') + '$' + Math.round(pnl).toLocaleString() + ' (' + pnlPct.toFixed(1) + '%)' : '—'}</span>
+      </div>
+    </div>`;
+  });
+  cards.innerHTML = html;
+  const totalPnl = totalVal - totalCost;
+  const totalPnlPct = totalCost ? (totalPnl / totalCost * 100) : 0;
+  metrics.innerHTML = `
+    <div class="metric"><div class="metric-label">Cost Basis</div><div class="metric-value">$${Math.round(totalCost).toLocaleString()}</div></div>
+    <div class="metric"><div class="metric-label">Market Value</div><div class="metric-value">${hasPrice ? '$' + Math.round(totalVal).toLocaleString() : '—'}</div></div>
+    <div class="metric"><div class="metric-label">Total P&amp;L</div><div class="metric-value ${totalPnl >= 0 ? 'pos' : 'neg'}">${hasPrice ? (totalPnl >= 0 ? '+' : '') + '$' + Math.round(totalPnl).toLocaleString() : '—'}</div><div class="metric-sub">${hasPrice ? (totalPnlPct >= 0 ? '+' : '') + totalPnlPct.toFixed(1) + '%' : ''}</div></div>
+    <div class="metric"><div class="metric-label">Holdings</div><div class="metric-value">${holdings.length}</div></div>`;
+}
+async function refreshPortfolio() {
+  const key = getKey('port-key');
+  if (!key) { setStatus('port-status','Enter your API key.',true); return; }
+  if (!holdings.length) { setStatus('port-status','No holdings to refresh.'); return; }
+  setStatus('port-status','Fetching prices…');
+  try {
+    const tickers = holdings.map(h => h.ticker).join(',');
+    const data = await apiFetch('/quote/' + tickers, key);
+    const map = {};
+    (Array.isArray(data) ? data : [data]).forEach(q => { map[q.symbol] = q; });
+    holdings.forEach(h => { if (map[h.ticker]) { h.price = map[h.ticker].price; h.name = map[h.ticker].name || ''; } });
+    saveHoldings(); renderPortfolio();
+  } catch(e) { setStatus('port-status','Error: ' + e.message, true); }
+}
+function clearPortfolio() { if (confirm('Clear all holdings?')) { holdings = []; saveHoldings(); renderPortfolio(); } }
+
+// --- DCF ---
+async function runDCF() {
+  const key = getKey('dcf-key');
+  const ticker = (document.getElementById('dcf-ticker').value||'').trim().toUpperCase();
+  if (!key || !ticker) { setStatus('dcf-status','Enter API key and ticker.',true); return; }
+  setStatus('dcf-status','Loading data for ' + ticker + '…');
+  try {
+    const [cf, profile, quote] = await Promise.all([
+      apiFetch('/cash-flow-statement/' + ticker + '?limit=1', key),
+      apiFetch('/profile/' + ticker, key),
+      apiFetch('/quote/' + ticker, key)
+    ]);
+    const fcf = cf[0]?.freeCashFlow;
+    const p = Array.isArray(profile) ? profile[0] : profile;
+    const shares = p?.sharesOutstanding;
+    const price = (Array.isArray(quote) ? quote[0] : quote)?.price;
+    const netDebt = cf[0]?.netDebt || 0;
+    if (fcf) document.getElementById('d-fcf').value = Math.min(200000, Math.max(100, Math.round(fcf/1e6)));
+    if (shares) document.getElementById('d-shares').value = Math.min(30000, Math.max(10, Math.round(shares/1e6)));
+    if (netDebt) document.getElementById('d-debt').value = Math.min(500000, Math.max(-200000, Math.round(netDebt/1e6)));
+    currentPrice = price;
+    setStatus('dcf-status', `Loaded ${ticker}: FCF ${fmtB(fcf)}, Shares ${shares ? (shares/1e6).toFixed(0)+'M' : '—'}, Price ${price ? '$'+price.toFixed(2) : '—'}`);
+    calcDCF();
+  } catch(e) { setStatus('dcf-status','Error: ' + e.message, true); }
+}
+function calcDCF() {
+  const fcf = parseFloat(document.getElementById('d-fcf').value);
+  const g1 = parseFloat(document.getElementById('d-g1').value) / 100;
+  const g2 = parseFloat(document.getElementById('d-g2').value) / 100;
+  const tg = parseFloat(document.getElementById('d-tg').value) / 100;
+  const wacc = parseFloat(document.getElementById('d-wacc').value) / 100;
+  const shares = parseFloat(document.getElementById('d-shares').value);
+  const debt = parseFloat(document.getElementById('d-debt').value);
+  document.getElementById('d-fcf-v').textContent = '$' + Math.round(fcf).toLocaleString() + 'M';
+  document.getElementById('d-g1-v').textContent = (g1*100).toFixed(0) + '%';
+  document.getElementById('d-g2-v').textContent = (g2*100).toFixed(0) + '%';
+  document.getElementById('d-tg-v').textContent = (tg*100).toFixed(1) + '%';
+  document.getElementById('d-wacc-v').textContent = (wacc*100).toFixed(1) + '%';
+  document.getElementById('d-shares-v').textContent = Math.round(shares).toLocaleString() + 'M';
+  document.getElementById('d-debt-v').textContent = (debt >= 0 ? '$' : '-$') + Math.abs(Math.round(debt)).toLocaleString() + 'M';
+  let pvFCF = 0, cf = fcf;
+  for (let y = 1; y <= 10; y++) {
+    cf *= (1 + (y <= 5 ? g1 : g2));
+    pvFCF += cf / Math.pow(1 + wacc, y);
+  }
+  const termVal = wacc > tg ? (cf * (1 + tg)) / (wacc - tg) : 0;
+  const pvTV = termVal / Math.pow(1 + wacc, 10);
+  const ev = pvFCF + pvTV;
+  const equity = ev - debt;
+  const ivps = equity / shares;
+  document.getElementById('dcf-pv').textContent = fmtBM(pvFCF);
+  document.getElementById('dcf-tv').textContent = fmtBM(pvTV);
+  document.getElementById('dcf-ev').textContent = fmtBM(ev);
+  document.getElementById('dcf-eq').textContent = fmtBM(equity);
+  document.getElementById('dcf-iv').textContent = '$' + ivps.toFixed(2);
+  if (currentPrice) {
+    const mos = ((ivps - currentPrice) / ivps * 100);
+    document.getElementById('dcf-cmp').textContent = 'Current price: $' + currentPrice.toFixed(2);
+    const mc = document.getElementById('dcf-margin-card');
+    mc.style.display = 'block';
+    const mr = document.getElementById('dcf-margin');
+    mr.textContent = mos.toFixed(1) + '%';
+    mr.className = 'big-result ' + (mos > 0 ? 'pos' : 'neg');
+    document.getElementById('dcf-margin-sub').textContent = mos > 0 ? 'Trading at a discount — potential upside' : 'Trading above intrinsic value estimate';
+  }
+}
+
+// --- FUNDAMENTALS ---
+async function loadFundamentals() {
+  const key = getKey('fund-key');
+  const ticker = (document.getElementById('fund-ticker').value||'').trim().toUpperCase();
+  if (!key || !ticker) { setStatus('fund-status','Enter API key and ticker.',true); return; }
+  setStatus('fund-status','Loading ' + ticker + '…');
+  document.getElementById('fund-content').innerHTML = '';
+  try {
+    const [profile, ratios, income, cashflow, balance, metrics] = await Promise.all([
+      apiFetch('/profile/' + ticker, key),
+      apiFetch('/ratios-ttm/' + ticker, key),
+      apiFetch('/income-statement/' + ticker + '?limit=4', key),
+      apiFetch('/cash-flow-statement/' + ticker + '?limit=4', key),
+      apiFetch('/balance-sheet-statement/' + ticker + '?limit=1', key),
+      apiFetch('/key-metrics-ttm/' + ticker, key)
+    ]);
+    const p = Array.isArray(profile) ? profile[0] : profile;
+    const r = Array.isArray(ratios) ? ratios[0] : ratios;
+    const m = Array.isArray(metrics) ? metrics[0] : metrics;
+    const b = Array.isArray(balance) ? balance[0] : balance;
+    setStatus('fund-status','');
+    const pct = n => n == null ? '—' : (n*100).toFixed(1) + '%';
+    let html = `<div class="profile-header">
+      ${p.image ? `<img src="${p.image}" alt="${ticker}" onerror="this.style.display='none'" />` : ''}
+      <div style="flex:1;">
+        <div style="font-size:18px;font-weight:600;">${p.companyName||ticker}</div>
+        <div style="font-size:13px;color:var(--text2);">${p.sector||''} ${p.industry ? '· '+p.industry : ''}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">${p.exchange||''} · ${p.country||''} · ${p.currency||'USD'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:24px;font-weight:600;">$${(p.price||0).toFixed(2)}</div>
+        <div style="font-size:12px;color:var(--text2);">Mkt Cap ${fmtB(p.mktCap)}</div>
+        ${p.website ? `<a href="${p.website}" target="_blank" style="font-size:12px;color:var(--blue);">${p.website.replace('https://','').replace('www.','').split('/')[0]}</a>` : ''}
+      </div>
+    </div>`;
+    html += `<div class="metrics">
+      <div class="metric"><div class="metric-label">P/E (TTM)</div><div class="metric-value">${r?.peRatioTTM ? r.peRatioTTM.toFixed(1)+'x' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">P/B</div><div class="metric-value">${r?.priceToBookRatioTTM ? r.priceToBookRatioTTM.toFixed(1)+'x' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">P/S</div><div class="metric-value">${r?.priceToSalesRatioTTM ? r.priceToSalesRatioTTM.toFixed(1)+'x' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">EV/EBITDA</div><div class="metric-value">${m?.enterpriseValueOverEBITDATTM ? m.enterpriseValueOverEBITDATTM.toFixed(1)+'x' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">ROE</div><div class="metric-value">${pct(r?.returnOnEquityTTM)}</div></div>
+      <div class="metric"><div class="metric-label">ROA</div><div class="metric-value">${pct(r?.returnOnAssetsTTM)}</div></div>
+      <div class="metric"><div class="metric-label">Gross Margin</div><div class="metric-value">${pct(r?.grossProfitMarginTTM)}</div></div>
+      <div class="metric"><div class="metric-label">Net Margin</div><div class="metric-value">${pct(r?.netProfitMarginTTM)}</div></div>
+      <div class="metric"><div class="metric-label">Debt/Equity</div><div class="metric-value">${r?.debtEquityRatioTTM ? r.debtEquityRatioTTM.toFixed(2) : '—'}</div></div>
+      <div class="metric"><div class="metric-label">Current Ratio</div><div class="metric-value">${r?.currentRatioTTM ? r.currentRatioTTM.toFixed(2) : '—'}</div></div>
+      <div class="metric"><div class="metric-label">FCF Yield</div><div class="metric-value">${pct(m?.freeCashFlowYieldTTM)}</div></div>
+      <div class="metric"><div class="metric-label">Div Yield</div><div class="metric-value">${pct(r?.dividendYieldTTM)}</div></div>
+    </div>`;
+    if (income.length) {
+      html += `<div class="card"><h3>Income Statement</h3><div class="overflow-x"><table>
+        <thead><tr><th>Year</th><th>Revenue</th><th>Gross Profit</th><th>Operating Inc.</th><th>Net Income</th><th>EPS</th><th>Net Margin</th></tr></thead><tbody>`;
+      income.forEach(y => {
+        const margin = y.revenue ? (y.netIncome / y.revenue * 100) : null;
+        html += `<tr>
+          <td>${y.calendarYear||y.date?.slice(0,4)||'—'}</td>
+          <td>${fmtB(y.revenue)}</td><td>${fmtB(y.grossProfit)}</td><td>${fmtB(y.operatingIncome)}</td>
+          <td class="${(y.netIncome||0)>=0?'pos':'neg'}">${fmtB(y.netIncome)}</td>
+          <td>${y.eps ? '$'+y.eps.toFixed(2) : '—'}</td>
+          <td>${margin != null ? margin.toFixed(1)+'%' : '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+    }
+    if (cashflow.length) {
+      html += `<div class="card"><h3>Cash Flow Statement</h3><div class="overflow-x"><table>
+        <thead><tr><th>Year</th><th>Operating CF</th><th>Investing CF</th><th>Financing CF</th><th>Free Cash Flow</th><th>CapEx</th></tr></thead><tbody>`;
+      cashflow.forEach(y => {
+        html += `<tr>
+          <td>${y.calendarYear||y.date?.slice(0,4)||'—'}</td>
+          <td class="${(y.operatingCashFlow||0)>=0?'pos':'neg'}">${fmtB(y.operatingCashFlow)}</td>
+          <td>${fmtB(y.investingCashFlow)}</td>
+          <td>${fmtB(y.financingCashFlow)}</td>
+          <td class="${(y.freeCashFlow||0)>=0?'pos':'neg'}">${fmtB(y.freeCashFlow)}</td>
+          <td>${fmtB(y.capitalExpenditure)}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+    }
+    if (b) {
+      html += `<div class="card"><h3>Balance Sheet Snapshot (Latest)</h3><div class="two-col" style="gap:1rem;">
+        <table>
+          <tr><th colspan="2">Assets</th></tr>
+          <tr><td style="color:var(--text2);">Cash &amp; Equivalents</td><td>${fmtB(b.cashAndCashEquivalents)}</td></tr>
+          <tr><td style="color:var(--text2);">Total Current Assets</td><td>${fmtB(b.totalCurrentAssets)}</td></tr>
+          <tr><td style="color:var(--text2);">Total Assets</td><td style="font-weight:500;">${fmtB(b.totalAssets)}</td></tr>
+        </table>
+        <table>
+          <tr><th colspan="2">Liabilities &amp; Equity</th></tr>
+          <tr><td style="color:var(--text2);">Total Current Liabilities</td><td>${fmtB(b.totalCurrentLiabilities)}</td></tr>
+          <tr><td style="color:var(--text2);">Total Debt</td><td>${fmtB(b.totalDebt)}</td></tr>
+          <tr><td style="color:var(--text2);">Total Equity</td><td style="font-weight:500;">${fmtB(b.totalStockholdersEquity)}</td></tr>
+        </table>
+      </div></div>`;
+    }
+    if (p.description) {
+      html += `<div class="card"><h3>About</h3><p style="font-size:13px;color:var(--text2);line-height:1.65;">${p.description.slice(0,800)}${p.description.length>800?'…':''}</p></div>`;
+    }
+    document.getElementById('fund-content').innerHTML = html;
+  } catch(e) { setStatus('fund-status','Error: ' + e.message, true); }
+}
+
+// --- CALCULATORS ---
+function calcRCAGR() {
+  const mode = document.getElementById('rcagr-mode').value;
+  const rate = parseFloat(document.getElementById('rcagr-rate').value) / 100;
+  const startWrap = document.getElementById('rcagr-start-wrap');
+  const endWrap = document.getElementById('rcagr-end-wrap');
+  const yearsWrap = document.getElementById('rcagr-years-wrap');
+  const label = document.getElementById('rcagr-label');
+  const result = document.getElementById('rcagr-result');
+  const sub = document.getElementById('rcagr-sub');
+  startWrap.style.display = mode === 'start' ? 'none' : '';
+  endWrap.style.display = mode === 'end' ? 'none' : '';
+  yearsWrap.style.display = mode === 'years' ? 'none' : '';
+  if (mode === 'end') {
+    const start = parseFloat(document.getElementById('rcagr-start').value);
+    const years = parseFloat(document.getElementById('rcagr-years').value);
+    if (isNaN(start)||isNaN(years)||rate<=-1) return;
+    const end = start * Math.pow(1 + rate, years);
+    label.textContent = 'End Value';
+    result.textContent = '$' + Math.round(end).toLocaleString();
+    sub.textContent = '$' + Math.round(start).toLocaleString() + ' growing at ' + (rate*100).toFixed(1) + '% for ' + years + ' years';
+  } else if (mode === 'start') {
+    const end = parseFloat(document.getElementById('rcagr-end').value);
+    const years = parseFloat(document.getElementById('rcagr-years').value);
+    if (isNaN(end)||isNaN(years)||rate<=-1) return;
+    const start = end / Math.pow(1 + rate, years);
+    label.textContent = 'Required Starting Value';
+    result.textContent = '$' + Math.round(start).toLocaleString();
+    sub.textContent = 'To reach $' + Math.round(end).toLocaleString() + ' in ' + years + ' yrs at ' + (rate*100).toFixed(1) + '%/yr';
+  } else {
+    const start = parseFloat(document.getElementById('rcagr-start').value);
+    const end = parseFloat(document.getElementById('rcagr-end').value);
+    if (isNaN(start)||isNaN(end)||start<=0||end<=0||rate<=0) return;
+    const years = Math.log(end / start) / Math.log(1 + rate);
+    label.textContent = 'Years Required';
+    result.textContent = years.toFixed(1) + ' yrs';
+    sub.textContent = '$' + Math.round(start).toLocaleString() + ' → $' + Math.round(end).toLocaleString() + ' at ' + (rate*100).toFixed(1) + '%/yr';
+  }
+}
+function calcCAGR() {
+  const s = parseFloat(document.getElementById('cagr-start').value);
+  const e = parseFloat(document.getElementById('cagr-end').value);
+  const y = parseFloat(document.getElementById('cagr-yrs').value);
+  if (!s || !e || !y || s <= 0) return;
+  const cagr = (Math.pow(e/s, 1/y) - 1) * 100;
+  document.getElementById('cagr-result').textContent = cagr.toFixed(2) + '%';
+  document.getElementById('cagr-sub').textContent = '$' + Math.round(s).toLocaleString() + ' → $' + Math.round(e).toLocaleString() + ' over ' + y + ' years';
+}
+function calcDRIP() {
+  const init = parseFloat(document.getElementById('drip-init').value);
+  const dy = parseFloat(document.getElementById('drip-yield').value) / 100;
+  const ap = parseFloat(document.getElementById('drip-ap').value) / 100;
+  const yrs = parseInt(document.getElementById('drip-yrs').value);
+  if (isNaN(init)||isNaN(dy)||isNaN(ap)||isNaN(yrs)) return;
+  let val = init;
+  for (let i = 0; i < yrs; i++) val = val * (1 + ap + dy);
+  document.getElementById('drip-result').textContent = '$' + Math.round(val).toLocaleString();
+  document.getElementById('drip-sub').textContent = 'vs $' + Math.round(init).toLocaleString() + ' — ' + ((val/init-1)*100).toFixed(0) + '% total return over ' + yrs + ' yrs';
+}
+function updatePEMethod() {
+  const method = document.getElementById('pe-method').value;
+  const label = document.getElementById('pe-extra-label');
+  const wrap = document.getElementById('pe-extra-wrap');
+  if (method === 'graham') { label.textContent = 'Book Value per Share ($)'; wrap.style.display = ''; }
+  else if (method === 'peg') { wrap.style.display = 'none'; }
+  else { label.textContent = 'Historical Average P/E'; wrap.style.display = ''; }
+}
+function calcPE() {
+  const eps = parseFloat(document.getElementById('pe-eps').value);
+  const g = parseFloat(document.getElementById('pe-g').value);
+  const method = document.getElementById('pe-method').value;
+  const extra = parseFloat(document.getElementById('pe-extra').value);
+  let result = null, sub = '';
+  if (method === 'graham') {
+    result = eps > 0 && extra > 0 ? Math.sqrt(22.5 * eps * extra) : null;
+    sub = 'Graham formula: √(22.5 × EPS × BVPS)';
+  } else if (method === 'peg') {
+    result = eps * g;
+    sub = 'PEG=1 implies P/E = growth rate (' + g + 'x EPS)';
+  } else {
+    result = eps * extra;
+    sub = 'Fair value at avg P/E of ' + extra + 'x';
+  }
+  document.getElementById('pe-result').textContent = result ? '$' + result.toFixed(2) : '—';
+  document.getElementById('pe-sub').textContent = sub;
+}
+function calcMOS() {
+  const iv = parseFloat(document.getElementById('mos-iv').value);
+  const price = parseFloat(document.getElementById('mos-price').value);
+  if (isNaN(iv)||isNaN(price)||iv <= 0) return;
+  const mos = ((iv - price) / iv) * 100;
+  const el = document.getElementById('mos-result');
+  el.textContent = mos.toFixed(1) + '%';
+  el.className = 'big-result ' + (mos >= 0 ? 'pos' : 'neg');
+  document.getElementById('mos-sub').textContent = mos >= 0 ? 'Stock is trading below intrinsic value' : 'Price exceeds estimated intrinsic value';
+}
+function calcDY() {
+  const div = parseFloat(document.getElementById('dy-div').value);
+  const price = parseFloat(document.getElementById('dy-price').value);
+  const eps = parseFloat(document.getElementById('dy-eps').value);
+  document.getElementById('dy-yield').textContent = price > 0 ? (div/price*100).toFixed(2) + '%' : '—';
+  document.getElementById('dy-payout').textContent = eps > 0 ? (div/eps*100).toFixed(1) + '%' : '—';
+}
+function calcEV() {
+  const mktcap = parseFloat(document.getElementById('ev-mktcap').value);
+  const debt = parseFloat(document.getElementById('ev-debt').value);
+  const cash = parseFloat(document.getElementById('ev-cash').value);
+  const ebitda = parseFloat(document.getElementById('ev-ebitda').value);
+  const ev = mktcap + debt - cash;
+  document.getElementById('ev-result').textContent = '$' + ev.toFixed(1) + 'B';
+  document.getElementById('ev-multiple').textContent = ebitda > 0 ? (ev/ebitda).toFixed(1) + 'x' : '—';
+}
+
+renderPortfolio(); calcDCF(); calcRCAGR(); calcCAGR(); calcDRIP(); calcPE(); calcMOS(); calcDY(); calcEV();
+</script>
+</body>
+</html>
