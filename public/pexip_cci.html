@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0e1a;--panel:#121929;--panel2:#141d30;--border:rgba(100,140,220,0.12);--border2:rgba(100,140,220,0.22);
+    --accent:#4a9eff;--green:#22d3a0;--red:#ff4d6a;--amber:#ffa928;--purple:#a78bfa;
+    --text:#e2e8f8;--text2:#8899bb;--text3:#5a6a88;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--navy);color:var(--text);font-family:var(--sans);font-size:13px;min-height:680px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+  .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between}
+  .hlogo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+  .hlogo::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+  .pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+  .pill.ok{background:rgba(34,211,160,.1);color:var(--green);border:1px solid rgba(34,211,220,.2)}
+  .pill.warn{background:rgba(255,169,40,.1);color:var(--amber);border:1px solid rgba(255,169,40,.2)}
+  .pill.err{background:rgba(255,77,106,.1);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+  .pill.idle{background:rgba(100,140,220,.08);color:var(--text3);border:1px solid var(--border2)}
+  .pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .pdot.blink{animation:pulse 1.5s infinite}
+
+  /* ── PRE-JOIN ── */
+  #prejoin{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:600px;padding:30px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,.05) 0%,transparent 60%)}
+  .join-card{background:var(--panel);border:1px solid var(--border2);border-radius:12px;padding:28px;width:100%;max-width:400px}
+  .join-card h2{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text)}
+  .join-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:22px;letter-spacing:.04em}
+  .fl{margin-bottom:12px}
+  .fl label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .fi{width:100%;background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+  .fi:focus{border-color:var(--accent)}
+  .fi::placeholder{color:var(--text3)}
+  select.fi option{background:#121929}
+  .preview-box{background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/9;margin-bottom:14px;position:relative;display:flex;align-items:center;justify-content:center}
+  .preview-box video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  .preview-label{position:absolute;bottom:8px;left:8px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.06em}
+  .no-cam{color:var(--text3);font-family:var(--mono);font-size:10px;text-align:center;padding:20px}
+  .btn{padding:8px 18px;border-radius:7px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+  .btn.primary{background:#2d7be8;border-color:#2d7be8;color:#fff;width:100%;justify-content:center;padding:11px;font-size:12px;margin-top:4px}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.primary:disabled{opacity:.4;cursor:not-allowed}
+  .btn.sm{padding:5px 11px;font-size:10px}
+  .btn.danger{background:rgba(255,77,106,.1);border-color:rgba(255,77,106,.3);color:var(--red)}
+  .btn.danger:hover{background:rgba(255,77,106,.2)}
+  .status-line{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;margin-top:10px;min-height:16px}
+  .status-line.err{color:var(--red)}.status-line.ok{color:var(--green)}
+
+  /* ── IN CALL ── */
+  #incall{display:none;flex-direction:column;height:calc(100vh - 48px);min-height:600px}
+  .call-layout{display:grid;grid-template-columns:1fr 260px;flex:1;overflow:hidden;gap:0}
+
+  /* VIDEO AREA */
+  .video-area{background:#000;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  #remote-video{width:100%;height:100%;object-fit:contain}
+  #local-video{position:absolute;bottom:70px;right:12px;width:140px;aspect-ratio:16/9;border-radius:8px;overflow:hidden;border:2px solid rgba(255,255,255,.15);background:#111}
+  #local-video video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  .video-overlay{position:absolute;top:12px;left:12px;display:flex;gap:8px;align-items:center}
+  .rec-badge{display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;background:rgba(255,77,106,.85);font-family:var(--mono);font-size:9px;color:#fff;letter-spacing:.06em}
+  .rec-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1s infinite}
+  .conf-badge{padding:3px 8px;border-radius:4px;background:rgba(0,0,0,.5);font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.7);letter-spacing:.06em;backdrop-filter:blur(4px)}
+  .no-video-msg{color:rgba(255,255,255,.3);font-family:var(--mono);font-size:11px;text-align:center}
+
+  /* CALL CONTROLS BAR */
+  .ctrl-bar{position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(0,0,0,.7));display:flex;align-items:center;justify-content:center;gap:10px;padding:0 16px}
+  .ctrl-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .15s;flex-shrink:0}
+  .ctrl-btn.cam{background:rgba(255,255,255,.15)}.ctrl-btn.cam:hover{background:rgba(255,255,255,.25)}
+  .ctrl-btn.mic{background:rgba(255,255,255,.15)}.ctrl-btn.mic:hover{background:rgba(255,255,255,.25)}
+  .ctrl-btn.share{background:rgba(255,255,255,.15)}.ctrl-btn.share:hover{background:rgba(255,255,255,.25)}
+  .ctrl-btn.off{background:rgba(255,77,106,.3)!important}
+  .ctrl-btn.end{background:var(--red);width:52px;height:52px;font-size:22px}.ctrl-btn.end:hover{background:#e03050;transform:scale(1.05)}
+  .ctrl-btn.sharing{background:rgba(74,158,255,.4)!important}
+  .ctrl-label{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.6);margin-top:2px;text-align:center;letter-spacing:.05em}
+  .ctrl-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .timer{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.7);letter-spacing:.1em;position:absolute;top:12px;right:12px;background:rgba(0,0,0,.4);padding:4px 8px;border-radius:4px}
+
+  /* SIDEBAR */
+  .sidebar{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .sidebar-tabs{display:flex;border-bottom:1px solid var(--border)}
+  .stab{flex:1;padding:10px 0;font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;letter-spacing:.06em}
+  .stab:hover{color:var(--text2)}.stab.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .sidebar-body{flex:1;overflow-y:auto;padding:10px}
+
+  /* ROSTER */
+  .roster-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;transition:background .12s}
+  .roster-item:hover{background:rgba(255,255,255,.03)}
+  .rav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+  .rname{font-size:12px;font-weight:500;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ricons{display:flex;gap:4px;flex-shrink:0}
+  .rico{font-size:11px;opacity:.6}
+  .rico.muted{opacity:1;color:var(--red)}
+  .empty-roster{padding:20px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:10px;line-height:1.8}
+
+  /* CHAT */
+  .chat-messages{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+  .chat-msg{background:rgba(255,255,255,.04);border-radius:6px;padding:7px 9px}
+  .chat-who{font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:3px}
+  .chat-who.me{color:var(--green)}
+  .chat-text{font-size:12px;color:var(--text);line-height:1.5}
+  .chat-input-row{display:flex;gap:6px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)}
+  .chat-fi{flex:1;background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:7px 9px;color:var(--text);font-family:var(--sans);font-size:12px;outline:none;resize:none;height:36px;transition:border-color .2s}
+  .chat-fi:focus{border-color:var(--accent)}
+  .chat-fi::placeholder{color:var(--text3)}
+  .btn-send{padding:7px 12px;border-radius:5px;border:1px solid rgba(74,158,255,.3);background:rgba(74,158,255,.1);color:var(--accent);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;flex-shrink:0}
+  .btn-send:hover{background:rgba(74,158,255,.2)}
+
+  /* STATS */
+  .stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(100,140,220,.06);font-size:11px}
+  .stat-lbl{color:var(--text3);font-family:var(--mono);font-size:10px}
+  .stat-val{color:var(--text);font-family:var(--mono);font-size:10px}
+  .stat-val.green{color:var(--green)}.stat-val.amber{color:var(--amber)}.stat-val.red{color:var(--red)}
+
+  .notif{position:fixed;top:54px;right:14px;background:var(--panel);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:10px;color:var(--text);z-index:999;transform:translateX(130%);transition:transform .3s;max-width:280px;line-height:1.4}
+  .notif.show{transform:translateX(0)}.notif.warn{border-left-color:var(--amber)}.notif.err{border-left-color:var(--red)}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="hlogo">PEXIP CTRL</div>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Browser Join</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="pill idle" id="call-status-pill"><div class="pdot"></div>NOT IN CALL</div>
+  </div>
+</div>
+
+<!-- PRE-JOIN -->
+<div id="prejoin">
+  <div class="join-card">
+    <h2>Join Conference</h2>
+    <div class="join-sub">sandboxconf.smithvcs.queensu.ca · PexRTC WebRTC</div>
+
+    <div class="preview-box" id="preview-box">
+      <video id="preview-video" autoplay muted playsinline></video>
+      <div class="preview-label">PREVIEW</div>
+    </div>
+
+    <div class="fl">
+      <label>Display Name</label>
+      <input class="fi" id="display-name" value="Control Room" placeholder="Your display name"/>
+    </div>
+    <div class="fl">
+      <label>Conference Alias (VMR)</label>
+      <input class="fi" id="conf-alias" value="sandbox" placeholder="e.g. sandbox"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fl">
+        <label>PIN (if required)</label>
+        <input class="fi" type="password" id="conf-pin" placeholder="Leave blank if none"/>
+      </div>
+      <div class="fl">
+        <label>Call Type</label>
+        <select class="fi" id="call-type">
+          <option value="video">Video + Audio</option>
+          <option value="audioonly">Audio Only</option>
+          <option value="recvonly">Receive Only</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn sm" id="btn-cam-toggle" onclick="togglePreviewCam()">📷 Cam On</button>
+      <button class="btn sm" id="btn-mic-toggle" onclick="togglePreviewMic()">🎤 Mic On</button>
+    </div>
+
+    <button class="btn primary" id="btn-join" onclick="joinCall()">Join Conference</button>
+    <div class="status-line" id="join-status">PexRTC loading from node…</div>
+  </div>
+</div>
+
+<!-- IN CALL -->
+<div id="incall">
+  <div class="call-layout">
+
+    <!-- VIDEO -->
+    <div class="video-area">
+      <video id="remote-video" autoplay playsinline></video>
+      <div id="no-video-overlay" class="no-video-msg" style="position:absolute">Waiting for video…</div>
+      <div id="local-video"><video id="local-vid" autoplay muted playsinline></video></div>
+      <div class="video-overlay">
+        <div class="conf-badge" id="conf-name-badge">sandbox</div>
+        <div class="rec-badge" id="rec-badge" style="display:none"><div class="rec-dot"></div>REC</div>
+      </div>
+      <div class="timer" id="call-timer">00:00:00</div>
+      <div class="ctrl-bar">
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn mic" id="ctrl-mic" onclick="toggleMic()">🎤</button>
+          <div class="ctrl-label">MIC</div>
+        </div>
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn cam" id="ctrl-cam" onclick="toggleCam()">📷</button>
+          <div class="ctrl-label">CAM</div>
+        </div>
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn share" id="ctrl-share" onclick="toggleShare()">🖥</button>
+          <div class="ctrl-label">SHARE</div>
+        </div>
+        <div class="ctrl-wrap">
+          <button class="ctrl-btn end" onclick="endCall()">✕</button>
+          <div class="ctrl-label" style="color:rgba(255,100,100,.8)">END</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="stab on" onclick="showSideTab(this,'s-roster')">Roster</button>
+        <button class="stab" onclick="showSideTab(this,'s-chat')">Chat</button>
+        <button class="stab" onclick="showSideTab(this,'s-stats')">Stats</button>
+      </div>
+
+      <div class="sidebar-body" id="s-roster">
+        <div id="roster-list"><div class="empty-roster">Joining conference…<br>Participants will appear here.</div></div>
+      </div>
+
+      <div class="sidebar-body" id="s-chat" style="display:none;flex-direction:column">
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-row">
+          <textarea class="chat-fi" id="chat-input" placeholder="Send a message…" rows="1" onkeydown="chatKeydown(event)"></textarea>
+          <button class="btn-send" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+
+      <div class="sidebar-body" id="s-stats" style="display:none">
+        <div id="stats-panel">
+          <div class="stat-row"><span class="stat-lbl">Node</span><span class="stat-val" id="st-node">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Role</span><span class="stat-val" id="st-role">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Version</span><span class="stat-val" id="st-ver">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Audio TX</span><span class="stat-val green" id="st-atx">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Audio RX</span><span class="stat-val green" id="st-arx">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Video TX</span><span class="stat-val" id="st-vtx">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Video RX</span><span class="stat-val" id="st-vrx">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Packet Loss</span><span class="stat-val" id="st-loss">—</span></div>
+          <div class="stat-row"><span class="stat-lbl">Resolution</span><span class="stat-val" id="st-res">—</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+const CONF_NODE = 'sandboxconf.smithvcs.queensu.ca';
+const PEXRTC_URL = 'https://' + CONF_NODE + '/static/webrtc/js/pexrtc.js';
+
+let px = null;
+let previewStream = null;
+let camOn = true, micOn = true, sharingScreen = false;
+let timerSecs = 0, timerInt = null;
+let statsInt = null;
+let rosterMap = {};
+let previewCamOn = true, previewMicOn = true;
+
+// ── LOAD PEXRTC ───────────────────────────────────────────────
+function loadPexRTC() {
+  const script = document.createElement('script');
+  script.src = PEXRTC_URL;
+  script.onload = () => {
+    setStatus('PexRTC loaded — ready to join', 'ok');
+    document.getElementById('btn-join').disabled = false;
+    startPreview();
+  };
+  script.onerror = () => {
+    setStatus('Could not load PexRTC from node — check node is reachable', 'err');
+  };
+  document.head.appendChild(script);
+}
+
+// ── PREVIEW ───────────────────────────────────────────────────
+async function startPreview() {
+  try {
+    previewStream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+    document.getElementById('preview-video').srcObject = previewStream;
+    document.getElementById('btn-cam-toggle').textContent = '📷 Cam On';
+    document.getElementById('btn-mic-toggle').textContent = '🎤 Mic On';
+  } catch(e) {
+    document.getElementById('preview-box').innerHTML = '<div class="no-cam">Camera/mic not available<br>You can still join audio-only</div>';
+  }
+}
+
+function togglePreviewCam() {
+  previewCamOn = !previewCamOn;
+  if (previewStream) previewStream.getVideoTracks().forEach(t => t.enabled = previewCamOn);
+  document.getElementById('btn-cam-toggle').textContent = previewCamOn ? '📷 Cam On' : '📷 Cam Off';
+}
+
+function togglePreviewMic() {
+  previewMicOn = !previewMicOn;
+  if (previewStream) previewStream.getAudioTracks().forEach(t => t.enabled = previewMicOn);
+  document.getElementById('btn-mic-toggle').textContent = previewMicOn ? '🎤 Mic On' : '🎤 Mic Off';
+}
+
+// ── JOIN ──────────────────────────────────────────────────────
+function joinCall() {
+  const name  = document.getElementById('display-name').value.trim() || 'Control Room';
+  const alias = document.getElementById('conf-alias').value.trim() || 'sandbox';
+  const pin   = document.getElementById('conf-pin').value.trim();
+  const type  = document.getElementById('call-type').value;
+
+  setStatus('<span class="spin">◌</span> Connecting…', '');
+  document.getElementById('btn-join').disabled = true;
+
+  // Stop preview
+  if (previewStream) { previewStream.getTracks().forEach(t => t.stop()); previewStream = null; }
+
+  px = new PexRTC();
+  px.screenshare_fps = 15;
+
+  // Respect cam/mic toggle from preview
+  if (!previewCamOn) px.video_source = false;
+  if (!previewMicOn) px.audio_source = false;
+
+  px.onSetup = function(stream, pin_status, conf_ext) {
+    if (stream) {
+      document.getElementById('local-vid').srcObject = stream;
+    }
+    if (pin_status === 'required' || pin_status === 'optional') {
+      px.connect(pin || 'none');
+    } else {
+      px.connect(pin || null);
+    }
+  };
+
+  px.onConnect = function(stream) {
+    document.getElementById('remote-video').srcObject = stream;
+    document.getElementById('no-video-overlay').style.display = 'none';
+    showInCall(alias, name);
+    document.getElementById('st-node').textContent = CONF_NODE;
+    document.getElementById('st-role').textContent = px.role || '—';
+    document.getElementById('st-ver').textContent = px.getVersion ? px.getVersion() : '—';
+    notify('Connected to ' + alias, 'ok');
+    startStats();
+  };
+
+  px.onDisconnect = function(reason) {
+    setStatus('Disconnected: ' + (reason||''), 'err');
+    showPreJoin();
+    notify('Disconnected: ' + (reason||'call ended'), 'err');
+  };
+
+  px.onError = function(err) {
+    setStatus('Error: ' + err, 'err');
+    document.getElementById('btn-join').disabled = false;
+    notify('Error: ' + err, 'err');
+  };
+
+  px.onRosterList = function(roster) {
+    rosterMap = {};
+    roster.forEach(p => rosterMap[p.uuid] = p);
+    renderRoster();
+  };
+
+  px.onParticipantCreate = function(p) {
+    rosterMap[p.uuid] = p;
+    renderRoster();
+    notify(p.display_name + ' joined', 'ok');
+  };
+
+  px.onParticipantUpdate = function(p) {
+    rosterMap[p.uuid] = p;
+    renderRoster();
+  };
+
+  px.onParticipantDelete = function(p) {
+    const name = rosterMap[p.uuid]?.display_name || 'Participant';
+    delete rosterMap[p.uuid];
+    renderRoster();
+    notify(name + ' left', 'warn');
+  };
+
+  px.onChatMessage = function(msg) {
+    addChatMsg(msg.origin, msg.payload, false);
+  };
+
+  px.onPresentation = function(active, presenter) {
+    if (active) notify('Presentation started by ' + presenter, 'ok');
+  };
+
+  px.onPresentationConnected = function(stream) {
+    // Show presentation in remote video
+    if (stream instanceof MediaStream) {
+      document.getElementById('remote-video').srcObject = stream;
+    }
+  };
+
+  px.onScreenshareStopped = function() {
+    document.getElementById('ctrl-share').classList.remove('sharing');
+    sharingScreen = false;
+    notify('Screen share stopped', 'warn');
+  };
+
+  px.makeCall(CONF_NODE, alias, name, 1500, type);
+}
+
+// ── IN-CALL UI ────────────────────────────────────────────────
+function showInCall(alias, name) {
+  document.getElementById('prejoin').style.display = 'none';
+  document.getElementById('incall').style.display = 'flex';
+  document.getElementById('conf-name-badge').textContent = alias;
+  setPillState('ok', 'IN CALL');
+  camOn = previewCamOn; micOn = previewMicOn;
+  updateCtrlBtns();
+  timerSecs = 0;
+  timerInt = setInterval(() => { timerSecs++; updateTimer(); }, 1000);
+}
+
+function showPreJoin() {
+  document.getElementById('incall').style.display = 'none';
+  document.getElementById('prejoin').style.display = 'flex';
+  setPillState('idle', 'NOT IN CALL');
+  if (timerInt) { clearInterval(timerInt); timerInt = null; }
+  if (statsInt) { clearInterval(statsInt); statsInt = null; }
+  rosterMap = {};
+  document.getElementById('btn-join').disabled = false;
+  startPreview();
+}
+
+function updateTimer() {
+  const h=String(Math.floor(timerSecs/3600)).padStart(2,'0');
+  const m=String(Math.floor((timerSecs%3600)/60)).padStart(2,'0');
+  const s=String(timerSecs%60).padStart(2,'0');
+  document.getElementById('call-timer').textContent = h+':'+m+':'+s;
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────
+function toggleMic() {
+  if (!px) return;
+  micOn = !micOn;
+  px.muteAudio(!micOn);
+  updateCtrlBtns();
+  notify('Microphone ' + (micOn ? 'unmuted' : 'muted'), micOn ? 'ok' : 'warn');
+}
+
+function toggleCam() {
+  if (!px) return;
+  camOn = !camOn;
+  px.muteVideo(!camOn);
+  updateCtrlBtns();
+  notify('Camera ' + (camOn ? 'on' : 'off'), camOn ? 'ok' : 'warn');
+}
+
+function toggleShare() {
+  if (!px) return;
+  if (sharingScreen) {
+    px.present(null);
+    sharingScreen = false;
+    document.getElementById('ctrl-share').classList.remove('sharing');
+    notify('Screen share stopped', 'warn');
+  } else {
+    px.present('screen');
+    sharingScreen = true;
+    document.getElementById('ctrl-share').classList.add('sharing');
+    notify('Screen share started', 'ok');
+  }
+}
+
+function endCall() {
+  if (px) { px.disconnect(); px = null; }
+  showPreJoin();
+}
+
+function updateCtrlBtns() {
+  const mic = document.getElementById('ctrl-mic');
+  const cam = document.getElementById('ctrl-cam');
+  mic.classList.toggle('off', !micOn);
+  cam.classList.toggle('off', !camOn);
+  mic.textContent = micOn ? '🎤' : '🔇';
+  cam.textContent = camOn ? '📷' : '🚫';
+}
+
+// ── ROSTER ────────────────────────────────────────────────────
+const COLORS = ['#4a9eff','#22d3a0','#a78bfa','#ffa928','#ff4d6a','#5ee7df'];
+function colorFor(n) { let h=0; for(let c of (n||'')) h=(h*31+c.charCodeAt(0))%COLORS.length; return COLORS[Math.abs(h)]; }
+function initials(n) { return (n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'; }
+
+function renderRoster() {
+  const list = Object.values(rosterMap).sort((a,b) => (a.display_name||'').localeCompare(b.display_name||''));
+  const el = document.getElementById('roster-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-roster">No participants yet.</div>';
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const color = colorFor(p.display_name);
+    const muted = p.is_muted;
+    const vidOff = p.is_video_muted;
+    return `<div class="roster-item">
+      <div class="rav" style="background:${color}22;color:${color}">${initials(p.display_name||p.uri)}</div>
+      <div class="rname" title="${esc(p.display_name||p.uri)}">${esc(p.display_name||p.uri)}</div>
+      <div class="ricons">
+        <span class="rico ${muted?'muted':''}" title="${muted?'Muted':'Unmuted'}">${muted?'🔇':'🎤'}</span>
+        <span class="rico ${vidOff?'muted':''}" title="${vidOff?'Video off':'Video on'}">${vidOff?'🚫':'📷'}</span>
+        ${p.role==='chair'?'<span class="rico" title="Host">⭐</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHAT ──────────────────────────────────────────────────────
+function addChatMsg(who, text, isMe) {
+  const el = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  div.innerHTML = `<div class="chat-who ${isMe?'me':''}">${esc(who)}</div><div class="chat-text">${esc(text)}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  // Switch to chat tab if not already on it
+  if (document.getElementById('s-chat').style.display === 'none') {
+    notify('Chat: ' + who + ': ' + text.slice(0,40), 'ok');
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || !px) return;
+  px.sendChatMessage(text);
+  addChatMsg('You', text, true);
+  input.value = '';
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+// ── STATS ─────────────────────────────────────────────────────
+function startStats() {
+  statsInt = setInterval(() => {
+    if (!px || !px.getMediaStatistics) return;
+    const s = px.getMediaStatistics();
+    if (!s || !s.outgoing) return;
+    const ao = s.outgoing.audio, ai = s.incoming.audio;
+    const vo = s.outgoing.video, vi = s.incoming.video;
+    setText('st-atx', ao['bitrate']||'—', ao['bitrate']?'green':'');
+    setText('st-arx', ai['bitrate']||'—', ai['bitrate']?'green':'');
+    setText('st-vtx', vo['bitrate']||'—', '');
+    setText('st-vrx', vi['bitrate']||'—', '');
+    const loss = vi['percentage-lost-recent'] || ao['percentage-lost-recent'] || '0%';
+    const lossNum = parseFloat(loss);
+    setText('st-loss', loss, lossNum>5?'red':lossNum>2?'amber':'green');
+    setText('st-res', vi['resolution'] || vo['resolution'] || '—', '');
+  }, 2000);
+}
+
+function setText(id, val, cls) {
+  const el = document.getElementById(id);
+  el.textContent = val;
+  el.className = 'stat-val ' + (cls||'');
+}
+
+// ── UI UTILS ──────────────────────────────────────────────────
+function showSideTab(el, id) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  ['s-roster','s-chat','s-stats'].forEach(s => {
+    document.getElementById(s).style.display = s===id ? (s==='s-chat'?'flex':'block') : 'none';
+  });
+}
+
+function setPillState(type, txt) {
+  const p = document.getElementById('call-status-pill');
+  p.className = 'pill ' + type;
+  p.innerHTML = `<div class="pdot ${type==='ok'?'blink':''}"></div>${txt}`;
+}
+
+function setStatus(html, cls) {
+  const el = document.getElementById('join-status');
+  el.innerHTML = html;
+  el.className = 'status-line ' + cls;
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let notifTO;
+function notify(msg, type='ok') {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.className = 'notif show' + (type==='warn'?' warn':type==='err'?' err':'');
+  clearTimeout(notifTO);
+  notifTO = setTimeout(() => n.classList.remove('show'), 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('btn-join').disabled = true;
+loadPexRTC();
+</script>
+</body>
+</html>

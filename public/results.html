@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-122458823-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-122458823-1');
+    </script>
+
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Find all the results from our recent and past events here.">
+
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <title>Splits Timing — Race Results</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="resources/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="resources/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="resources/favicons/favicon-16x16.png">
+    <link rel="manifest" href="resources/favicons/manifest.json">
+    <link rel="shortcut icon" href="resources/favicons/favicon.ico">
+    <meta name="theme-color" content="#ffffff">
+
+    <style>
+      :root {
+        --st-bg: #fafafa;
+        --st-surface: #ffffff;
+        --st-surface-alt: #f4f5f7;
+        --st-ink: #0f1115;
+        --st-ink-2: #2a2e36;
+        --st-ink-3: #5b6270;
+        --st-ink-4: #8a909c;
+        --st-line: #e6e8ec;
+        --st-accent: #ff5a1f;
+        --st-accent-deep: #e94915;
+        --st-accent-soft: #fff1ea;
+        --st-radius: 14px;
+        --st-radius-sm: 10px;
+        --st-shadow-md: 0 4px 14px rgba(15,17,21,0.06), 0 2px 4px rgba(15,17,21,0.04);
+      }
+
+      .st-page, .st-page * { box-sizing: border-box; }
+      body.st-page { background: var(--st-bg); margin: 0; }
+      body.st-page > header.header-results { display: none !important; }
+
+      .st-page {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: var(--st-ink);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+
+      /* NAV */
+      .st-nav {
+        position: sticky; top: 0; z-index: 50;
+        background: rgba(255,255,255,0.85);
+        backdrop-filter: saturate(180%) blur(14px);
+        -webkit-backdrop-filter: saturate(180%) blur(14px);
+        border-bottom: 1px solid var(--st-line);
+      }
+      .st-nav-inner {
+        max-width: 1180px; margin: 0 auto;
+        padding: 14px 28px;
+        display: flex; align-items: center; gap: 28px;
+      }
+      .st-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--st-ink); }
+      .st-brand .mark {
+        width: 32px; height: 32px; border-radius: 9px;
+        background: var(--st-ink); color: #fff;
+        display: grid; place-items: center;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700; font-size: 16px;
+        position: relative;
+      }
+      .st-brand .mark::after {
+        content:""; position:absolute; right:5px; bottom:5px;
+        width:6px; height:6px; border-radius:50%;
+        background: var(--st-accent);
+      }
+      .st-brand .word {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700; font-size: 17px;
+        letter-spacing: -0.015em;
+      }
+      .st-brand .word .light { color: var(--st-ink-3); font-weight: 500; }
+
+      .st-nav-links { list-style: none; margin: 0; padding: 0;
+        display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+      .st-nav-links a {
+        display: inline-block; padding: 8px 11px; border-radius: 8px;
+        color: var(--st-ink-2); font-size: 13px; font-weight: 500;
+        text-decoration: none; transition: background 0.15s ease, color 0.15s ease;
+      }
+      .st-nav-links a:hover { background: var(--st-surface-alt); color: var(--st-ink); }
+
+      .st-mobile-toggle {
+        display: none; background: transparent;
+        border: 1px solid var(--st-line); border-radius: 8px;
+        width: 38px; height: 38px; margin-left: auto; cursor: pointer;
+        align-items: center; justify-content: center;
+      }
+      .st-mobile-toggle span { display: block; width: 16px; height: 2px;
+        background: var(--st-ink); position: relative; }
+      .st-mobile-toggle span::before, .st-mobile-toggle span::after {
+        content:""; position: absolute; left: 0; width: 16px; height: 2px;
+        background: var(--st-ink);
+      }
+      .st-mobile-toggle span::before { top: -5px; }
+      .st-mobile-toggle span::after { top: 5px; }
+
+      /* HERO */
+      .st-hero { max-width: 1180px; margin: 0 auto; padding: 64px 28px 28px; }
+      .st-eyebrow {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 12px; font-weight: 600;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--st-accent-deep); background: var(--st-accent-soft);
+        padding: 6px 12px; border-radius: 999px;
+        margin-bottom: 20px;
+      }
+      .st-eyebrow .pulse { width: 8px; height: 8px; background: var(--st-accent);
+        border-radius: 50%; position: relative; }
+      .st-eyebrow .pulse::after {
+        content:""; position: absolute; inset: -4px; border-radius: 50%;
+        background: var(--st-accent); opacity: 0.4;
+        animation: stPulse 1.8s ease-in-out infinite;
+      }
+      @keyframes stPulse {
+        0%,100% { transform: scale(1); opacity: 0.4; }
+        50% { transform: scale(1.6); opacity: 0; }
+      }
+      .st-hero h1 {
+        font-family: 'Inter', sans-serif; font-weight: 800;
+        font-size: clamp(40px, 6.5vw, 76px);
+        line-height: 1.02; letter-spacing: -0.035em;
+        margin: 0 0 18px;
+      }
+      .st-hero h1 .accent { color: var(--st-accent); font-style: italic; }
+      .st-hero p.lede {
+        font-size: 18px; color: var(--st-ink-3);
+        max-width: 660px; margin: 0; line-height: 1.55;
+      }
+
+      /* SEARCH */
+      .st-search {
+        margin-top: 32px; display: flex; align-items: center; gap: 10px;
+        background: var(--st-surface); border: 1px solid var(--st-line);
+        border-radius: 999px; padding: 6px 6px 6px 18px;
+        max-width: 560px;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .st-search:focus-within {
+        border-color: var(--st-ink);
+        box-shadow: 0 0 0 4px rgba(15,17,21,0.06);
+      }
+      .st-search svg { flex-shrink: 0; color: var(--st-ink-4); }
+      .st-search input {
+        flex: 1; border: none; outline: none; background: transparent;
+        font: inherit; font-size: 15px; color: var(--st-ink); padding: 10px 0;
+      }
+      .st-search input::placeholder { color: var(--st-ink-4); }
+      .st-search .clear {
+        display: none; background: var(--st-surface-alt); border: none;
+        color: var(--st-ink-3); width: 32px; height: 32px;
+        border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1;
+      }
+      .st-search.has-text .clear { display: inline-flex; align-items: center; justify-content: center; }
+
+      /* STATS */
+      .st-stats {
+        max-width: 1180px; margin: 36px auto 0;
+        padding: 0 28px;
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+      }
+      .st-stat {
+        background: var(--st-surface); border: 1px solid var(--st-line);
+        border-radius: var(--st-radius); padding: 18px 20px;
+      }
+      .st-stat .num {
+        font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+        font-size: 34px; line-height: 1;
+        letter-spacing: -0.02em; margin-bottom: 6px;
+      }
+      .st-stat .num .accent { color: var(--st-accent); }
+      .st-stat .label { font-size: 12px; font-weight: 500; color: var(--st-ink-3); }
+
+      /* MAIN / YEARS */
+      .st-main { max-width: 1180px; margin: 0 auto; padding: 64px 28px 96px; }
+      .st-year { margin-bottom: 64px; scroll-margin-top: 90px; }
+      .st-year:last-child { margin-bottom: 0; }
+
+      .st-year-header {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 20px; padding-bottom: 18px; margin-bottom: 24px;
+        border-bottom: 1px solid var(--st-line);
+      }
+      .st-year-header h2 {
+        font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+        font-size: clamp(36px, 4vw, 52px);
+        letter-spacing: -0.025em; margin: 0; line-height: 1;
+      }
+      .st-year-header .meta {
+        font-size: 13px; color: var(--st-ink-4);
+        font-weight: 500; font-feature-settings: "tnum";
+      }
+      .st-year-header .meta strong { color: var(--st-ink-2); font-weight: 600; }
+
+      /* CARDS */
+      .st-events {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 14px;
+      }
+      .st-event {
+        background: var(--st-surface); border: 1px solid var(--st-line);
+        border-radius: var(--st-radius);
+        padding: 20px 20px 16px;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        position: relative; overflow: hidden;
+        display: flex; flex-direction: column; min-height: 140px;
+      }
+      .st-event:hover {
+        transform: translateY(-2px);
+        border-color: #d4d7dc;
+        box-shadow: var(--st-shadow-md);
+      }
+      .st-event::before {
+        content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+        width: 3px; background: transparent;
+        transition: background 0.2s ease;
+      }
+      .st-event:hover::before { background: var(--st-accent); }
+      .st-event.featured {
+        background: linear-gradient(165deg, #fff8f4 0%, var(--st-surface) 65%);
+        border-color: #f5cdb8;
+      }
+      .st-event.featured::before { background: var(--st-accent); }
+
+      .st-event-top {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        gap: 12px; margin-bottom: 12px;
+      }
+      .st-date {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 12px; font-weight: 600; color: var(--st-ink-3);
+        font-feature-settings: "tnum";
+      }
+      .st-tag {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 10px; font-weight: 700;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--st-accent-deep); background: var(--st-accent-soft);
+        padding: 3px 8px; border-radius: 999px;
+      }
+      .st-event h3 {
+        font-family: 'Inter', sans-serif; font-weight: 700;
+        font-size: 17px; line-height: 1.3; letter-spacing: -0.01em;
+        color: var(--st-ink); margin: 0 0 14px; flex: 1;
+      }
+      .st-event-actions {
+        display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto;
+      }
+      .st-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 12px; border-radius: 8px;
+        font-size: 12.5px; font-weight: 600;
+        text-decoration: none; transition: all 0.15s ease; white-space: nowrap;
+      }
+      .st-link.primary { background: var(--st-ink); color: #fff; }
+      .st-link.primary:hover { background: var(--st-accent); }
+      .st-link.primary:hover .arrow { transform: translateX(2px); }
+      .st-link.secondary {
+        background: var(--st-surface-alt); color: var(--st-ink);
+        border: 1px solid var(--st-line);
+      }
+      .st-link.secondary:hover { background: #fff; border-color: var(--st-ink); }
+      .st-link .arrow { transition: transform 0.15s ease; display: inline-block; font-size: 13px; }
+
+      .st-no-results {
+        display: none; text-align: center;
+        padding: 60px 20px; color: var(--st-ink-3);
+      }
+      .st-no-results.visible { display: block; }
+      .st-no-results strong {
+        display: block; font-size: 18px; color: var(--st-ink);
+        font-weight: 600; margin-bottom: 6px;
+      }
+      .st-year.hidden-by-search { display: none; }
+
+      /* FOOTER */
+      .st-footer { border-top: 1px solid var(--st-line); background: var(--st-surface); }
+      .st-footer-inner {
+        max-width: 1180px; margin: 0 auto; padding: 44px 28px 28px;
+      }
+      .st-footer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+      .st-footer-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--st-ink);
+        margin-bottom: 12px;
+      }
+      .st-footer-text {
+        font-size: 14px;
+        color: var(--st-ink-3);
+        line-height: 1.7;
+      }
+      .st-footer-text a {
+        color: var(--st-ink-2);
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px solid var(--st-line);
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+      .st-footer-text a:hover {
+        color: var(--st-accent-deep);
+        border-bottom-color: var(--st-accent);
+      }
+      .st-social {
+        display: flex; gap: 8px; margin-top: 16px;
+      }
+      .st-social a {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 36px; height: 36px;
+        border: 1px solid var(--st-line);
+        border-radius: 50%;
+        color: var(--st-ink-3);
+        text-decoration: none;
+        transition: all 0.15s ease;
+      }
+      .st-social a:hover {
+        color: #fff;
+        background: var(--st-ink);
+        border-color: var(--st-ink);
+        transform: translateY(-1px);
+      }
+      .st-footer-bottom {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 18px 28px 28px;
+        border-top: 1px solid var(--st-line);
+        font-size: 12px;
+        color: var(--st-ink-4);
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 880px) {
+        .st-stats { grid-template-columns: repeat(2, 1fr); }
+        .st-hero { padding-top: 44px; }
+        .st-main { padding-top: 44px; }
+      }
+      @media (max-width: 640px) {
+        .st-nav-inner { padding: 12px 18px; gap: 12px; }
+        .st-hero, .st-stats, .st-main, .st-footer-inner { padding-left: 18px; padding-right: 18px; }
+        .st-nav-links {
+          display: none;
+          position: absolute; top: 100%; right: 18px;
+          background: var(--st-surface); border: 1px solid var(--st-line);
+          border-radius: var(--st-radius-sm);
+          padding: 8px; flex-direction: column; gap: 2px; min-width: 160px;
+          box-shadow: var(--st-shadow-md);
+        }
+        .st-nav-links.open { display: flex; }
+        .st-nav-links a { padding: 10px 12px; }
+        .st-mobile-toggle { display: inline-flex; }
+        .st-events { grid-template-columns: 1fr; }
+        .st-year-header { flex-direction: column; gap: 4px; align-items: flex-start; }
+        .st-footer-grid { grid-template-columns: 1fr; gap: 28px; }
+        .st-footer-inner { padding: 32px 18px 22px; }
+        .st-footer-bottom { padding: 16px 18px 24px; }
+      }
+    </style>
+</head>
+<body class="st-page">
+
+    <!-- Original site header preserved (hidden via CSS) -->
+    <header class="header-results" aria-hidden="true">
+        <nav class="sticky">
+            <div class="row">
+                <img src="Resources/img/logo-black.png" alt="Splits Timing logo" class="logo-black">
+                <ul class="main-nav js--main-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#2026">2026</a></li>
+                    <li><a href="#2025">2025</a></li>
+                    <li><a href="#2024">2024</a></li>
+                    <li><a href="#2016">2016</a></li>
+                    <li><a href="#2015">2015</a></li>
+                    <li><a href="#2014">2014</a></li>
+                </ul>
+                <a class="mobile-nav-icon js--nav-icon"><i class="ion-navicon-round"></i></a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ============ NAV ============ -->
+    <nav class="st-nav">
+      <div class="st-nav-inner">
+        <a class="st-brand" href="index.html" aria-label="Splits Timing — Home">
+          <span class="mark">S</span>
+          <span class="word">Splits<span class="light">Timing</span></span>
+        </a>
+
+        <button class="st-mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span></span>
+        </button>
+
+        <ul class="st-nav-links" id="stNavLinks">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="#2026">2026</a></li>
+          <li><a href="#2025">2025</a></li>
+          <li><a href="#2024">2024</a></li>
+          <li><a href="#2016">2016</a></li>
+          <li><a href="#2015">2015</a></li>
+          <li><a href="#2014">2014</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- ============ HERO ============ -->
+    <section class="st-hero">
+      <span class="st-eyebrow"><span class="pulse"></span>Race Results</span>
+      <h1>Every finish, <span class="accent">every split.</span></h1>
+      <p class="lede">Browse complete timing results from races we've timed across Ontario — championship cross-country, triathlons, charity runs, swims, and Hyrox. A decade of grass-roots events, all in one place.</p>
+
+      <div class="st-search" id="stSearchWrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <input id="stSearch" type="search" placeholder="Search events, dates, distances…" autocomplete="off" />
+        <button class="clear" id="stClear" aria-label="Clear search">×</button>
+      </div>
+    </section>
+
+    <!-- ============ STATS ============ -->
+    <div class="st-stats">
+      <div class="st-stat">
+        <div class="num"><span class="accent">56</span></div>
+        <div class="label">Events Posted</div>
+      </div>
+      <div class="st-stat">
+        <div class="num">2026</div>
+        <div class="label">Latest Season</div>
+      </div>
+      <div class="st-stat">
+        <div class="num">6</div>
+        <div class="label">Active Years</div>
+      </div>
+      <div class="st-stat">
+        <div class="num">2014+</div>
+        <div class="label">Since</div>
+      </div>
+    </div>
+
+    <!-- ============ YEARS ============ -->
+    <main class="st-main">
+
+      <!-- ========== 2026 ========== -->
+      <section class="st-year" id="2026">
+        <div class="st-year-header">
+          <h2>2026</h2>
+          <div class="meta"><strong>2 events</strong> · current season</div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event featured" data-search="butterfly run april 26 2026 charity peterborough">
+            <div class="st-event-top">
+              <span class="st-date">April 26, 2026</span>
+              <span class="st-tag">Latest</span>
+            </div>
+            <h3>Butterfly Run</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://peterboroughbutterflyrun.itsyourrace.com/Results.aspx?id=10476" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="hyrox peterborough fitness april 19 2026">
+            <div class="st-event-top">
+              <span class="st-date">April 19, 2026</span>
+            </div>
+            <h3>Hyrox Peterborough</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://www.splitstiming.com/results/hyrox/hyrox.html" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ========== 2025 ========== -->
+      <section class="st-year" id="2025">
+        <div class="st-year-header">
+          <h2>2025</h2>
+          <div class="meta"><strong>3 events</strong></div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event" data-search="kpreaa champs xc cross country individuals all grades october 9 2025">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 9, 2025</span>
+              <span class="st-tag">XC</span>
+            </div>
+            <h3>KPREAA Champs XC — Individuals, All Grades</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://www.splitstiming.com/results/kpreaaxc/2025/champsall" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="kpreaa champs grade 4 girls team xc cross country october 9 2025">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 9, 2025</span>
+              <span class="st-tag">XC</span>
+            </div>
+            <h3>KPREAA Champs — Grade 4 Girls Team</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://www.splitstiming.com/results/kpreaaxc/2025/4Fchampsteam" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="our hospital walk run north bay september 28 2025 charity">
+            <div class="st-event-top">
+              <span class="st-date">Sept. 28, 2025</span>
+            </div>
+            <h3>Our Hospital Walk/Run — North Bay</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://results.raceroster.com/v2/en-CA/results/j95s4ypzn4z3a9wx/results" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ========== 2024 ========== -->
+      <section class="st-year" id="2024">
+        <div class="st-year-header">
+          <h2>2024</h2>
+          <div class="meta"><strong>2 events</strong></div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event" data-search="halloween hustle peterborough october 27 2024">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 27, 2024</span>
+            </div>
+            <h3>Halloween Hustle</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://peterboroughhalloweenhustle.itsyourrace.com/Results.aspx?id=14848" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="kpreaa championships grade 4 girls xc cross country individual team october 11 2024">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 11, 2024</span>
+              <span class="st-tag">XC</span>
+            </div>
+            <h3>KPREAA Championships — Grade 4 Girls</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="https://www.splitstiming.com/results/kpreaaxc/2024/4Fchamp" target="_blank" rel="noopener">Individual <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="https://www.splitstiming.com/results/kpreaaxc/2024/4Fchampteam" target="_blank" rel="noopener">Team <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ========== 2016 ========== -->
+      <section class="st-year" id="2016">
+        <div class="st-year-header">
+          <h2>2016</h2>
+          <div class="meta"><strong>12 events</strong></div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event" data-search="overdrive race relay october 30 2016">
+            <div class="st-event-top"><span class="st-date">Oct. 30, 2016</span></div>
+            <h3>Overdrive Race &amp; Relay</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="http://www.itsyourrace.com/results.aspx?id=8435&y=2016" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="warkworth 8 miler october 22 2016">
+            <div class="st-event-top"><span class="st-date">Oct. 22, 2016</span></div>
+            <h3>Warkworth 8-Miler</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="http://www.itsyourrace.com/results.aspx?id=8400&y=2016" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="northumberland turkey trot october 10 2016 5k 2.5k 2k">
+            <div class="st-event-top"><span class="st-date">Oct. 10, 2016</span></div>
+            <h3>Northumberland Turkey Trot</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/northumberlandturkey/2016/2016NorthUmTurkTrot5K.html" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/northumberlandturkey/2016/2016NorthUmTurkTrot2-5K.html" target="_blank" rel="noopener">2.5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/northumberlandturkey/2016/2016NorthUmTurkTrot2K.html" target="_blank" rel="noopener">2K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="fenelon falls turkey trot october 10 2016 1k 5k 10k">
+            <div class="st-event-top"><span class="st-date">Oct. 10, 2016</span></div>
+            <h3>Fenelon Falls Turkey Trot</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/fenelonturkey/2016/2016FenTurkTrot10Kresults.html" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/fenelonturkey/2016/2016FenTurkTrot5Kresults.html" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/fenelonturkey/2016/2016FenTurkTrot1Kresults.html" target="_blank" rel="noopener">1K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="run for mental health september 10 2016 2.5k 5k 10k walk charity">
+            <div class="st-event-top"><span class="st-date">Sept. 10, 2016</span></div>
+            <h3>Run for Mental Health</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/run4mentalhealth/2016/2016_RFMH_10Kresults.html" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/run4mentalhealth/2016/2016_RFMH_5Kresults.html" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/run4mentalhealth/2016/2016_RFMH_5Kwalkresults.html" target="_blank" rel="noopener">5K Walk <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/run4mentalhealth/2016/2016_RFMH_2_5Kresults.html" target="_blank" rel="noopener">2.5K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="chemong lake tri triathlon august 7 2016">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 7, 2016</span>
+              <span class="st-tag">Tri</span>
+            </div>
+            <h3>Chemong Lake Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/chemongtri/2016/chemongtryatri" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="highland yard august 1 2016 10k 5k 2k overall age groups">
+            <div class="st-event-top"><span class="st-date">Aug. 1, 2016</span></div>
+            <h3>The Highland Yard</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/highlandyard/2016/2016highlandyard10koverall.html" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2016/2016highlandyard5koverall.html" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2016/2016highlandyard2koverall.html" target="_blank" rel="noopener">2K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2016/2016highlandyard10kages.html" target="_blank" rel="noopener">10K Ages <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2016/2016highlandyard5kages.html" target="_blank" rel="noopener">5K Ages <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2016/2016highlandyard2kages.html" target="_blank" rel="noopener">2K Ages <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="dr shufelt kids tri triathlon july 30 2016 children">
+            <div class="st-event-top">
+              <span class="st-date">July 30, 2016</span>
+              <span class="st-tag">Kids</span>
+            </div>
+            <h3>Dr. Shufelt's Kids Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/drshufeltkidstri/2016/2016ptbokidstriresults.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="kingston kids tri triathlon june 25 2016 boys girls children">
+            <div class="st-event-top">
+              <span class="st-date">June 25, 2016</span>
+              <span class="st-tag">Kids</span>
+            </div>
+            <h3>Kingston Kids' Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/ktownkidsresults/ktownkidstri2016M1415.htm" target="_blank" rel="noopener">B 14-15 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016M1213.htm" target="_blank" rel="noopener">B 12-13 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016M1011.htm" target="_blank" rel="noopener">B 10-11 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016M0809.htm" target="_blank" rel="noopener">B 8-9 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016M0607.htm" target="_blank" rel="noopener">B 6-7 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016M0405.htm" target="_blank" rel="noopener">B 4-5 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F1415.htm" target="_blank" rel="noopener">G 14-15 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F1213.htm" target="_blank" rel="noopener">G 12-13 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F1011.htm" target="_blank" rel="noopener">G 10-11 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F0809.htm" target="_blank" rel="noopener">G 8-9 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F0607.htm" target="_blank" rel="noopener">G 6-7 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/ktownkidsresults/ktownkidstri2016F0405.htm" target="_blank" rel="noopener">G 4-5 <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="peterborough relay for life june 4 2016 charity">
+            <div class="st-event-top"><span class="st-date">June 4, 2016</span></div>
+            <h3>Peterborough Relay for Life</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/peterborough4life/2016/peterboroughrelayforlife2016.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="swim kawartha may 29 2016 1k 2k 4k swimming">
+            <div class="st-event-top">
+              <span class="st-date">May 29, 2016</span>
+              <span class="st-tag">Swim</span>
+            </div>
+            <h3>Swim Kawartha</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/swimkawartha/2016/swimkawarthaall.html" target="_blank" rel="noopener">Overall <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/swimkawartha/2016/swimkawartha4k.html" target="_blank" rel="noopener">4K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/swimkawartha/2016/swimkawartha2k.html" target="_blank" rel="noopener">2K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/swimkawartha/2016/swimkawartha1k.html" target="_blank" rel="noopener">1K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="st patrick's day 5k march 13 2016 st paddy">
+            <div class="st-event-top"><span class="st-date">March 13, 2016</span></div>
+            <h3>St. Patrick's Day 5K</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/stpatrick/2016/stpatallfinishers6" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ========== 2015 ========== -->
+      <section class="st-year" id="2015">
+        <div class="st-year-header">
+          <h2>2015</h2>
+          <div class="meta"><strong>21 events</strong></div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event" data-search="overdrive race relay november 8 2015">
+            <div class="st-event-top"><span class="st-date">Nov. 8, 2015</span></div>
+            <h3>Overdrive Race &amp; Relay</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/overdrive/2015/overdrivereport12" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="warkworth 8 miler november 8 2015 13k 5k">
+            <div class="st-event-top"><span class="st-date">Nov. 8, 2015</span></div>
+            <h3>Warkworth 8-Miler</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/warkworth8/2015/Warkworth%20Report%2013K17" target="_blank" rel="noopener">13K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/warkworth8/2015/Warkworth%20Report%205K4" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="halloween fun run october 31 2015 2.5k 5k">
+            <div class="st-event-top"><span class="st-date">Oct. 31, 2015</span></div>
+            <h3>Halloween Fun Run</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/halloween/2015/halloween5report3" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/halloween/2015/halloween2report2" target="_blank" rel="noopener">2.5K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="cossa xc cross country october 30 2015 midget junior senior boys girls team">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 30, 2015</span>
+              <span class="st-tag">XC</span>
+            </div>
+            <h3>COSSA XC</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/cossaxc/2015/TeamResults3.htm" target="_blank" rel="noopener">Team <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overallseniorboys4" target="_blank" rel="noopener">SB <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overallseniorgirls9" target="_blank" rel="noopener">SG <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overalljuniorboys1" target="_blank" rel="noopener">JB <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overalljuniorgirls1" target="_blank" rel="noopener">JG <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overallmidgetboys1" target="_blank" rel="noopener">MB <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/cossaxc/2015/overallmidgetgirls3" target="_blank" rel="noopener">MG <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="northumberland turkey trot october 12 2015">
+            <div class="st-event-top"><span class="st-date">Oct. 12, 2015</span></div>
+            <h3>Northumberland Turkey Trot</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/northumberlandturkey/2015/allresults3565" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="peterborough run relay september 12 2015 kids">
+            <div class="st-event-top"><span class="st-date">Sept. 12, 2015</span></div>
+            <h3>Peterborough Run &amp; Relay</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/ptborunrelay/2015/runrelayallfinishers7" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/ptborunrelay/2015/runrelaykids" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="fleming college 5k september 11 2015">
+            <div class="st-event-top"><span class="st-date">Sept. 11, 2015</span></div>
+            <h3>Fleming College 5K</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/fleming5k/2015/fleming5kresults2015" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="canaqua sports swim splash august 15 2015 jackson point swimming">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 15, 2015</span>
+              <span class="st-tag">Swim</span>
+            </div>
+            <h3>Canaqua Sports Swim Splash</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/canaqua/2015/swimsplashjacksonpoint.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="chemong lake tri triathlon august 9 2015 sprint duathlon relay try-a-tri">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 9, 2015</span>
+              <span class="st-tag">Tri</span>
+            </div>
+            <h3>Chemong Lake Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="results/chemongtri/2015/chemongsprintfinal101" target="_blank" rel="noopener">Sprint <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="results/chemongtri/2015/ChemongDuathlon23" target="_blank" rel="noopener">Du <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="results/chemongtri/2015/chemongrelay123" target="_blank" rel="noopener">Relay <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="results/chemongtri/2015/chemongtryatri1" target="_blank" rel="noopener">Try-a-tri <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="stoney lake sprint august 8 2015 triathlon">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 8, 2015</span>
+              <span class="st-tag">Tri</span>
+            </div>
+            <h3>Stoney Lake Sprint</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/stoneylakesprint/2015/sprintallfinishers2" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="highland yard august 2 2015">
+            <div class="st-event-top"><span class="st-date">Aug. 2, 2015</span></div>
+            <h3>The Highland Yard</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/highlandyard/2015/highlandreportallresults" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="dr shufelt kids tri triathlon august 1 2015 children">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 1, 2015</span>
+              <span class="st-tag">Kids</span>
+            </div>
+            <h3>Dr. Shufelt's Kids Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/drshufeltkidstri/2015/kidstriresultsallfinishers" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="canaqua swim innisfil july 25 2015 swimming">
+            <div class="st-event-top">
+              <span class="st-date">July 25, 2015</span>
+              <span class="st-tag">Swim</span>
+            </div>
+            <h3>Canaqua Swim Innisfil</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/canaqua/2015/innisfilswim.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="mudmoiselle july 11 2015">
+            <div class="st-event-top"><span class="st-date">July 11, 2015</span></div>
+            <h3>Mudmoiselle</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/mudmoiselle/2015/mudmoisellereport15" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="aquathon july 5 2015 olympic sprint try-a-tri team">
+            <div class="st-event-top"><span class="st-date">July 5, 2015</span></div>
+            <h3>Aquathon</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/aquathon/2015/aquathonolympic" target="_blank" rel="noopener">Olympic <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/aquathon/2015/aquathonsprintdistance" target="_blank" rel="noopener">Sprint <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/aquathon/2015/teamresults" target="_blank" rel="noopener">Team <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/aquathon/2015/aquathontryatri" target="_blank" rel="noopener">Try-a-tri <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="kingston kids triathlon june 20 2015 children">
+            <div class="st-event-top">
+              <span class="st-date">June 20, 2015</span>
+              <span class="st-tag">Kids</span>
+            </div>
+            <h3>Kingston Kids Triathlon</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="http://splitstiming.com/KtownKids/results.html" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="stoney lake triathlon june 7 2015 sprint duathlon relay try-a-tri kids">
+            <div class="st-event-top">
+              <span class="st-date">June 7, 2015</span>
+              <span class="st-tag">Tri</span>
+            </div>
+            <h3>Stoney Lake Triathlon</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/stoneylaketri/2015/stoneysprint" target="_blank" rel="noopener">Sprint <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylaketri/2015/stoneydu" target="_blank" rel="noopener">Du <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylaketri/2015/stoneyrelay" target="_blank" rel="noopener">Relay <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylaketri/2015/stoneytry" target="_blank" rel="noopener">Try-a-tri <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylaketri/2015/stoney1k" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="swim kawartha may 31 2015 1k 2k 4k swimming">
+            <div class="st-event-top">
+              <span class="st-date">May 31, 2015</span>
+              <span class="st-tag">Swim</span>
+            </div>
+            <h3>Swim Kawartha</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/swimkawartha/2015/4kfinal2" target="_blank" rel="noopener">4K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/swimkawartha/2015/2kfinal2" target="_blank" rel="noopener">2K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/swimkawartha/2015/1kfinal2" target="_blank" rel="noopener">1K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="rlm 5000 may 16 2015 youth">
+            <div class="st-event-top"><span class="st-date">May 16, 2015</span></div>
+            <h3>RLM 5000</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/rlm5000/2015/rlmFINAL5000.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/rlm5000/2015/rlmkidsresults1.txt" target="_blank" rel="noopener">Youth <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="ks for care april 26 2015 5k 10k walk team charity">
+            <div class="st-event-top"><span class="st-date">April 26, 2015</span></div>
+            <h3>K's for Care</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/kforcare/2015/ksforcare10kfinal2" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2015/ksforcare5krfinal" target="_blank" rel="noopener">5K Run <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2015/ksforcare5kwfinal" target="_blank" rel="noopener">Walk <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2015/ksforcare5krteam" target="_blank" rel="noopener">Team Run <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2015/ksforcare5kwteam" target="_blank" rel="noopener">Team Walk <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="st patrick's day 5k march 15 2015 st paddy">
+            <div class="st-event-top"><span class="st-date">March 15, 2015</span></div>
+            <h3>St. Patrick's Day 5K</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="results/stpatrick/2015/2015stpaddyreport" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- ========== 2014 ========== -->
+      <section class="st-year" id="2014">
+        <div class="st-year-header">
+          <h2>2014</h2>
+          <div class="meta"><strong>16 events</strong></div>
+        </div>
+        <div class="st-events">
+
+          <article class="st-event" data-search="james fund run october 26 2014 5k 10k charity">
+            <div class="st-event-top"><span class="st-date">Oct. 26, 2014</span></div>
+            <h3>James Fund Run</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/jamesfund/2014/James%20Fund%2010k%20Report" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/jamesfund/2014/James%205k%20Report" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="warkworth 8 miler october 25 2014 13k 5k">
+            <div class="st-event-top"><span class="st-date">Oct. 25, 2014</span></div>
+            <h3>Warkworth 8-Miler</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/warkworth8/2014/W14%2013k%20Report" target="_blank" rel="noopener">13K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/warkworth8/2014/W14%205k%20Race" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="northumberland turkey trot october 13 2014 5k 2.5k kids">
+            <div class="st-event-top"><span class="st-date">Oct. 13, 2014</span></div>
+            <h3>Northumberland Turkey Trot</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/northumberlandturkey/2014/turkeytrot5kresults" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/northumberlandturkey/2014/turkeytrot2.5kresults" target="_blank" rel="noopener">2.5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/northumberlandturkey/2014/turkeytrot2kresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="thanksgiving cross country xc october 11 2014 6.6k 3.3k">
+            <div class="st-event-top">
+              <span class="st-date">Oct. 11, 2014</span>
+              <span class="st-tag">XC</span>
+            </div>
+            <h3>Thanksgiving Cross Country</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/thanksgivingxc/2014/thanksgiving6kresults" target="_blank" rel="noopener">6.6K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/thanksgivingxc/2014/thanksgiving3kresults" target="_blank" rel="noopener">3.3K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="autumn colours run hanover october 5 2014 10k 5k walk kids">
+            <div class="st-event-top"><span class="st-date">Oct. 5, 2014</span></div>
+            <h3>Autumn Colours Run</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/autumncolours/2014/hanover10kmresults" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/autumncolours/2014/hanover5results" target="_blank" rel="noopener">5K Run <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/autumncolours/2014/hanover5kmwalkresults" target="_blank" rel="noopener">Walk <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/autumncolours/2014/hanover1kmresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="peterborough corporate run relay september 13 2014 10k kids">
+            <div class="st-event-top"><span class="st-date">Sept. 13, 2014</span></div>
+            <h3>Peterborough Corporate Run &amp; Relay</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/ptborunrelay/2014/overallcorporateresults" target="_blank" rel="noopener">Overall <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/ptborunrelay/2014/10kcorporateresults" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/ptborunrelay/2014/relaycorporateresults" target="_blank" rel="noopener">Relay <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/ptborunrelay/2014/kidscorporateresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="kash end of summer dash august 17 2014 10k kids">
+            <div class="st-event-top"><span class="st-date">Aug. 17, 2014</span></div>
+            <h3>KASH End of Summer Dash</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/kashdash/2014/kash10kmresultsoverall" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kashdash/2014/kash1koverallresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="stoney lake sprint august 10 2014 10k 5k kids">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 10, 2014</span>
+              <span class="st-tag">Tri</span>
+            </div>
+            <h3>Stoney Lake Sprint</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/stoneylakesprint/2014/sls10koverallresults" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylakesprint/2014/sls5koverallresults" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/stoneylakesprint/2014/sls1koverallresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="highland yard august 3 2014 10k 5k kids">
+            <div class="st-event-top"><span class="st-date">Aug. 3, 2014</span></div>
+            <h3>The Highland Yard</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/highlandyard/2014/hy10kresults" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2014/hy5kmresults" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/highlandyard/2014/hy2kmresults" target="_blank" rel="noopener">Kids <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="dr shufelt kids tri triathlon august 2 2014 boys girls children">
+            <div class="st-event-top">
+              <span class="st-date">Aug. 2, 2014</span>
+              <span class="st-tag">Kids</span>
+            </div>
+            <h3>Dr. Shufelt's Kids Tri</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/drshufeltkidstri/2014/boys12to13results" target="_blank" rel="noopener">B 12-13 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/boys10to11results" target="_blank" rel="noopener">B 10-11 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/boys89results" target="_blank" rel="noopener">B 8-9 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/boys6to7results" target="_blank" rel="noopener">B 6-7 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/boys45results" target="_blank" rel="noopener">B 4-5 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/boys3underresults" target="_blank" rel="noopener">B 3 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/girls12to13results" target="_blank" rel="noopener">G 12-13 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/girls10to11results" target="_blank" rel="noopener">G 10-11 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/girls89results" target="_blank" rel="noopener">G 8-9 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/girls6to7results" target="_blank" rel="noopener">G 6-7 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/girls45results" target="_blank" rel="noopener">G 4-5 <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/drshufeltkidstri/2014/g3ur" target="_blank" rel="noopener">G 3 <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="mudmoiselle july 12 2014 individual team">
+            <div class="st-event-top"><span class="st-date">July 12, 2014</span></div>
+            <h3>Mudmoiselle</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/devilsrun/2014/devilsrunindividualresults" target="_blank" rel="noopener">Individual <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/devilsrun/2014/devilsrunfinalteamresults.htm" target="_blank" rel="noopener">Team <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="2xu open water swim june 1 2014 4k 2k 1k">
+            <div class="st-event-top">
+              <span class="st-date">June 1, 2014</span>
+              <span class="st-tag">Swim</span>
+            </div>
+            <h3>2XU Open Water Swim</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/2xuopenwater/2014/ows4konlineresults.htm" target="_blank" rel="noopener">4K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/2xuopenwater/2014/ows2konlineresults.htm" target="_blank" rel="noopener">2K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/2xuopenwater/2014/ows1konlineresults.htm" target="_blank" rel="noopener">1K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="rlm 5000 may 17 2014 youth">
+            <div class="st-event-top"><span class="st-date">May 17, 2014</span></div>
+            <h3>RLM 5000</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/rlm5000/2014/rlm5000metresfinalresults.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/rlm5000/2014/rlmyouthmileresultsfinal.htm" target="_blank" rel="noopener">Youth <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="ks for care april 27 2014 10k 5k team charity">
+            <div class="st-event-top"><span class="st-date">April 27, 2014</span></div>
+            <h3>K's for Care</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/kforcare/2014/care10" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2014/5kksforcare" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/kforcare/2014/careteam.htm" target="_blank" rel="noopener">Team <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="spring thaw april 12 2014 10k 5k 1k">
+            <div class="st-event-top"><span class="st-date">April 12, 2014</span></div>
+            <h3>Spring Thaw</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/springthaw/2014/springthaw10K" target="_blank" rel="noopener">10K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/springthaw/2014/springthaw5K" target="_blank" rel="noopener">5K <span class="arrow">→</span></a>
+              <a class="st-link secondary" href="/results/springthaw/2014/springthaw1K" target="_blank" rel="noopener">1K <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+          <article class="st-event" data-search="st patrick's day 5k march 16 2014 st paddy">
+            <div class="st-event-top"><span class="st-date">March 16, 2014</span></div>
+            <h3>St. Patrick's Day 5K</h3>
+            <div class="st-event-actions">
+              <a class="st-link primary" href="/results/stpatrick/2014/stpaddys5k.htm" target="_blank" rel="noopener">Results <span class="arrow">→</span></a>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <div class="st-no-results" id="stNoResults">
+        <strong>No events match your search.</strong>
+        Try a different keyword, or browse by year above.
+      </div>
+
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="st-footer">
+      <div class="st-footer-inner st-footer-grid">
+        <div class="st-footer-col">
+          <div class="st-footer-title">Splits Timing</div>
+          <div class="st-footer-text">
+            by <a href="http://www.runnerslife.ca" target="_blank" rel="noopener">Runners Life</a><br>
+            174 Charlotte Street<br>
+            Peterborough, ON&nbsp; K9J 2T8<br>
+            <a href="tel:17058768960">(705) 876-8960</a>
+          </div>
+        </div>
+        <div class="st-footer-col">
+          <div class="st-footer-title">Get in touch</div>
+          <div class="st-footer-text">
+            Can't find a race?<br>
+            <a href="mailto:splitstiming@gmail.com">splitstiming@gmail.com</a>
+          </div>
+          <div class="st-social">
+            <a href="mailto:info@splitstiming.com" aria-label="Email"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></a>
+            <a href="tel:17058768960" aria-label="Phone"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="https://www.facebook.com/Splits-Timing-279948508813568/" target="_blank" rel="noopener" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01z"/></svg></a>
+          </div>
+        </div>
+      </div>
+      <div class="st-footer-bottom">
+        © Splits Timing — Race timing across Ontario
+      </div>
+    </footer>
+
+    <script>
+      (function() {
+        var btn = document.querySelector('.st-mobile-toggle');
+        var menu = document.getElementById('stNavLinks');
+        if (btn && menu) {
+          btn.addEventListener('click', function() {
+            var isOpen = menu.classList.toggle('open');
+            btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          });
+          menu.querySelectorAll('a').forEach(function(a) {
+            a.addEventListener('click', function() {
+              menu.classList.remove('open');
+              btn.setAttribute('aria-expanded', 'false');
+            });
+          });
+        }
+      })();
+
+      (function() {
+        var input = document.getElementById('stSearch');
+        var clear = document.getElementById('stClear');
+        var wrap = document.getElementById('stSearchWrap');
+        var noResults = document.getElementById('stNoResults');
+        if (!input) return;
+
+        var allEvents = Array.prototype.slice.call(document.querySelectorAll('.st-event'));
+        var allYears  = Array.prototype.slice.call(document.querySelectorAll('.st-year'));
+
+        function applyFilter(term) {
+          term = term.trim().toLowerCase();
+          wrap.classList.toggle('has-text', term.length > 0);
+
+          if (!term) {
+            allEvents.forEach(function(ev){ ev.style.display = ''; });
+            allYears.forEach(function(y){ y.classList.remove('hidden-by-search'); });
+            noResults.classList.remove('visible');
+            return;
+          }
+
+          var anyMatch = false;
+          allEvents.forEach(function(ev) {
+            var hay = (ev.getAttribute('data-search') || '') + ' ' + (ev.querySelector('h3') ? ev.querySelector('h3').textContent : '');
+            var match = hay.toLowerCase().indexOf(term) !== -1;
+            ev.style.display = match ? '' : 'none';
+            if (match) anyMatch = true;
+          });
+
+          allYears.forEach(function(y) {
+            var visible = y.querySelectorAll('.st-event');
+            var hasVisible = false;
+            for (var i = 0; i < visible.length; i++) {
+              if (visible[i].style.display !== 'none') { hasVisible = true; break; }
+            }
+            y.classList.toggle('hidden-by-search', !hasVisible);
+          });
+
+          noResults.classList.toggle('visible', !anyMatch);
+        }
+
+        input.addEventListener('input', function() { applyFilter(input.value); });
+        clear.addEventListener('click', function() {
+          input.value = '';
+          applyFilter('');
+          input.focus();
+        });
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') { input.value = ''; applyFilter(''); }
+        });
+      })();
+    </script>
+
+</body>
+</html>

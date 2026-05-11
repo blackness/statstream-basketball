@@ -309,6 +309,21 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
 
     subs.forEach(sub => {
       const t = toSecs(sub.period || 1, sub.timeRemaining);
+
+      // Period marker — same player in and out, just a continuation checkpoint
+      if (sub.isPeriodMarker && sub.playerInId === sub.playerOutId) {
+        if (sub.playerOutId === playerId && timeIn !== null) {
+          // End of period — close interval
+          intervals.push({ start: timeIn, end: t });
+          timeIn = null;
+        }
+        if (sub.playerInId === playerId && sub.playerOutId === playerId) {
+          // Start of next period — reopen interval
+          timeIn = t;
+        }
+        return;
+      }
+
       if (sub.playerInId === playerId) timeIn = t;
       else if (sub.playerOutId === playerId && timeIn !== null) {
         intervals.push({ start: timeIn, end: t });
@@ -586,6 +601,97 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
             );
           })()}
 
+          {/* Period scores grid */}
+          {(() => {
+            const totalPeriods = game.game_settings?.totalPeriods || 4;
+            const periodStartScores = game.game_settings?.periodStartScores || {};
+            const periods = Array.from({ length: totalPeriods }, (_, i) => i + 1);
+            const myTotal  = isHome ? (game.home_score||0) : (game.away_score||0);
+            const oppTotal = isHome ? (game.away_score||0) : (game.home_score||0);
+
+            // Calculate per-period score from start scores
+            const getPeriodScore = (period) => {
+              const start = periodStartScores[period];
+              const end   = periodStartScores[period + 1];
+              if (!start) {
+                // Fall back to play_log for this period
+                const plays = (game.play_log || []).filter(p => p.period === period && (p.points||0) > 0);
+                const myPts  = plays.filter(p => p.team === 'home').reduce((s,p) => s+p.points, 0);
+                const oppPts = plays.filter(p => p.team === 'away').reduce((s,p) => s+p.points, 0);
+                return { my: myPts, opp: oppPts };
+              }
+              // If we have next period's start, the delta is exact
+              if (end) {
+                const homeDelta = end.home - start.home;
+                const awayDelta = end.away - start.away;
+                return isHome
+                  ? { my: homeDelta, opp: awayDelta }
+                  : { my: awayDelta, opp: homeDelta };
+              }
+              // Last period — delta from start to final score
+              const homeDelta = (game.home_score||0) - start.home;
+              const awayDelta = (game.away_score||0) - start.away;
+              return isHome
+                ? { my: homeDelta, opp: awayDelta }
+                : { my: awayDelta, opp: homeDelta };
+            };
+
+            const cellStyle = (highlight) => ({
+              flex:1, textAlign:'center', padding:'4px 2px',
+              borderRight:'1px solid #1e293b',
+              background: highlight ? '#162032' : 'transparent',
+            });
+
+            return (
+              <div style={{ borderTop:'1px solid #1e293b', margin:'0 14px' }}>
+                {/* Header row */}
+                <div style={{ display:'flex', alignItems:'center' }}>
+                  <div style={{ width:NAME_W - 28, fontSize:8, color:'#334155', fontWeight:700, paddingRight:6, textAlign:'right', flexShrink:0 }}></div>
+                  {periods.map(p => (
+                    <div key={p} style={cellStyle(false)}>
+                      <span style={{ fontSize:8, fontWeight:900, color:'#334155', letterSpacing:'0.1em' }}>Q{p}</span>
+                    </div>
+                  ))}
+                  <div style={{ ...cellStyle(true), borderRight:'none' }}>
+                    <span style={{ fontSize:8, fontWeight:900, color:'#64748b', letterSpacing:'0.1em' }}>T</span>
+                  </div>
+                </div>
+                {/* My team row */}
+                <div style={{ display:'flex', alignItems:'center' }}>
+                  <div style={{ width:NAME_W - 28, fontSize:9, color:'#60a5fa', fontWeight:800, paddingRight:6, textAlign:'right', flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {myName}
+                  </div>
+                  {periods.map(p => (
+                    <div key={p} style={cellStyle(false)}>
+                      <span style={{ fontSize:11, fontWeight:700, color:'#94a3b8', fontVariantNumeric:'tabular-nums' }}>
+                        {getPeriodScore(p).my}
+                      </span>
+                    </div>
+                  ))}
+                  <div style={{ ...cellStyle(true), borderRight:'none' }}>
+                    <span style={{ fontSize:12, fontWeight:900, color:'#60a5fa', fontVariantNumeric:'tabular-nums' }}>{myTotal}</span>
+                  </div>
+                </div>
+                {/* Opponent row */}
+                <div style={{ display:'flex', alignItems:'center', marginBottom:4 }}>
+                  <div style={{ width:NAME_W - 28, fontSize:9, color:'#f87171', fontWeight:800, paddingRight:6, textAlign:'right', flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {oppName}
+                  </div>
+                  {periods.map(p => (
+                    <div key={p} style={cellStyle(false)}>
+                      <span style={{ fontSize:11, fontWeight:700, color:'#94a3b8', fontVariantNumeric:'tabular-nums' }}>
+                        {getPeriodScore(p).opp}
+                      </span>
+                    </div>
+                  ))}
+                  <div style={{ ...cellStyle(true), borderRight:'none' }}>
+                    <span style={{ fontSize:12, fontWeight:900, color:'#f87171', fontVariantNumeric:'tabular-nums' }}>{oppTotal}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Recent plays ticker — live only */}
           {isLive && (game.recent_plays||[]).length > 0 && (
             <div style={{ borderTop:'1px solid #1e293b', padding:'6px 14px', display:'flex', gap:12, overflowX:'auto' }}>
@@ -677,7 +783,7 @@ const GameDetail = ({ initialGame, team: initialTeam, onBack, user }) => {
                           color: col.key==='pm'?pmColor(s.pm):col.color||(player.hasStats?'#94a3b8':'#1e293b'),
                           fontVariantNumeric:'tabular-nums',
                         }}>
-                          {player.hasStats ? colVal(s, col.key, player) : (isFrac(col.key)?'0/0':col.key==='pm'||col.key==='min'?'—':'0')}
+                          {player.hasStats ? colVal(s, col.key, player) : (col.key==='min' ? calcMinutes(player.id) || '—' : isFrac(col.key)?'0/0':col.key==='pm'?'—':'0')}
                         </span>
                       </div>
                     ))}

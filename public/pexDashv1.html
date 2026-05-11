@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pexip Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --teal: #00B894; --teal-dark: #007A63; --teal-bg: #E6F7F4;
+  --amber: #F0A500; --amber-bg: #FEF6E4;
+  --red: #D63031; --red-bg: #FDEAEA;
+  --slate: #0F1F2E; --slate2: #1A2F42;
+  --bg: #F0F2F5; --surface: #FFFFFF; --surface2: #F7F8FA;
+  --border: #E2E6EA; --border2: #C8CDD4;
+  --text: #0F1F2E; --text2: #4A5568; --text3: #9AA5B4;
+  --r: 10px; --r-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.09);
+}
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: 210px; background: var(--slate); display: flex; flex-direction: column; flex-shrink: 0; }
+.sidebar-logo { padding: 22px 18px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.logo-icon { width: 32px; height: 32px; background: var(--teal); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-icon svg { width: 17px; height: 17px; fill: white; }
+.logo-name { font-size: 15px; font-weight: 600; color: #fff; }
+.logo-tag { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.07em; }
+.nav { padding: 14px 10px; flex: 1; }
+.nav-label { font-size: 10px; color: rgba(255,255,255,0.22); text-transform: uppercase; letter-spacing: 0.09em; padding: 6px 8px 4px; }
+.nav-btn { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px; border-radius: var(--r-sm); border: none; background: none; color: rgba(255,255,255,0.5); font-size: 13.5px; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; text-align: left; transition: all 0.13s; margin-bottom: 2px; }
+.nav-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; opacity: 0.7; }
+.nav-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.82); }
+.nav-btn.active { background: rgba(0,184,148,0.18); color: var(--teal); font-weight: 500; }
+.nav-btn.active svg { opacity: 1; }
+.sidebar-foot { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+.node-pill { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border-radius: var(--r-sm); background: rgba(255,255,255,0.04); }
+.ndot { width: 6px; height: 6px; border-radius: 50%; background: #555; flex-shrink: 0; transition: background 0.3s; }
+.ndot.ok { background: var(--teal); } .ndot.err { background: var(--red); }
+.node-name { font-size: 11.5px; color: rgba(255,255,255,0.35); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); height: 56px; padding: 0 24px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar-title { flex: 1; }
+.topbar-title h1 { font-size: 16px; font-weight: 600; }
+.topbar-title p { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
+.content { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text2); font-size: 13px; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif; cursor: pointer; transition: all 0.12s; }
+.btn:hover { background: var(--surface2); }
+.btn svg { width: 13px; height: 13px; fill: currentColor; }
+.btn.on { background: var(--teal-bg); color: var(--teal-dark); border-color: var(--teal); }
+.btn-primary { background: var(--teal); color: white; border-color: var(--teal); }
+.btn-primary:hover { background: var(--teal-dark); }
+
+/* Connection prompt */
+.cfg-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 28px; max-width: 520px; margin: 0 auto 24px; box-shadow: var(--shadow); }
+.cfg-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.cfg-card p { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
+.cfg-fields { display: flex; flex-direction: column; gap: 10px; }
+.cfg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 12px; font-weight: 500; color: var(--text2); }
+.field input, .field select { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; background: var(--surface); color: var(--text); }
+.field input:focus, .field select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 2px rgba(0,184,148,0.12); }
+.hint { font-size: 12px; color: var(--text3); line-height: 1.5; margin-top: 4px; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); }
+.stat-val { font-size: 28px; font-weight: 600; line-height: 1; font-family: 'IBM Plex Mono', monospace; }
+.stat-val.green { color: var(--teal); }
+.stat-lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 5px; }
+
+/* Toolbar */
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.search { position: relative; flex: 1; min-width: 180px; }
+.search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; fill: var(--text3); pointer-events: none; }
+.search input { width: 100%; padding: 7px 10px 7px 30px; border: 1px solid var(--border); border-radius: var(--r-sm); font-size: 13px; font-family: 'IBM Plex Sans', sans-serif; background: var(--surface); color: var(--text); }
+.search input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 2px rgba(0,184,148,0.12); }
+.pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.pill { padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; color: var(--text2); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: all 0.12s; }
+.pill.on { background: var(--teal-bg); color: var(--teal-dark); border-color: var(--teal); font-weight: 500; }
+
+/* Strip */
+.strip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-sm); margin-bottom: 14px; font-size: 12px; color: var(--text2); }
+.strip .sp { flex: 1; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot.idle { background: var(--border2); }
+.dot.live { background: var(--teal); animation: blink 2s infinite; }
+.dot.load { background: var(--amber); animation: blink 0.7s infinite; }
+.dot.err  { background: var(--red); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* Card */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
+.card-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.card-head-title { font-size: 13px; font-weight: 600; flex: 1; }
+.card-count { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; padding: 8px 16px; font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; background: var(--surface2); border-bottom: 1px solid var(--border); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td { padding: 10px 16px; vertical-align: middle; }
+.cell-name { display: flex; align-items: center; gap: 10px; }
+.ava { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.ava.live   { background: var(--teal-bg); color: var(--teal-dark); }
+.ava.empty  { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.ava.locked { background: var(--amber-bg); color: #7A5006; }
+.row-name  { font-size: 13.5px; font-weight: 500; }
+.row-alias { font-size: 11.5px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; margin-top: 1px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.badge.live   { background: var(--teal-bg); color: var(--teal-dark); }
+.badge.empty  { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.badge.locked { background: var(--amber-bg); color: #7A5006; }
+.pbar-wrap { display: flex; align-items: center; gap: 8px; }
+.pbar { width: 52px; height: 3px; background: var(--border); border-radius: 2px; }
+.pbar-fill { height: 100%; background: var(--teal); border-radius: 2px; }
+.pcount { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+/* Address Book */
+.ab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 10px; padding: 14px; }
+.ab-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 9px; transition: box-shadow 0.15s, border-color 0.15s; }
+.ab-card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
+.ab-top { display: flex; align-items: center; gap: 10px; }
+.ab-ava { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: white; flex-shrink: 0; }
+.ab-ava.room { border-radius: 10px; font-size: 16px; }
+.ab-nm { font-size: 13.5px; font-weight: 500; line-height: 1.2; }
+.ab-sub { font-size: 11.5px; color: var(--text3); margin-top: 1px; }
+.ab-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+.tag.vmr     { background: var(--teal-bg); color: var(--teal-dark); }
+.tag.contact { background: #EEF2FF; color: #3730A3; }
+.tag.pin     { background: var(--amber-bg); color: #7A5006; }
+.ab-detail { font-size: 12px; color: var(--text2); display: flex; align-items: flex-start; gap: 6px; }
+.ab-detail svg { width: 12px; height: 12px; fill: var(--text3); flex-shrink: 0; margin-top: 1px; }
+.ab-uri { font-family: 'IBM Plex Mono', monospace; font-size: 11px; word-break: break-all; }
+.ab-actions { display: flex; gap: 6px; margin-top: 2px; }
+.ab-action { flex: 1; padding: 6px; font-size: 12px; font-weight: 500; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; color: var(--text2); transition: all 0.12s; text-align: center; }
+.ab-action:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+.ab-action.call { background: var(--teal); color: white; border-color: var(--teal); }
+.ab-action.call:hover { background: var(--teal-dark); }
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 13px; }
+.empty-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+
+/* Panel */
+.panel { display: none; }
+.panel.show { display: block; animation: fadeUp 0.2s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)} }
+
+/* Toast */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--slate); color: white; padding: 10px 16px; border-radius: var(--r-sm); font-size: 13px; box-shadow: var(--shadow-md); opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 999; }
+.toast.show { opacity: 1; transform: none; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+      <div><div class="logo-name">Pexip</div><div class="logo-tag">Dashboard</div></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Monitor</div>
+      <button class="nav-btn active" id="nav-conf" onclick="showPanel('conf')">
+        <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+        Conferences
+      </button>
+      <button class="nav-btn" id="nav-ab" onclick="showPanel('ab')">
+        <svg viewBox="0 0 24 24"><path d="M20 0H4v2h16V0zM4 24h16v-2H4v2zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 2.75c1.24 0 2.25 1.01 2.25 2.25S13.24 11.25 12 11.25 9.75 10.24 9.75 9s1.01-2.25 2.25-2.25zM17 17H7v-.75c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V17z"/></svg>
+        Address Book
+      </button>
+      <div class="nav-label" style="margin-top:12px;">Config</div>
+      <button class="nav-btn" id="nav-cfg" onclick="showPanel('cfg')">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        Connection
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="node-pill">
+        <div class="ndot" id="nodeDot"></div>
+        <div class="node-name" id="nodeName">Not configured</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">
+        <h1 id="pageTitle">Conferences</h1>
+        <p id="pageSub">Live conference status</p>
+      </div>
+      <button class="btn on" id="autoBtn" onclick="toggleAuto()" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        <span id="autoBtnTxt">Auto ON</span>
+      </button>
+      <button class="btn" id="refreshBtn" onclick="onRefresh()" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <div class="content">
+
+      <!-- Conferences -->
+      <div id="panel-conf" class="panel show">
+        <div class="stats">
+          <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
+          <div class="stat"><div class="stat-val green" id="s-live">—</div><div class="stat-lbl">Active</div></div>
+          <div class="stat"><div class="stat-val" id="s-parts">—</div><div class="stat-lbl">Participants</div></div>
+          <div class="stat"><div class="stat-val" id="s-pin">—</div><div class="stat-lbl">PIN required</div></div>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input id="confQ" placeholder="Search conferences…" oninput="renderConf()" />
+          </div>
+          <div class="pills">
+            <button class="pill on" onclick="setConfF('all',this)">All</button>
+            <button class="pill" onclick="setConfF('live',this)">Active</button>
+            <button class="pill" onclick="setConfF('empty',this)">Empty</button>
+            <button class="pill" onclick="setConfF('locked',this)">PIN required</button>
+          </div>
+        </div>
+        <div class="strip">
+          <div class="dot idle" id="confDot"></div>
+          <span id="confMsg">Connecting…</span>
+          <span class="sp"></span>
+          <span id="confCd" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);"></span>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-head-title">Conference rooms</span>
+            <span class="card-count" id="confCount">—</span>
+          </div>
+          <div id="confBody"><div class="empty-state"><div class="empty-icon">▣</div>Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Address Book -->
+      <div id="panel-ab" class="panel">
+        <div class="toolbar">
+          <div class="search" style="max-width:300px;">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input id="abQ" placeholder="Search contacts & VMRs…" oninput="renderAB()" />
+          </div>
+          <div class="pills">
+            <button class="pill on" onclick="setAbF('all',this)">All</button>
+            <button class="pill" onclick="setAbF('vmr',this)">VMRs</button>
+            <button class="pill" onclick="setAbF('contact',this)">Contacts</button>
+          </div>
+        </div>
+        <div class="strip">
+          <div class="dot idle" id="abDot"></div>
+          <span id="abMsg">Hit Refresh to load address book</span>
+          <span class="sp"></span>
+          <span id="abCount" style="font-size:11px;color:var(--text3);"></span>
+        </div>
+        <div id="abBody"><div class="empty-state"><div class="empty-icon">👤</div>No contacts loaded yet</div></div>
+      </div>
+
+      <!-- Connection settings -->
+      <div id="panel-cfg" class="panel">
+        <div class="cfg-card">
+          <h3>Node connection</h3>
+          <p>Point this to your CORS proxy (default <code>localhost:3000</code>). The proxy forwards requests to your Pexip sandbox with CORS headers added.</p>
+          <div class="cfg-fields">
+            <div class="cfg-row">
+              <div class="field">
+                <label>Proxy host</label>
+                <input id="cfgHost" placeholder="localhost:3000" />
+              </div>
+              <div class="field">
+                <label>Protocol</label>
+                <select id="cfgProto"><option value="http">HTTP</option><option value="https">HTTPS</option></select>
+              </div>
+            </div>
+            <div class="cfg-row">
+              <div class="field">
+                <label>Admin username</label>
+                <input id="cfgUser" placeholder="admin" />
+              </div>
+              <div class="field">
+                <label>Admin password</label>
+                <input id="cfgPass" type="password" placeholder="••••••••" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Auto-refresh interval (seconds)</label>
+              <input id="cfgInterval" type="number" value="15" min="5" max="120" />
+            </div>
+            <p class="hint">Admin credentials are required for the status and configuration APIs. Make sure your proxy is running (<code>node proxy.cjs</code>) before connecting.</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+              <button class="btn btn-primary" onclick="saveAndConnect()">Save &amp; Connect</button>
+              <button class="btn" onclick="testConn()">Test connection</button>
+              <span id="cfgMsg" style="font-size:12px;color:var(--text3);"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem('pexip_cfg3') || '{}'); } catch {}
+
+function base() { return `${cfg.proto||'http'}://${cfg.host||'localhost:3000'}`; }
+function hdrs() {
+  const h = { 'Content-Type': 'application/json' };
+  if (cfg.user && cfg.pass) h['Authorization'] = 'Basic ' + btoa(`${cfg.user}:${cfg.pass}`);
+  return h;
+}
+function persist() { localStorage.setItem('pexip_cfg3', JSON.stringify(cfg)); }
+
+function loadCfgFields() {
+  document.getElementById('cfgHost').value     = cfg.host     || 'localhost:3000';
+  document.getElementById('cfgProto').value    = cfg.proto    || 'http';
+  document.getElementById('cfgUser').value     = cfg.user     || '';
+  document.getElementById('cfgInterval').value = cfg.interval || 15;
+  document.getElementById('nodeName').textContent = cfg.host || 'localhost:3000';
+}
+
+function saveAndConnect() {
+  cfg.host     = document.getElementById('cfgHost').value.trim()     || 'localhost:3000';
+  cfg.proto    = document.getElementById('cfgProto').value;
+  cfg.user     = document.getElementById('cfgUser').value.trim();
+  cfg.pass     = document.getElementById('cfgPass').value;
+  cfg.interval = parseInt(document.getElementById('cfgInterval').value) || 15;
+  persist();
+  document.getElementById('nodeName').textContent = cfg.host;
+  showMsg('cfgMsg','✓ Saved','var(--teal)');
+  showPanel('conf');
+  fetchConf();
+}
+
+async function testConn() {
+  showMsg('cfgMsg','Testing…','var(--text3)');
+  try {
+    const r = await fetch(`${base()}/api/admin/status/v2/conference/`, { headers: hdrs() });
+    showMsg('cfgMsg', r.ok ? '✓ Connected — HTTP '+r.status : '✗ HTTP '+r.status, r.ok ? 'var(--teal)' : 'var(--red)');
+    if (r.ok) document.getElementById('nodeDot').className = 'ndot ok';
+  } catch(e) {
+    showMsg('cfgMsg','✗ '+e.message,'var(--red)');
+    document.getElementById('nodeDot').className = 'ndot err';
+  }
+}
+
+function showMsg(id, txt, color) {
+  const el = document.getElementById(id);
+  el.textContent = txt; el.style.color = color;
+  setTimeout(() => el.textContent = '', 4000);
+}
+
+// ── Navigation ─────────────────────────────────────────
+const PAGES = {
+  conf: ['Conferences','Live conference status'],
+  ab:   ['Address Book','Contacts & VMRs'],
+  cfg:  ['Connection','Proxy & credentials'],
+};
+
+function showPanel(id) {
+  Object.keys(PAGES).forEach(k => {
+    document.getElementById('panel-'+k).classList.toggle('show', k===id);
+    document.getElementById('nav-'+k).classList.toggle('active', k===id);
+  });
+  document.getElementById('pageTitle').textContent = PAGES[id][0];
+  document.getElementById('pageSub').textContent   = PAGES[id][1];
+  const isConf = id === 'conf';
+  document.getElementById('autoBtn').style.display    = isConf ? 'inline-flex' : 'none';
+  document.getElementById('refreshBtn').style.display = id !== 'cfg' ? 'inline-flex' : 'none';
+  if (id === 'ab' && !abLoaded) fetchAB();
+}
+
+function onRefresh() {
+  const active = Object.keys(PAGES).find(k => document.getElementById('panel-'+k).classList.contains('show'));
+  if (active === 'conf') { fetchConf(); if (autoOn) startAuto(); }
+  if (active === 'ab')   fetchAB();
+}
+
+// ── Toast ───────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Helpers ─────────────────────────────────────────────
+const COLORS = ['#2D7DD2','#00B894','#7B5EA7','#E05252','#F5A623','#3DA5D9','#E67E22','#16A085','#8E44AD','#C0392B'];
+function colorFor(s) { let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))&0xffff; return COLORS[h%COLORS.length]; }
+function inits(n) { return (n||'').split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')||'?'; }
+function setDot(id, t) { document.getElementById(id).className = 'dot '+t; }
+
+// ── Conferences ──────────────────────────────────────────
+let confData = [], confF = 'all', autoOn = true, autoTimer = null, countdown = 15;
+
+function toggleAuto() {
+  autoOn = !autoOn;
+  document.getElementById('autoBtn').classList.toggle('on', autoOn);
+  document.getElementById('autoBtnTxt').textContent = autoOn ? 'Auto ON' : 'Auto OFF';
+  if (autoOn) { fetchConf(); startAuto(); }
+  else { clearInterval(autoTimer); document.getElementById('confCd').textContent = ''; }
+}
+
+function startAuto() {
+  clearInterval(autoTimer);
+  countdown = cfg.interval || 15;
+  autoTimer = setInterval(() => {
+    countdown--;
+    document.getElementById('confCd').textContent = `Refresh in ${countdown}s`;
+    if (countdown <= 0) { countdown = cfg.interval || 15; fetchConf(); }
+  }, 1000);
+}
+
+function setConfF(f, el) {
+  confF = f;
+  document.querySelectorAll('#panel-conf .pill').forEach(b => b.classList.remove('on'));
+  el.classList.add('on'); renderConf();
+}
+
+async function fetchConf() {
+  setDot('confDot','load');
+  document.getElementById('confMsg').textContent = 'Fetching conferences…';
+
+  // Try v2 then v1
+  let ok = false;
+  for (const path of ['/api/admin/status/v2/conference/', '/api/admin/status/v1/conference/']) {
+    try {
+      const r = await fetch(base() + path, { headers: hdrs() });
+      if (!r.ok) continue;
+      const d = await r.json();
+      const objs = d.objects || d.results || (Array.isArray(d) ? d : []);
+      confData = objs.map(c => ({
+        name:         c.name || c.display_name || c.service_name || 'Unnamed',
+        alias:        c.primary_alias || c.alias || c.tag || '',
+        participants: c.participant_count ?? 0,
+        locked:       !!(c.locked || c.pin || c.host_pin),
+        active:       (c.participant_count ?? 0) > 0,
+      }));
+      ok = true; break;
+    } catch {}
+  }
+
+  if (ok) {
+    setDot('confDot','live');
+    document.getElementById('nodeDot').className = 'ndot ok';
+    document.getElementById('confMsg').textContent = `${confData.length} conference${confData.length!==1?'s':''} · ${new Date().toLocaleTimeString()}`;
+  } else {
+    setDot('confDot','err');
+    document.getElementById('nodeDot').className = 'ndot err';
+    document.getElementById('confMsg').textContent = `Cannot reach proxy at ${cfg.host||'localhost:3000'} — is it running?`;
+    confData = [];
+  }
+  updateStats(); renderConf();
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = confData.length;
+  document.getElementById('s-live').textContent  = confData.filter(c=>c.active).length;
+  document.getElementById('s-parts').textContent = confData.reduce((s,c)=>s+(c.participants||0),0);
+  document.getElementById('s-pin').textContent   = confData.filter(c=>c.locked).length;
+}
+
+function renderConf() {
+  const q = document.getElementById('confQ').value.toLowerCase();
+  const list = confData
+    .filter(c => {
+      const ms = !q || c.name.toLowerCase().includes(q) || c.alias.toLowerCase().includes(q);
+      const mf = confF==='all'?true : confF==='live'?c.active : confF==='empty'?!c.active : confF==='locked'?c.locked : true;
+      return ms && mf;
+    })
+    .sort((a,b)=>(b.active?1:0)-(a.active?1:0)||b.participants-a.participants);
+
+  document.getElementById('confCount').textContent = `${list.length} shown`;
+  const body = document.getElementById('confBody');
+  if (!list.length) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">▣</div>${confData.length?'No conferences match your filter':'No conferences found — check credentials in Connection settings'}</div>`;
+    return;
+  }
+  const maxP = Math.max(...list.map(c=>c.participants), 1);
+  body.innerHTML = `<table><thead><tr><th>Conference</th><th>Status</th><th>Participants</th><th>Alias</th></tr></thead><tbody>
+    ${list.map(c => {
+      const ic  = c.locked?'locked':c.active?'live':'empty';
+      const bdg = c.active?'<span class="badge live">LIVE</span>':c.locked?'<span class="badge locked">PIN</span>':'<span class="badge empty">EMPTY</span>';
+      const pw  = Math.round((c.participants/maxP)*100);
+      return `<tr>
+        <td><div class="cell-name"><div class="ava ${ic}">${inits(c.name)}</div><div><div class="row-name">${c.name}</div></div></div></td>
+        <td>${bdg}</td>
+        <td><div class="pbar-wrap"><span class="pcount">${c.participants}</span>${c.participants>0?`<div class="pbar"><div class="pbar-fill" style="width:${pw}%"></div></div>`:''}</div></td>
+        <td><span class="row-alias">${c.alias||'—'}</span></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── Address Book ─────────────────────────────────────────
+let abData = [], abF = 'all', abLoaded = false;
+
+function setAbF(f, el) {
+  abF = f;
+  document.querySelectorAll('#panel-ab .pill').forEach(b => b.classList.remove('on'));
+  el.classList.add('on'); renderAB();
+}
+
+async function fetchAB() {
+  abLoaded = true;
+  setDot('abDot','load');
+  document.getElementById('abMsg').textContent = 'Fetching address book…';
+  abData = [];
+
+  const tryFetch = async (path) => {
+    try {
+      const r = await fetch(base()+path, { headers: hdrs() });
+      if (!r.ok) return [];
+      const d = await r.json();
+      return d.objects || d.results || (Array.isArray(d)?d:[]);
+    } catch { return []; }
+  };
+
+  const [vmrs, aliases, locations] = await Promise.all([
+    tryFetch('/api/admin/configuration/v1/conference/'),
+    tryFetch('/api/admin/configuration/v1/alias/'),
+    tryFetch('/api/admin/configuration/v1/location/'),
+  ]);
+
+  const vmrEntries = vmrs.map(v => ({
+    name:  v.name || v.display_name || 'Unnamed VMR',
+    sub:   v.description || 'Virtual Meeting Room',
+    uri:   v.primary_alias || v.alias || '',
+    ext:   v.h323_extension || v.extension || '',
+    type:  'vmr',
+    pin:   !!(v.pin || v.host_pin),
+  }));
+
+  const contactEntries = [...aliases, ...locations].map(a => ({
+    name:  a.name || a.description || a.alias || 'Unknown',
+    sub:   a.description || a.type || 'Contact',
+    uri:   a.alias || a.sip_uri || a.uri || '',
+    ext:   a.h323_extension || a.extension || '',
+    type:  'contact',
+    pin:   false,
+  }));
+
+  abData = [...vmrEntries, ...contactEntries]
+    .filter((e,i,arr) => arr.findIndex(x=>x.name===e.name&&x.uri===e.uri)===i)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  if (abData.length) {
+    setDot('abDot','live');
+    document.getElementById('abMsg').textContent = `${abData.length} entries · ${new Date().toLocaleTimeString()}`;
+  } else {
+    setDot('abDot','err');
+    document.getElementById('abMsg').textContent = 'No data returned — check credentials or API permissions';
+  }
+  renderAB();
+}
+
+function renderAB() {
+  const q = document.getElementById('abQ').value.toLowerCase();
+  const list = abData.filter(c => {
+    const ms = !q || c.name.toLowerCase().includes(q) || (c.uri||'').toLowerCase().includes(q) || (c.sub||'').toLowerCase().includes(q);
+    const mf = abF==='all'?true:abF===c.type;
+    return ms && mf;
+  });
+
+  document.getElementById('abCount').textContent = `${list.length} result${list.length!==1?'s':''}`;
+  const body = document.getElementById('abBody');
+  if (!list.length) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div>${abData.length?'No results match':'No contacts loaded'}</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="ab-grid">${list.map(c => {
+    const col = colorFor(c.name);
+    const isVmr = c.type==='vmr';
+    return `<div class="ab-card">
+      <div class="ab-top">
+        <div class="ab-ava ${isVmr?'room':''}" style="background:${col};">${isVmr?'▣':inits(c.name)}</div>
+        <div><div class="ab-nm">${c.name}</div><div class="ab-sub">${c.sub}</div></div>
+      </div>
+      <div class="ab-tags">
+        <span class="tag ${c.type}">${isVmr?'VMR':'Contact'}</span>
+        ${c.pin?'<span class="tag pin">PIN</span>':''}
+      </div>
+      ${c.uri?`<div class="ab-detail"><svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg><span class="ab-uri">${c.uri}</span></div>`:''}
+      ${c.ext?`<div class="ab-detail"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg><span>Ext. ${c.ext}</span></div>`:''}
+      <div class="ab-actions">
+        <button class="ab-action call" onclick="dialEntry('${(c.uri||c.ext||'').replace(/'/g,"\\'")}','${c.name.replace(/'/g,"\\'")}')">📞 Call</button>
+        ${c.uri?`<button class="ab-action" onclick="copyUri('${c.uri.replace(/'/g,"\\'")}')">Copy URI</button>`:''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function dialEntry(uri, name) { toast(`Dialling ${name}… (wire to PexRTC for live calls)`); }
+function copyUri(uri) { navigator.clipboard.writeText(uri).then(()=>toast('URI copied')).catch(()=>toast(uri)); }
+
+// ── Init ─────────────────────────────────────────────────
+loadCfgFields();
+showPanel('conf');
+fetchConf();
+if (autoOn) startAuto();
+</script>
+</body>
+</html>

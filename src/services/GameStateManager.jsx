@@ -1,8 +1,9 @@
 import { supabase } from '@/supabase';
 
 class GameStateManager {
-  constructor(gameId) {
+  constructor(gameId, saveWithFallback = null) {
     this.gameId = gameId;
+    this.saveWithFallback = saveWithFallback; // optional offline queue function
   }
 
   /**
@@ -23,6 +24,13 @@ class GameStateManager {
         updated_at: new Date().toISOString()
       };
       if (notPresent !== undefined) update.not_present = notPresent;
+
+      // Use offline queue if available, otherwise direct Supabase save
+      if (this.saveWithFallback) {
+        const result = await this.saveWithFallback(this.gameId, update);
+        return result;
+      }
+
       const { data, error } = await supabase.from('games').update(update).eq('id', this.gameId).select().single();
 
       if (error) throw error;

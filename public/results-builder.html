@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results Builder — Splits Timing</title>
+<meta name="description" content="Upload a CSV, get a beautifully formatted race results page.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --ink: #0f1115;
+  --ink-2: #2a2e36;
+  --ink-3: #5b6270;
+  --ink-4: #8a909c;
+  --line: #e6e8ec;
+  --line-2: #eef0f3;
+  --accent: #ff5a1f;
+  --accent-deep: #e94915;
+  --accent-soft: #fff1ea;
+  --ok: #1e9e6a;
+  --warn: #d97706;
+  --err: #dc2626;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(15,17,21,.04), 0 4px 14px rgba(15,17,21,.06);
+  --shadow-lg: 0 6px 24px rgba(15,17,21,.10), 0 2px 6px rgba(15,17,21,.06);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== TOP BAR ===== */
+.top {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 50;
+}
+.top-inner {
+  max-width: 1180px; margin: 0 auto; padding: 14px 28px;
+  display: flex; align-items: center; gap: 18px;
+}
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand .mark {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: var(--ink); color: #fff;
+  display: grid; place-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700; font-size: 16px;
+  position: relative;
+}
+.brand .mark::after { content:""; position:absolute; right:5px; bottom:5px; width:6px; height:6px; border-radius:50%; background: var(--accent); }
+.brand .word { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -.015em; }
+.brand .word .light { color: var(--ink-3); font-weight: 500; }
+.tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent-deep); background: var(--accent-soft);
+  padding: 4px 10px; border-radius: 999px;
+}
+
+/* ===== STEPPER ===== */
+.stepper {
+  max-width: 1180px; margin: 0 auto; padding: 28px;
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.step-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 500; color: var(--ink-3);
+}
+.step-pill .num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface-2); color: var(--ink-3);
+  display: grid; place-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700;
+}
+.step-pill.active { border-color: var(--ink); color: var(--ink); }
+.step-pill.active .num { background: var(--ink); color: #fff; }
+.step-pill.done .num { background: var(--ok); color: #fff; }
+.step-pill.done { color: var(--ink-2); }
+
+/* ===== STAGES (each step) ===== */
+.stage { max-width: 1180px; margin: 0 auto; padding: 8px 28px 80px; }
+.stage[hidden] { display: none; }
+
+.stage-head { margin-bottom: 28px; }
+.stage-eyebrow {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent-deep); margin-bottom: 10px;
+}
+.stage-head h1 {
+  font-family: 'Inter', sans-serif; font-weight: 800;
+  font-size: clamp(32px, 4.5vw, 48px);
+  line-height: 1.05; letter-spacing: -.03em;
+  margin: 0 0 10px;
+}
+.stage-head h1 .accent { color: var(--accent); font-style: italic; }
+.stage-head p { font-size: 16px; color: var(--ink-3); margin: 0; max-width: 640px; }
+
+/* ===== UPLOAD ===== */
+.dropzone {
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 64px 28px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.dropzone:hover, .dropzone.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.dropzone .ico {
+  width: 56px; height: 56px; margin: 0 auto 18px;
+  border-radius: 14px;
+  background: var(--ink); color: #fff;
+  display: grid; place-items: center;
+}
+.dropzone h2 {
+  font-family: 'Inter', sans-serif; font-weight: 700;
+  font-size: 22px; letter-spacing: -.015em;
+  margin: 0 0 6px;
+}
+.dropzone p { color: var(--ink-3); font-size: 14px; margin: 0; }
+.dropzone .browse {
+  display: inline-block; margin-top: 16px;
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--ink); color: #fff;
+  font-size: 13px; font-weight: 600;
+}
+.dropzone input { display: none; }
+
+.helper {
+  margin-top: 18px;
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-3);
+}
+.helper .chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.helper .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+
+.try-sample {
+  margin-top: 18px; font-size: 13px; color: var(--ink-3);
+}
+.try-sample a {
+  color: var(--accent-deep); text-decoration: none; font-weight: 600;
+  border-bottom: 1px solid currentColor; cursor: pointer;
+}
+
+/* ===== WIZARD (column mapping) ===== */
+.wizard-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  align-items: start;
+}
+.wizard-cols {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.wizard-cols-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.wizard-cols-head h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-2); margin: 0;
+}
+.wizard-cols-head .count {
+  font-size: 12px; color: var(--ink-4);
+  font-family: 'JetBrains Mono', monospace;
+}
+.col-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line-2);
+  align-items: center;
+}
+.col-row:last-child { border-bottom: none; }
+.col-row .src {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.col-row .src .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  word-break: break-word;
+}
+.col-row .src .preview {
+  font-size: 12px; color: var(--ink-4);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.col-row .arrow {
+  display: none;
+}
+.col-row select {
+  width: 100%;
+  padding: 9px 32px 9px 12px;
+  font: inherit; font-size: 13px; font-weight: 500;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+.col-row select:focus {
+  outline: none; border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(15,17,21,.06);
+}
+.col-row.is-mapped select { border-color: #b8d8c5; background-color: #f1faf4; }
+.col-row.is-split select { border-color: #d4c5e8; background-color: #f7f3fc; }
+.col-row.is-ignored { opacity: .55; }
+
+.wizard-help {
+  position: sticky; top: 90px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.wizard-help h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-2); margin: 0 0 10px;
+}
+.wizard-help p { font-size: 13px; color: var(--ink-3); margin: 0 0 14px; line-height: 1.55; }
+.wizard-help ul { margin: 0 0 14px; padding-left: 18px; }
+.wizard-help li { font-size: 13px; color: var(--ink-3); margin-bottom: 6px; }
+.wizard-help .legend {
+  display: flex; flex-direction: column; gap: 6px;
+  padding-top: 14px; border-top: 1px solid var(--line-2);
+}
+.wizard-help .legend-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-3);
+}
+.wizard-help .legend-row .swatch {
+  width: 12px; height: 12px; border-radius: 3px;
+  border: 1px solid currentColor;
+}
+.wizard-help .legend-row.green .swatch { background: #f1faf4; border-color: #b8d8c5; color: #5b6270; }
+.wizard-help .legend-row.purple .swatch { background: #f7f3fc; border-color: #d4c5e8; color: #5b6270; }
+
+/* ===== CONFIG FORM ===== */
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+.field label {
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: .02em;
+}
+.field .hint { font-size: 12px; color: var(--ink-4); margin-top: 2px; }
+.field input[type="text"],
+.field input[type="date"],
+.field input[type="url"] {
+  padding: 11px 14px;
+  font: inherit; font-size: 14px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink);
+}
+.field input:focus {
+  outline: none; border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(15,17,21,.06);
+}
+.color-row { display: flex; gap: 10px; align-items: center; }
+.color-row input[type="color"] {
+  width: 50px; height: 44px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); cursor: pointer;
+  padding: 4px;
+}
+.color-row .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.color-row .swatch-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  outline: 1px solid var(--line);
+  cursor: pointer; padding: 0;
+}
+.color-row .swatch-btn.is-active { outline: 2px solid var(--ink); }
+
+.radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+.radio-group label {
+  flex: 1; min-width: 160px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.radio-group label:hover { border-color: var(--ink-4); }
+.radio-group label.is-active {
+  border-color: var(--ink); background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(15,17,21,.06);
+}
+.radio-group label input { display: none; }
+.radio-group label .name {
+  font-weight: 600; font-size: 14px; color: var(--ink);
+}
+.radio-group label .desc {
+  font-size: 12px; color: var(--ink-3); line-height: 1.45;
+}
+
+/* ===== PREVIEW ===== */
+.preview-shell {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.preview-shell-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.preview-shell-head .label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--ink-3);
+}
+.preview-shell-head .label .dots {
+  display: inline-flex; gap: 4px; margin-right: 10px; vertical-align: middle;
+}
+.preview-shell-head .label .dots span {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: inline-block;
+}
+.preview-shell-head .label .dots span:nth-child(1) { background: #ff5f57; }
+.preview-shell-head .label .dots span:nth-child(2) { background: #febc2e; }
+.preview-shell-head .label .dots span:nth-child(3) { background: #28c840; }
+
+.preview-frame {
+  width: 100%;
+  border: none;
+  height: 720px;
+  background: #fff;
+  display: block;
+}
+
+/* ===== ACTIONS BAR ===== */
+.actions {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 10px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  text-decoration: none; cursor: pointer; border: 1px solid transparent;
+  transition: all .15s ease;
+  background: var(--surface-2); color: var(--ink);
+}
+.btn:hover { background: #ebeef2; }
+.btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+.btn.ghost { background: transparent; color: var(--ink-3); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+.btn .arrow { transition: transform .15s ease; display: inline-block; }
+.btn.primary:hover .arrow { transform: translateX(2px); }
+.btn-spacer { flex: 1; }
+
+/* ===== ERROR / STATUS ===== */
+.banner {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-bottom: 18px;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.banner.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.banner.warn { background: #fffbeb; color: #92400e; border: 1px solid #fed7aa; }
+.banner.ok { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.banner svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 880px) {
+  .wizard-grid { grid-template-columns: 1fr; }
+  .wizard-help { position: static; }
+  .config-grid { grid-template-columns: 1fr; }
+  .col-row { grid-template-columns: 1fr; gap: 8px; }
+}
+@media (max-width: 640px) {
+  .top-inner, .stepper, .stage { padding-left: 18px; padding-right: 18px; }
+  .stepper { gap: 8px; }
+  .step-pill { padding: 6px 10px; font-size: 12px; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="#" aria-label="Splits Timing">
+      <span class="mark">S</span>
+      <span class="word">Splits<span class="light">Timing</span></span>
+    </a>
+    <span class="tag">Results Builder</span>
+  </div>
+</header>
+
+<div class="stepper" id="stepper">
+  <div class="step-pill active" data-step="upload"><span class="num">1</span> Upload CSV</div>
+  <div class="step-pill" data-step="map"><span class="num">2</span> Map columns</div>
+  <div class="step-pill" data-step="config"><span class="num">3</span> Configure</div>
+  <div class="step-pill" data-step="preview"><span class="num">4</span> Preview &amp; download</div>
+</div>
+
+<!-- ============ STAGE 1: UPLOAD ============ -->
+<section class="stage" id="stage-upload">
+  <div class="stage-head">
+    <div class="stage-eyebrow">Step 1 of 4</div>
+    <h1>Drop a results CSV. <span class="accent">Get a beautiful page.</span></h1>
+    <p>Upload your race timing CSV and we'll turn it into a polished, shareable HTML results page — sortable, searchable, and ready to host.</p>
+  </div>
+
+  <label class="dropzone" id="dropzone" for="fileInput">
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/csv">
+    <div class="ico">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </div>
+    <h2>Drop your CSV here</h2>
+    <p>or click to browse — accepts .csv, .tsv, or tab/comma-separated text</p>
+    <span class="browse">Choose file</span>
+  </label>
+
+  <div class="helper">
+    <span class="chip"><span class="dot"></span>Auto-detects columns</span>
+    <span class="chip"><span class="dot"></span>Supports splits &amp; categories</span>
+    <span class="chip"><span class="dot"></span>Files never leave your browser</span>
+  </div>
+
+  <div class="try-sample">
+    No file handy? <a id="trySample">Try a sample dataset</a>
+  </div>
+</section>
+
+<!-- ============ STAGE 2: MAP COLUMNS ============ -->
+<section class="stage" id="stage-map" hidden>
+  <div class="stage-head">
+    <div class="stage-eyebrow">Step 2 of 4</div>
+    <h1>Confirm <span class="accent">column mappings.</span></h1>
+    <p>We've taken our best guess at what each column is. Adjust any that look wrong, then continue. Anything marked <em>Ignore</em> won't appear in the output.</p>
+  </div>
+
+  <div id="mapBanner"></div>
+
+  <div class="wizard-grid">
+    <div class="wizard-cols">
+      <div class="wizard-cols-head">
+        <h3>Columns from your file</h3>
+        <span class="count" id="colCount">—</span>
+      </div>
+      <div id="colList"></div>
+    </div>
+
+    <aside class="wizard-help">
+      <h4>What goes where</h4>
+      <p>The <strong>essentials</strong> are Place, Name, and Time. Everything else is optional but enriches the output.</p>
+      <ul>
+        <li><strong>Place / Bib</strong> — finishing position &amp; bib number</li>
+        <li><strong>Name</strong> — single column, or First + Last</li>
+        <li><strong>Time</strong> — finish time (chip or gun)</li>
+        <li><strong>Category / Gender / Age</strong> — for filtering</li>
+        <li><strong>Split</strong> — segment times like 1K, Run 1, T1</li>
+      </ul>
+      <div class="legend">
+        <div class="legend-row green"><span class="swatch"></span>Mapped to a result field</div>
+        <div class="legend-row purple"><span class="swatch"></span>Mapped to a split / segment</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" id="backToUpload">← Start over</button>
+    <div class="btn-spacer"></div>
+    <button class="btn primary" id="goToConfig">Continue <span class="arrow">→</span></button>
+  </div>
+</section>
+
+<!-- ============ STAGE 3: CONFIGURE ============ -->
+<section class="stage" id="stage-config" hidden>
+  <div class="stage-head">
+    <div class="stage-eyebrow">Step 3 of 4</div>
+    <h1>Configure <span class="accent">your results page.</span></h1>
+    <p>Add the event details, pick an accent color, and decide whether the file should be self-contained or branded with your site.</p>
+  </div>
+
+  <div class="config-grid">
+    <div class="field">
+      <label for="cfgTitle">Event title</label>
+      <input type="text" id="cfgTitle" placeholder="e.g. Highland Yard 10K">
+    </div>
+    <div class="field">
+      <label for="cfgDate">Date</label>
+      <input type="date" id="cfgDate">
+    </div>
+    <div class="field">
+      <label for="cfgLocation">Location <span class="hint">(optional)</span></label>
+      <input type="text" id="cfgLocation" placeholder="e.g. Haliburton, ON">
+    </div>
+    <div class="field">
+      <label for="cfgSubtitle">Subtitle <span class="hint">(optional)</span></label>
+      <input type="text" id="cfgSubtitle" placeholder="e.g. 10K Run · Overall results">
+    </div>
+    <div class="field full">
+      <label>Accent color</label>
+      <div class="color-row">
+        <input type="color" id="cfgColor" value="#ff5a1f">
+        <div class="swatches" id="colorSwatches"></div>
+      </div>
+    </div>
+    <div class="field full">
+      <label for="cfgLogo">Logo URL <span class="hint">(optional — appears in header)</span></label>
+      <input type="url" id="cfgLogo" placeholder="https://example.com/logo.png">
+    </div>
+    <div class="field full">
+      <label>Output style</label>
+      <div class="radio-group" id="modeRadios">
+        <label data-mode="standalone" class="is-active">
+          <input type="radio" name="mode" value="standalone" checked>
+          <span class="name">Self-contained</span>
+          <span class="desc">A single HTML file with everything inline. Works offline, no internet required.</span>
+        </label>
+        <label data-mode="branded">
+          <input type="radio" name="mode" value="branded">
+          <span class="name">Branded for splitstiming.com</span>
+          <span class="desc">Loads Splits Timing fonts &amp; assets from your site for a consistent look.</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" id="backToMap">← Back to mapping</button>
+    <div class="btn-spacer"></div>
+    <button class="btn primary" id="goToPreview">Generate preview <span class="arrow">→</span></button>
+  </div>
+</section>
+
+<!-- ============ STAGE 4: PREVIEW ============ -->
+<section class="stage" id="stage-preview" hidden>
+  <div class="stage-head">
+    <div class="stage-eyebrow">Step 4 of 4</div>
+    <h1>Preview &amp; <span class="accent">download.</span></h1>
+    <p>This is exactly what your downloaded HTML file will look like. Try the search and column sorting — they work in the final output too.</p>
+  </div>
+
+  <div class="preview-shell">
+    <div class="preview-shell-head">
+      <span class="label">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span id="previewFilename">results.html</span>
+      </span>
+      <span class="label" id="previewStats">—</span>
+    </div>
+    <iframe class="preview-frame" id="previewFrame" title="Results preview"></iframe>
+  </div>
+
+  <div class="actions">
+    <button class="btn ghost" id="backToConfig">← Back to configure</button>
+    <div class="btn-spacer"></div>
+    <button class="btn" id="copyHtml">Copy HTML</button>
+    <button class="btn primary" id="downloadHtml">Download HTML <span class="arrow">↓</span></button>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  rawText: '',
+  rows: [],          // array of arrays (after parse)
+  headers: [],       // first row
+  data: [],          // remaining rows as arrays
+  mappings: [],      // index-aligned with headers; each is {role, splitName?}
+  config: {
+    title: '',
+    date: '',
+    location: '',
+    subtitle: '',
+    color: '#ff5a1f',
+    logo: '',
+    mode: 'standalone'
+  },
+  generatedHtml: ''
+};
+
+/* ============================================================
+   STEP NAVIGATION
+   ============================================================ */
+const stages = ['upload', 'map', 'config', 'preview'];
+function showStep(name) {
+  stages.forEach(s => {
+    const el = document.getElementById('stage-' + s);
+    if (el) el.hidden = (s !== name);
+  });
+  // Update stepper
+  const order = stages;
+  const idx = order.indexOf(name);
+  document.querySelectorAll('.step-pill').forEach((pill, i) => {
+    pill.classList.toggle('active', i === idx);
+    pill.classList.toggle('done', i < idx);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   CSV PARSER (RFC 4180-ish, supports quoted fields, both , and \t)
+   ============================================================ */
+function detectDelimiter(text) {
+  const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
+  const tabs = (sample.match(/\t/g) || []).length;
+  const commas = (sample.match(/,/g) || []).length;
+  const semis = (sample.match(/;/g) || []).length;
+  if (tabs > commas && tabs > semis) return '\t';
+  if (semis > commas) return ';';
+  return ',';
+}
+
+function parseCSV(text, delim) {
+  const rows = [];
+  let cur = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i+1];
+    if (inQuotes) {
+      if (c === '"' && n === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === delim) { cur.push(field); field = ''; }
+      else if (c === '\n') { cur.push(field); rows.push(cur); cur = []; field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length > 0 || cur.length > 0) { cur.push(field); rows.push(cur); }
+  // Trim trailing empties
+  return rows.filter(r => r.some(x => x && x.trim().length > 0));
+}
+
+/* ============================================================
+   COLUMN AUTO-DETECT
+   ============================================================ */
+const ROLES = [
+  { value: 'ignore', label: '— Ignore —' },
+  { value: 'place', label: 'Place' },
+  { value: 'bib', label: 'Bib' },
+  { value: 'name', label: 'Full name' },
+  { value: 'firstName', label: 'First name' },
+  { value: 'lastName', label: 'Last name' },
+  { value: 'time', label: 'Finish time' },
+  { value: 'chipTime', label: 'Chip time' },
+  { value: 'gunTime', label: 'Gun time' },
+  { value: 'pace', label: 'Pace' },
+  { value: 'category', label: 'Category / Division' },
+  { value: 'gender', label: 'Gender' },
+  { value: 'age', label: 'Age' },
+  { value: 'ageGroup', label: 'Age group' },
+  { value: 'team', label: 'Team / Club' },
+  { value: 'city', label: 'City' },
+  { value: 'distance', label: 'Distance / Event' },
+  { value: 'split', label: 'Split / Segment time' },
+  { value: 'note', label: 'Other (display as-is)' }
+];
+
+const ROLE_PATTERNS = [
+  { role: 'place',     re: /^(place|pos|position|rank|finish|overall|o\/a)$/i },
+  { role: 'bib',       re: /^(bib|bib\s*#?|bib\s*no\.?|bibno|number|race\s*#?|racenum)$/i },
+  { role: 'name',      re: /^(name|runner|athlete|fullname|full\s*name|participant)$/i },
+  { role: 'firstName', re: /^(first|firstname|first\s*name|fname|givenname|given\s*name)$/i },
+  { role: 'lastName',  re: /^(last|lastname|last\s*name|lname|surname|familyname|family\s*name)$/i },
+  { role: 'chipTime',  re: /^(chip|chiptime|chip\s*time|nettime|net\s*time|net)$/i },
+  { role: 'gunTime',   re: /^(gun|guntime|gun\s*time|grosstime|gross\s*time|clock)$/i },
+  { role: 'time',      re: /^(time|finish|finishtime|finish\s*time|total|totaltime|total\s*time|elapsed)$/i },
+  { role: 'pace',      re: /^(pace|min\/k|min\/km|min\/mi|min\s*per\s*km|min\s*per\s*mile)$/i },
+  { role: 'category',  re: /^(cat|category|div|division|class)$/i },
+  { role: 'gender',    re: /^(gender|sex|m\/f)$/i },
+  { role: 'age',       re: /^(age|years|yrs)$/i },
+  { role: 'ageGroup',  re: /^(agegroup|age\s*group|ag|ag\s*group|ag\s*division)$/i },
+  { role: 'team',      re: /^(team|club|affiliation|crew|squad)$/i },
+  { role: 'city',      re: /^(city|town|hometown|location|residence)$/i },
+  { role: 'distance',  re: /^(distance|event|race|category|class|wave|leg)$/i },
+];
+
+// Common split-segment keywords
+const SPLIT_PATTERNS = [
+  /^\d+\s*k(m)?$/i,       // 1K, 2km, 5K
+  /^\d+\s*mi(le)?s?$/i,   // 1mi, 5miles
+  /split\s*\d+/i,
+  /^k\d+$/i,              // K1, K2
+  /lap\s*\d+/i,
+  /^run\s*\d+$/i,         // Run 1
+  /^bike\s*\d+$/i,
+  /^swim$|^bike$|^run$/i, // tri legs
+  /^t1$|^t2$/i,           // transitions
+  /^leg\s*\d+$/i,
+  /erg|sled|burpee|row|farmer|lunge|wall/i,  // hyrox
+  /5k\s*split|10k\s*split|half\s*split/i,
+];
+
+function autoDetect(headers, sample) {
+  const usedSingleton = new Set();
+  return headers.map((h, idx) => {
+    const clean = (h || '').trim().toLowerCase().replace(/[._-]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return { role: 'ignore' };
+
+    // Try named patterns first
+    for (const p of ROLE_PATTERNS) {
+      if (p.re.test(clean.replace(/\s+/g, '')) || p.re.test(clean)) {
+        // Singleton fields shouldn't double-up
+        if (['place','bib','name','firstName','lastName','time','chipTime','gunTime','pace','category','gender','age','ageGroup','team','city','distance'].includes(p.role)) {
+          if (!usedSingleton.has(p.role)) {
+            usedSingleton.add(p.role);
+            return { role: p.role };
+          }
+        } else {
+          return { role: p.role };
+        }
+      }
+    }
+
+    // Try split patterns
+    for (const sp of SPLIT_PATTERNS) {
+      if (sp.test(clean)) {
+        return { role: 'split', splitName: h };
+      }
+    }
+
+    // Heuristic: if values look like times (MM:SS or H:MM:SS), it's likely a split
+    const sampleVals = sample.map(r => (r[idx] || '').trim()).filter(Boolean).slice(0, 5);
+    const timeLike = sampleVals.filter(v => /^\d{1,2}:\d{2}(:\d{2})?(\.\d+)?$/.test(v)).length;
+    if (sampleVals.length >= 2 && timeLike >= sampleVals.length * 0.6) {
+      if (!usedSingleton.has('time') && /^(time|finish|total)/i.test(clean)) {
+        usedSingleton.add('time');
+        return { role: 'time' };
+      }
+      return { role: 'split', splitName: h };
+    }
+
+    return { role: 'ignore' };
+  });
+}
+
+/* ============================================================
+   FILE LOAD
+   ============================================================ */
+const fileInput = document.getElementById('fileInput');
+const dropzone = document.getElementById('dropzone');
+const trySample = document.getElementById('trySample');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('over');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    handleFile(e.dataTransfer.files[0]);
+  }
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.rawText = String(reader.result);
+    processRawText();
+  };
+  reader.onerror = () => alert('Failed to read the file.');
+  reader.readAsText(file);
+  // Pre-fill title from filename if blank
+  if (!state.config.title) {
+    const base = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+    state.config.title = base.charAt(0).toUpperCase() + base.slice(1);
+  }
+}
+
+trySample.addEventListener('click', () => {
+  state.rawText = SAMPLE_CSV;
+  if (!state.config.title) state.config.title = 'Highland Yard 10K';
+  if (!state.config.date) state.config.date = '2026-08-01';
+  if (!state.config.location) state.config.location = 'Haliburton, ON';
+  processRawText();
+});
+
+function processRawText() {
+  const delim = detectDelimiter(state.rawText);
+  const rows = parseCSV(state.rawText, delim);
+  if (rows.length < 2) {
+    alert('That file looks empty or malformed. Need at least a header row + one data row.');
+    return;
+  }
+  state.rows = rows;
+  state.headers = rows[0].map(h => (h || '').trim());
+  state.data = rows.slice(1);
+  state.mappings = autoDetect(state.headers, state.data.slice(0, 8));
+  buildColumnMapper();
+  showStep('map');
+}
+
+/* ============================================================
+   COLUMN MAPPER UI
+   ============================================================ */
+function buildColumnMapper() {
+  const list = document.getElementById('colList');
+  const count = document.getElementById('colCount');
+  list.innerHTML = '';
+  count.textContent = state.headers.length + ' columns · ' + state.data.length + ' rows';
+
+  state.headers.forEach((h, i) => {
+    const samples = state.data.slice(0, 3).map(r => (r[i] || '').trim()).filter(Boolean).join(' · ');
+    const row = document.createElement('div');
+    row.className = 'col-row';
+    row.dataset.idx = i;
+
+    const src = document.createElement('div');
+    src.className = 'src';
+    src.innerHTML = '<span class="name">' + escapeHtml(h || '(empty)') + '</span>' +
+                    '<span class="preview">' + escapeHtml(samples || '—') + '</span>';
+    row.appendChild(src);
+
+    // Build select with role options + dynamic split-name input
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex'; wrap.style.gap = '8px'; wrap.style.alignItems = 'center';
+
+    const sel = document.createElement('select');
+    ROLES.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.value; opt.textContent = r.label;
+      sel.appendChild(opt);
+    });
+    sel.value = state.mappings[i].role;
+    sel.addEventListener('change', () => {
+      state.mappings[i].role = sel.value;
+      if (sel.value === 'split' && !state.mappings[i].splitName) {
+        state.mappings[i].splitName = h;
+      }
+      refreshRow(row, i);
+    });
+    wrap.appendChild(sel);
+
+    // Optional split-name input
+    const splitInput = document.createElement('input');
+    splitInput.type = 'text';
+    splitInput.placeholder = 'Label';
+    splitInput.style.cssText = 'width: 100px; padding: 9px 10px; font-size: 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);';
+    splitInput.value = state.mappings[i].splitName || h;
+    splitInput.addEventListener('input', () => {
+      state.mappings[i].splitName = splitInput.value;
+    });
+    wrap.appendChild(splitInput);
+    row._splitInput = splitInput;
+
+    row.appendChild(wrap);
+    list.appendChild(row);
+    refreshRow(row, i);
+  });
+
+  validateMappings();
+}
+
+function refreshRow(row, i) {
+  const m = state.mappings[i];
+  row.classList.toggle('is-mapped', m.role !== 'ignore' && m.role !== 'split');
+  row.classList.toggle('is-split', m.role === 'split');
+  row.classList.toggle('is-ignored', m.role === 'ignore');
+  if (row._splitInput) {
+    row._splitInput.style.display = m.role === 'split' ? '' : 'none';
+  }
+  validateMappings();
+}
+
+function validateMappings() {
+  const banner = document.getElementById('mapBanner');
+  const goBtn = document.getElementById('goToConfig');
+  const issues = [];
+
+  // Check required: name (or first+last) AND time AND place
+  const roles = state.mappings.map(m => m.role);
+  const hasName = roles.includes('name') || (roles.includes('firstName') && roles.includes('lastName'));
+  const hasTime = roles.includes('time') || roles.includes('chipTime') || roles.includes('gunTime');
+  const hasPlace = roles.includes('place');
+
+  if (!hasName) issues.push('Map a Name (or First + Last name) column');
+  if (!hasTime) issues.push('Map a Finish/Chip/Gun Time column');
+  if (!hasPlace) issues.push('Map a Place column (or we will auto-number rows)');
+
+  // Duplicates of singletons
+  const singletons = ['place','bib','name','firstName','lastName','time','chipTime','gunTime','pace','category','gender','age','ageGroup','team','city','distance'];
+  const seen = {};
+  state.mappings.forEach(m => {
+    if (singletons.includes(m.role)) seen[m.role] = (seen[m.role] || 0) + 1;
+  });
+  Object.keys(seen).forEach(k => {
+    if (seen[k] > 1) issues.push('Multiple columns mapped to "' + k + '" — only one is allowed');
+  });
+
+  if (issues.length) {
+    const isBlocking = issues.some(i => !i.startsWith('Map a Place'));
+    banner.innerHTML = '<div class="banner ' + (isBlocking ? 'warn' : 'ok') + '">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+      '<div>' + issues.map(escapeHtml).join('<br>') + '</div></div>';
+    goBtn.disabled = isBlocking;
+  } else {
+    banner.innerHTML = '<div class="banner ok">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      'All set — ready to configure.</div>';
+    goBtn.disabled = false;
+  }
+}
+
+/* ============================================================
+   NAV BUTTONS
+   ============================================================ */
+document.getElementById('backToUpload').addEventListener('click', () => showStep('upload'));
+document.getElementById('goToConfig').addEventListener('click', () => {
+  prepareConfigStage();
+  showStep('config');
+});
+document.getElementById('backToMap').addEventListener('click', () => showStep('map'));
+document.getElementById('goToPreview').addEventListener('click', () => {
+  readConfigInputs();
+  generateAndPreview();
+  showStep('preview');
+});
+document.getElementById('backToConfig').addEventListener('click', () => showStep('config'));
+
+/* ============================================================
+   CONFIG STAGE
+   ============================================================ */
+function prepareConfigStage() {
+  document.getElementById('cfgTitle').value = state.config.title;
+  document.getElementById('cfgDate').value = state.config.date;
+  document.getElementById('cfgLocation').value = state.config.location;
+  document.getElementById('cfgSubtitle').value = state.config.subtitle;
+  document.getElementById('cfgColor').value = state.config.color;
+  document.getElementById('cfgLogo').value = state.config.logo;
+  buildColorSwatches();
+  buildModeRadios();
+}
+
+const PRESET_COLORS = [
+  { name: 'Splits orange', value: '#ff5a1f' },
+  { name: 'Crimson',       value: '#dc2626' },
+  { name: 'Amber',         value: '#f59e0b' },
+  { name: 'Forest',        value: '#16a34a' },
+  { name: 'Teal',          value: '#0d9488' },
+  { name: 'Royal',         value: '#2563eb' },
+  { name: 'Indigo',        value: '#4f46e5' },
+  { name: 'Violet',        value: '#7c3aed' },
+  { name: 'Pink',          value: '#db2777' },
+  { name: 'Slate',         value: '#475569' }
+];
+
+function buildColorSwatches() {
+  const wrap = document.getElementById('colorSwatches');
+  wrap.innerHTML = '';
+  PRESET_COLORS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'swatch-btn';
+    b.style.background = c.value;
+    b.title = c.name + ' (' + c.value + ')';
+    b.addEventListener('click', () => {
+      document.getElementById('cfgColor').value = c.value;
+      state.config.color = c.value;
+      Array.from(wrap.children).forEach(x => x.classList.remove('is-active'));
+      b.classList.add('is-active');
+    });
+    if (c.value.toLowerCase() === state.config.color.toLowerCase()) b.classList.add('is-active');
+    wrap.appendChild(b);
+  });
+  document.getElementById('cfgColor').addEventListener('input', e => {
+    state.config.color = e.target.value;
+    Array.from(wrap.children).forEach(x => x.classList.remove('is-active'));
+  });
+}
+
+function buildModeRadios() {
+  const grp = document.getElementById('modeRadios');
+  Array.from(grp.querySelectorAll('label')).forEach(l => {
+    l.addEventListener('click', () => {
+      Array.from(grp.querySelectorAll('label')).forEach(x => x.classList.remove('is-active'));
+      l.classList.add('is-active');
+      l.querySelector('input').checked = true;
+      state.config.mode = l.dataset.mode;
+    });
+  });
+}
+
+function readConfigInputs() {
+  state.config.title = document.getElementById('cfgTitle').value.trim() || 'Race Results';
+  state.config.date = document.getElementById('cfgDate').value;
+  state.config.location = document.getElementById('cfgLocation').value.trim();
+  state.config.subtitle = document.getElementById('cfgSubtitle').value.trim();
+  state.config.color = document.getElementById('cfgColor').value;
+  state.config.logo = document.getElementById('cfgLogo').value.trim();
+  // Mode is set live by the radio click handler
+}
+
+/* ============================================================
+   BUILD STRUCTURED RESULT FROM RAW DATA + MAPPINGS
+   ============================================================ */
+function buildStructured() {
+  const m = state.mappings;
+  const headers = state.headers;
+
+  // Find indices for each named role
+  const findIdx = role => m.findIndex(x => x.role === role);
+  const idx = {
+    place: findIdx('place'),
+    bib: findIdx('bib'),
+    name: findIdx('name'),
+    firstName: findIdx('firstName'),
+    lastName: findIdx('lastName'),
+    time: findIdx('time'),
+    chipTime: findIdx('chipTime'),
+    gunTime: findIdx('gunTime'),
+    pace: findIdx('pace'),
+    category: findIdx('category'),
+    gender: findIdx('gender'),
+    age: findIdx('age'),
+    ageGroup: findIdx('ageGroup'),
+    team: findIdx('team'),
+    city: findIdx('city'),
+    distance: findIdx('distance')
+  };
+  const splitIdxs = m.map((x, i) => x.role === 'split' ? { i, label: x.splitName || headers[i] } : null).filter(Boolean);
+  const noteIdxs = m.map((x, i) => x.role === 'note' ? { i, label: headers[i] } : null).filter(Boolean);
+
+  // Pick a primary time field
+  const primaryTimeIdx = idx.time !== -1 ? idx.time
+                       : idx.chipTime !== -1 ? idx.chipTime
+                       : idx.gunTime;
+
+  const records = state.data.map((row, rowIdx) => {
+    const get = i => i !== -1 ? (row[i] || '').trim() : '';
+    let name = get(idx.name);
+    if (!name && idx.firstName !== -1) {
+      name = (get(idx.firstName) + ' ' + get(idx.lastName)).trim();
+    }
+    return {
+      place: get(idx.place) || String(rowIdx + 1),
+      bib: get(idx.bib),
+      name: name,
+      time: get(primaryTimeIdx),
+      chipTime: get(idx.chipTime),
+      gunTime: get(idx.gunTime),
+      pace: get(idx.pace),
+      category: get(idx.category),
+      gender: get(idx.gender),
+      age: get(idx.age),
+      ageGroup: get(idx.ageGroup),
+      team: get(idx.team),
+      city: get(idx.city),
+      distance: get(idx.distance),
+      splits: splitIdxs.map(s => ({ label: s.label, value: get(s.i) })),
+      notes: noteIdxs.map(n => ({ label: n.label, value: get(n.i) }))
+    };
+  });
+
+  // Determine which optional columns have any data
+  const hasAny = (key) => records.some(r => r[key] && r[key].length);
+  const hasSplits = splitIdxs.length > 0;
+  const splitLabels = splitIdxs.map(s => s.label);
+  const noteLabels = noteIdxs.map(n => n.label);
+
+  return {
+    records,
+    show: {
+      bib: hasAny('bib'),
+      category: hasAny('category'),
+      gender: hasAny('gender'),
+      age: hasAny('age'),
+      ageGroup: hasAny('ageGroup'),
+      team: hasAny('team'),
+      city: hasAny('city'),
+      distance: hasAny('distance'),
+      pace: hasAny('pace'),
+      chipTime: hasAny('chipTime'),
+      gunTime: hasAny('gunTime'),
+      splits: hasSplits
+    },
+    splitLabels,
+    noteLabels
+  };
+}
+
+/* ============================================================
+   GENERATE OUTPUT HTML
+   ============================================================ */
+function generateAndPreview() {
+  const data = buildStructured();
+  const html = buildOutputHtml(state.config, data);
+  state.generatedHtml = html;
+
+  // Inject into iframe
+  const frame = document.getElementById('previewFrame');
+  frame.srcdoc = html;
+
+  // Update meta
+  document.getElementById('previewFilename').textContent = sanitizeFilename(state.config.title) + '.html';
+  document.getElementById('previewStats').textContent =
+    data.records.length + ' results · ' + (state.config.mode === 'standalone' ? 'Self-contained' : 'Branded');
+}
+
+function sanitizeFilename(s) {
+  return (s || 'results').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'results';
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* ============================================================
+   DOWNLOAD / COPY
+   ============================================================ */
+document.getElementById('downloadHtml').addEventListener('click', () => {
+  if (!state.generatedHtml) return;
+  const blob = new Blob([state.generatedHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = sanitizeFilename(state.config.title) + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+document.getElementById('copyHtml').addEventListener('click', async () => {
+  if (!state.generatedHtml) return;
+  try {
+    await navigator.clipboard.writeText(state.generatedHtml);
+    const btn = document.getElementById('copyHtml');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  } catch (e) {
+    alert('Could not copy. Use Download instead.');
+  }
+});
+</script>
+
+<script>
+/* ============================================================
+   OUTPUT TEMPLATE: builds the final results page HTML
+   ============================================================ */
+function buildOutputHtml(cfg, data) {
+  const records = data.records;
+  const show = data.show;
+  const splitLabels = data.splitLabels;
+  const noteLabels = data.noteLabels;
+  const accent = cfg.color;
+  const accentDeep = darken(accent, 0.10);
+  const accentSoft = lighten(accent, 0.92);
+
+  // Build table headers
+  const cols = [{ key: 'place', label: 'Place', cls: 'mono' }];
+  if (show.bib)       cols.push({ key: 'bib', label: 'Bib', cls: 'mono' });
+  cols.push({ key: 'name', label: 'Name' });
+  if (show.gender)    cols.push({ key: 'gender', label: 'Gender' });
+  if (show.age)       cols.push({ key: 'age', label: 'Age', cls: 'mono num' });
+  if (show.ageGroup)  cols.push({ key: 'ageGroup', label: 'AG' });
+  if (show.category)  cols.push({ key: 'category', label: 'Category' });
+  if (show.distance)  cols.push({ key: 'distance', label: 'Event' });
+  if (show.team)      cols.push({ key: 'team', label: 'Team' });
+  if (show.city)      cols.push({ key: 'city', label: 'City' });
+  cols.push({ key: 'time', label: 'Time', cls: 'mono num strong' });
+  if (show.chipTime && data.records.some(r => r.chipTime !== r.time)) cols.push({ key: 'chipTime', label: 'Chip', cls: 'mono num' });
+  if (show.gunTime && data.records.some(r => r.gunTime !== r.time))   cols.push({ key: 'gunTime', label: 'Gun', cls: 'mono num' });
+  if (show.pace)      cols.push({ key: 'pace', label: 'Pace', cls: 'mono num' });
+  // Splits
+  splitLabels.forEach((label, i) => {
+    cols.push({ key: 'split:' + i, label: label, cls: 'mono num split-col' });
+  });
+  // Notes
+  noteLabels.forEach((label, i) => {
+    cols.push({ key: 'note:' + i, label: label });
+  });
+
+  // Filter facets — gather unique values for category/gender/distance
+  const facets = {};
+  if (show.gender) facets.gender = uniqueVals(records.map(r => r.gender));
+  if (show.category) facets.category = uniqueVals(records.map(r => r.category));
+  if (show.distance) facets.distance = uniqueVals(records.map(r => r.distance));
+  if (show.ageGroup) facets.ageGroup = uniqueVals(records.map(r => r.ageGroup));
+
+  // Stats
+  const totalCount = records.length;
+  const fastestTime = records.map(r => r.time).filter(Boolean).sort(timeSortAsc)[0] || '—';
+  const facetCount = Object.keys(facets).length;
+
+  const dateText = cfg.date ? formatDate(cfg.date) : '';
+
+  // Build rows
+  const rowsHtml = records.map((r, i) => {
+    const cells = cols.map(c => {
+      let val;
+      if (c.key.startsWith('split:')) {
+        const idx = parseInt(c.key.split(':')[1], 10);
+        val = (r.splits[idx] && r.splits[idx].value) || '';
+      } else if (c.key.startsWith('note:')) {
+        const idx = parseInt(c.key.split(':')[1], 10);
+        val = (r.notes[idx] && r.notes[idx].value) || '';
+      } else {
+        val = r[c.key] || '';
+      }
+      const cls = c.cls ? ' class="' + c.cls + '"' : '';
+      const dataAttr = ' data-key="' + c.key + '"';
+      return '<td' + cls + dataAttr + '>' + escapeHtml(val) + '</td>';
+    }).join('');
+    // Searchable string covers everything
+    const search = [r.place, r.bib, r.name, r.gender, r.age, r.ageGroup, r.category, r.distance, r.team, r.city, r.time]
+                    .filter(Boolean).join(' ').toLowerCase();
+    // Facet attrs
+    const attrs = [];
+    if (show.gender)   attrs.push('data-gender="'   + escapeHtml(r.gender)   + '"');
+    if (show.category) attrs.push('data-category="' + escapeHtml(r.category) + '"');
+    if (show.distance) attrs.push('data-distance="' + escapeHtml(r.distance) + '"');
+    if (show.ageGroup) attrs.push('data-agegroup="' + escapeHtml(r.ageGroup) + '"');
+    return '<tr data-search="' + escapeHtml(search) + '" ' + attrs.join(' ') + '>' + cells + '</tr>';
+  }).join('\n');
+
+  const headerHtml = cols.map((c, i) => {
+    const sortable = ['place','bib','age','time','chipTime','gunTime','pace'].includes(c.key)
+                  || c.key.startsWith('split:');
+    return '<th data-col="' + i + '" data-key="' + c.key + '"' + (sortable ? ' class="sortable"' : '') + '>' +
+           escapeHtml(c.label) + (sortable ? '<span class="sort-arrow"></span>' : '') + '</th>';
+  }).join('');
+
+  // Filter UI
+  const filtersHtml = Object.keys(facets).map(k => {
+    const opts = facets[k].map(v => '<option value="' + escapeHtml(v) + '">' + escapeHtml(v) + '</option>').join('');
+    const labelMap = { gender: 'Gender', category: 'Category', distance: 'Event', ageGroup: 'Age Group' };
+    return '<select class="filter" data-facet="' + k + '">' +
+           '<option value="">All ' + labelMap[k] + 's</option>' + opts + '</select>';
+  }).join('');
+
+  // Build the page
+  const isBranded = cfg.mode === 'branded';
+  const fontImports = isBranded
+    ? '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">'
+    : '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">';
+
+  const brandHeader = cfg.logo
+    ? '<img src="' + escapeHtml(cfg.logo) + '" alt="" class="logo">'
+    : '<span class="mark">' + escapeHtml((cfg.title || 'R').charAt(0).toUpperCase()) + '</span>';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(cfg.title)}${dateText ? ' — ' + escapeHtml(dateText) : ''}</title>
+<meta name="description" content="${escapeHtml(cfg.title)} race results">
+${fontImports}
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --ink: #0f1115;
+  --ink-2: #2a2e36;
+  --ink-3: #5b6270;
+  --ink-4: #8a909c;
+  --line: #e6e8ec;
+  --line-2: #eef0f3;
+  --accent: ${accent};
+  --accent-deep: ${accentDeep};
+  --accent-soft: ${accentSoft};
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 28px; }
+
+/* HEADER */
+header.top {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 50;
+}
+header.top .inner {
+  max-width: 1280px; margin: 0 auto; padding: 14px 28px;
+  display: flex; align-items: center; gap: 14px;
+}
+header.top .mark, header.top .logo {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: grid; place-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700; font-size: 17px;
+  background: var(--ink); color: #fff;
+  position: relative;
+}
+header.top .mark::after {
+  content:""; position:absolute; right:5px; bottom:5px; width:6px; height:6px; border-radius:50%; background: var(--accent);
+}
+header.top .logo { background: transparent; padding: 0; }
+header.top .logo img { width: 100%; height: 100%; object-fit: contain; }
+header.top .meta-bar { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-4); margin-left: auto; letter-spacing: .04em; }
+header.top .title-block { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+header.top .title-date { font-size: 12px; color: var(--ink-4); font-family: 'JetBrains Mono', monospace; }
+
+/* HERO */
+.hero { padding: 56px 0 28px; }
+.hero .eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent-deep); background: var(--accent-soft);
+  padding: 6px 12px; border-radius: 999px;
+  margin-bottom: 18px;
+}
+.hero .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.hero h1 {
+  font-family: 'Inter', sans-serif; font-weight: 800;
+  font-size: clamp(36px, 5.5vw, 64px); line-height: 1.04; letter-spacing: -.03em;
+  margin: 0 0 12px;
+}
+.hero .subtitle {
+  font-size: 17px; color: var(--ink-3); max-width: 720px; margin: 0;
+}
+.hero .meta {
+  margin-top: 18px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 500; color: var(--ink-3);
+}
+.hero .meta .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.hero .meta .pill svg { color: var(--accent); }
+
+/* STATS */
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-top: 28px;
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.stat .num {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  font-size: 30px; line-height: 1; letter-spacing: -.02em; margin-bottom: 4px;
+  font-feature-settings: "tnum";
+}
+.stat .num .accent { color: var(--accent); }
+.stat .label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+
+/* CONTROLS */
+.controls {
+  margin-top: 28px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+.search-box {
+  flex: 1; min-width: 240px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 4px 4px 16px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.search-box:focus-within {
+  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(15,17,21,.06);
+}
+.search-box svg { color: var(--ink-4); flex-shrink: 0; }
+.search-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font: inherit; font-size: 14px; padding: 9px 0;
+  color: var(--ink);
+}
+.search-box .clear {
+  display: none;
+  background: var(--surface-2); border: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; color: var(--ink-3);
+  font-size: 14px; line-height: 1;
+  align-items: center; justify-content: center;
+}
+.search-box.has-val .clear { display: inline-flex; }
+
+.filter, .density {
+  font: inherit; font-size: 13px; padding: 9px 32px 9px 14px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--ink-2); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  font-weight: 500;
+}
+.filter:focus, .density:focus { outline: none; border-color: var(--ink); }
+
+.export-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border-radius: 999px;
+  background: var(--ink); color: #fff;
+  border: none; font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .15s ease;
+}
+.export-btn:hover { background: var(--accent); }
+
+/* TABLE */
+.table-wrap {
+  margin-top: 18px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15,17,21,.04);
+}
+.table-scroll { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13.5px;
+}
+thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface-2);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-2);
+  text-align: left; padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+thead th.sortable {
+  cursor: pointer; user-select: none;
+  transition: background .12s ease;
+}
+thead th.sortable:hover { background: var(--line-2); }
+thead th.sortable .sort-arrow {
+  display: inline-block; margin-left: 6px;
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink-4);
+  vertical-align: middle;
+  opacity: .35;
+  transition: transform .15s ease, opacity .15s ease, border-top-color .15s ease;
+}
+thead th.sortable.sort-asc .sort-arrow {
+  transform: rotate(180deg); opacity: 1; border-top-color: var(--accent);
+}
+thead th.sortable.sort-desc .sort-arrow { opacity: 1; border-top-color: var(--accent); }
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line-2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--accent-soft); }
+tbody td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ink-2); font-feature-settings: "tnum"; }
+tbody td.num { text-align: right; }
+tbody td.strong { font-weight: 600; color: var(--ink); }
+tbody td.split-col { color: var(--ink-3); font-weight: 500; }
+tbody td[data-key="place"] {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  color: var(--ink); font-size: 14px;
+}
+tbody tr:nth-child(1) td[data-key="place"]::before {
+  content: "🥇 "; font-size: 12px;
+}
+tbody tr:nth-child(2) td[data-key="place"]::before {
+  content: "🥈 "; font-size: 12px;
+}
+tbody tr:nth-child(3) td[data-key="place"]::before {
+  content: "🥉 "; font-size: 12px;
+}
+tbody tr.hidden { display: none; }
+tbody td[data-key="name"] { font-weight: 600; color: var(--ink); }
+
+/* DENSITY */
+body.compact tbody td { padding: 7px 14px; font-size: 12.5px; }
+body.compact thead th { padding: 9px 14px; }
+
+/* EMPTY */
+.empty {
+  display: none; padding: 60px 20px; text-align: center; color: var(--ink-3);
+}
+.empty.visible { display: block; }
+.empty strong { display: block; font-size: 16px; color: var(--ink); margin-bottom: 6px; }
+
+/* FOOTER */
+footer.bottom {
+  border-top: 1px solid var(--line);
+  padding: 28px 0 36px;
+  margin-top: 60px;
+  font-size: 13px; color: var(--ink-4);
+  text-align: center;
+}
+footer.bottom strong { color: var(--ink-2); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .wrap { padding: 0 18px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .hero { padding-top: 36px; }
+  .hero h1 { font-size: 36px; }
+  thead th, tbody td { padding: 9px 10px; font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    ${brandHeader}
+    <div>
+      <div class="title-block">${escapeHtml(cfg.title)}</div>
+      ${dateText ? '<div class="title-date">' + escapeHtml(dateText) + '</div>' : ''}
+    </div>
+    <span class="meta-bar">${totalCount} finishers</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow"><span class="dot"></span>Official Results</span>
+    <h1>${escapeHtml(cfg.title)}</h1>
+    ${cfg.subtitle ? '<p class="subtitle">' + escapeHtml(cfg.subtitle) + '</p>' : ''}
+    <div class="meta">
+      ${dateText ? '<span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' + escapeHtml(dateText) + '</span>' : ''}
+      ${cfg.location ? '<span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' + escapeHtml(cfg.location) + '</span>' : ''}
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="num"><span class="accent">${totalCount}</span></div>
+        <div class="label">Finishers</div>
+      </div>
+      <div class="stat">
+        <div class="num">${escapeHtml(fastestTime)}</div>
+        <div class="label">Fastest Time</div>
+      </div>
+      <div class="stat">
+        <div class="num">${facetCount > 0 ? facetCount : (splitLabels.length || '—')}</div>
+        <div class="label">${facetCount > 0 ? 'Filterable Categories' : (splitLabels.length ? 'Splits' : 'Field')}</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search-box" id="searchBox">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search by name, bib, team, city…" autocomplete="off">
+        <button class="clear" id="clearBtn" aria-label="Clear">×</button>
+      </div>
+      ${filtersHtml}
+      <select class="density" id="density">
+        <option value="comfort">Comfort</option>
+        <option value="compact">Compact</option>
+      </select>
+      <button class="export-btn" id="exportCsv">Export CSV</button>
+    </div>
+  </section>
+
+  <section class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>${headerHtml}</tr>
+        </thead>
+        <tbody>
+${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">
+      <strong>No matching results.</strong>
+      Try a different search term or clear your filters.
+    </div>
+  </section>
+
+  <footer class="bottom">
+    <strong>${escapeHtml(cfg.title)}</strong>${dateText ? ' · ' + escapeHtml(dateText) : ''}<br>
+    Generated by <span style="color: var(--accent-deep);">Splits Timing Results Builder</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  const tbody = document.querySelector('tbody');
+  const allRows = Array.from(tbody.querySelectorAll('tr'));
+  const search = document.getElementById('search');
+  const clearBtn = document.getElementById('clearBtn');
+  const searchBox = document.getElementById('searchBox');
+  const empty = document.getElementById('empty');
+  const filters = Array.from(document.querySelectorAll('.filter'));
+  const density = document.getElementById('density');
+  const exportBtn = document.getElementById('exportCsv');
+
+  function applyFilters() {
+    const term = (search.value || '').trim().toLowerCase();
+    searchBox.classList.toggle('has-val', term.length > 0);
+    const facetVals = {};
+    filters.forEach(f => {
+      if (f.value) facetVals[f.dataset.facet] = f.value.toLowerCase();
+    });
+
+    let visible = 0;
+    allRows.forEach(row => {
+      const hay = row.dataset.search || '';
+      let show = !term || hay.indexOf(term) !== -1;
+      if (show) {
+        for (const k in facetVals) {
+          const v = (row.dataset[k.toLowerCase()] || '').toLowerCase();
+          if (v !== facetVals[k]) { show = false; break; }
+        }
+      }
+      row.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    empty.classList.toggle('visible', visible === 0);
+  }
+
+  search.addEventListener('input', applyFilters);
+  search.addEventListener('keydown', e => { if (e.key === 'Escape') { search.value = ''; applyFilters(); } });
+  clearBtn.addEventListener('click', () => { search.value = ''; applyFilters(); search.focus(); });
+  filters.forEach(f => f.addEventListener('change', applyFilters));
+
+  density.addEventListener('change', () => {
+    document.body.classList.toggle('compact', density.value === 'compact');
+  });
+
+  // Sortable columns
+  const headers = Array.from(document.querySelectorAll('th.sortable'));
+  const state = { col: null, dir: 'asc' };
+
+  function timeToSec(s) {
+    if (!s) return Number.POSITIVE_INFINITY;
+    const parts = s.split(':').map(p => parseFloat(p));
+    if (parts.some(isNaN)) return Number.POSITIVE_INFINITY;
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return parts[0];
+  }
+  function isTimeKey(k) {
+    return k === 'time' || k === 'chipTime' || k === 'gunTime' || k === 'pace' || (k && k.indexOf('split:') === 0);
+  }
+
+  headers.forEach(th => {
+    th.addEventListener('click', () => {
+      const colIdx = parseInt(th.dataset.col, 10);
+      const key = th.dataset.key;
+      if (state.col === colIdx) {
+        state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.col = colIdx;
+        state.dir = 'asc';
+      }
+      headers.forEach(x => { x.classList.remove('sort-asc', 'sort-desc'); });
+      th.classList.add('sort-' + state.dir);
+
+      // Sort rows
+      const rows = Array.from(tbody.children);
+      rows.sort((a, b) => {
+        const av = (a.children[colIdx].textContent || '').trim();
+        const bv = (b.children[colIdx].textContent || '').trim();
+        let cmp;
+        if (isTimeKey(key)) {
+          cmp = timeToSec(av) - timeToSec(bv);
+        } else if (!isNaN(parseFloat(av)) && !isNaN(parseFloat(bv))) {
+          cmp = parseFloat(av) - parseFloat(bv);
+        } else {
+          cmp = av.localeCompare(bv);
+        }
+        return state.dir === 'asc' ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+
+  // CSV export of currently visible rows
+  exportBtn.addEventListener('click', () => {
+    const ths = Array.from(document.querySelectorAll('thead th')).map(t => t.textContent.replace(/\\s+/g, ' ').trim());
+    const lines = [ths.map(csvEscape).join(',')];
+    Array.from(tbody.children).forEach(row => {
+      if (row.classList.contains('hidden')) return;
+      const cells = Array.from(row.children).map(td => csvEscape(td.textContent.trim()));
+      lines.push(cells.join(','));
+    });
+    const blob = new Blob([lines.join('\\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = ${JSON.stringify(sanitizeFilename(cfg.title) + '.csv')};
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  function csvEscape(s) {
+    s = String(s == null ? '' : s);
+    return /[",\\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+})();
+<\/script>
+</body>
+</html>`;
+}
+
+/* ============================================================
+   COLOR & UTIL HELPERS
+   ============================================================ */
+function hexToRgb(h) {
+  h = h.replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c+c).join('');
+  return { r: parseInt(h.slice(0,2), 16), g: parseInt(h.slice(2,4), 16), b: parseInt(h.slice(4,6), 16) };
+}
+function rgbToHex(r, g, b) {
+  const c = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+  return '#' + c(r) + c(g) + c(b);
+}
+function darken(hex, amt) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r * (1-amt), g * (1-amt), b * (1-amt));
+}
+function lighten(hex, amt) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r + (255-r)*amt, g + (255-g)*amt, b + (255-b)*amt);
+}
+function uniqueVals(arr) {
+  const seen = new Set();
+  arr.forEach(v => { if (v && v.length) seen.add(v); });
+  return Array.from(seen).sort();
+}
+function timeSortAsc(a, b) {
+  const conv = s => {
+    if (!s) return Infinity;
+    const p = s.split(':').map(parseFloat);
+    if (p.some(isNaN)) return Infinity;
+    if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+    if (p.length === 2) return p[0]*60 + p[1];
+    return p[0];
+  };
+  return conv(a) - conv(b);
+}
+function formatDate(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+</script>
+
+<script>
+/* ============================================================
+   SAMPLE CSV (Highland Yard 10K — fictional but realistic)
+   ============================================================ */
+const SAMPLE_CSV = `Place,Bib,First Name,Last Name,Gender,Age,AG,Category,Team,City,Chip Time,Gun Time,Pace,5K Split
+1,142,Sarah,Patterson,F,28,F25-29,10K Open,Peterborough Runners,Peterborough ON,36:42,36:44,3:40,17:58
+2,87,Michael,Chen,M,32,M30-34,10K Open,Kawartha AC,Lindsay ON,36:55,36:56,3:42,18:05
+3,201,David,Romero,M,29,M25-29,10K Open,,Toronto ON,37:14,37:16,3:43,18:22
+4,55,Jenna,Halloway,F,34,F30-34,10K Open,Trent Tri Club,Peterborough ON,37:48,37:51,3:47,18:35
+5,118,Robert,Anderson,M,41,M40-44,10K Masters,Peterborough Runners,Peterborough ON,38:02,38:04,3:48,18:42
+6,34,Liam,Pasternak,M,24,M19-24,10K Open,Trent University,Peterborough ON,38:31,38:32,3:51,19:01
+7,176,Ashley,Beaumont,F,31,F30-34,10K Open,,Peterborough ON,39:17,39:20,3:55,19:25
+8,93,Nathan,Kowalski,M,38,M35-39,10K Open,Lakefield Runners,Lakefield ON,39:44,39:46,3:58,19:38
+9,261,Emma,Sullivan,F,26,F25-29,10K Open,Peterborough Runners,Peterborough ON,40:15,40:17,4:01,19:52
+10,12,Marcus,Tremblay,M,45,M45-49,10K Masters,,Peterborough ON,40:38,40:41,4:03,20:04
+11,189,Hannah,Brookes,F,29,F25-29,10K Open,Trent Tri Club,Peterborough ON,40:55,40:58,4:05,20:11
+12,77,Jordan,Whitfield,M,33,M30-34,10K Open,,Toronto ON,41:22,41:25,4:08,20:24
+13,224,Karen,Fitzgerald,F,42,F40-44,10K Masters,Peterborough Runners,Peterborough ON,41:48,41:52,4:11,20:38
+14,156,Tom,Bergeron,M,27,M25-29,10K Open,,Lindsay ON,42:13,42:15,4:13,20:51
+15,302,Olivia,Marchetti,F,24,F19-24,10K Open,Trent University,Peterborough ON,42:47,42:50,4:16,21:08
+16,68,Patrick,Donnelly,M,52,M50-54,10K Masters,Lakefield Runners,Lakefield ON,43:14,43:17,4:19,21:21
+17,245,Riley,Sutherland,F,35,F35-39,10K Open,,Peterborough ON,43:39,43:42,4:21,21:34
+18,109,Christopher,Vance,M,36,M35-39,10K Open,Peterborough Runners,Peterborough ON,44:02,44:04,4:24,21:48
+19,178,Madeline,Cho,F,30,F30-34,10K Open,Kawartha AC,Lindsay ON,44:28,44:32,4:26,21:59
+20,91,Stephen,Kowalewski,M,48,M45-49,10K Masters,,Toronto ON,44:51,44:54,4:29,22:11
+21,267,Catherine,Larkspur,F,33,F30-34,10K Open,Trent Tri Club,Peterborough ON,45:18,45:21,4:31,22:24
+22,143,Andrew,Magnusson,M,29,M25-29,10K Open,,Peterborough ON,45:42,45:45,4:34,22:38
+23,205,Jessica,Pemberton,F,26,F25-29,10K Open,Peterborough Runners,Peterborough ON,46:09,46:13,4:36,22:51
+24,52,Kevin,O'Sullivan,M,55,M55-59,10K Masters,Lakefield Runners,Lakefield ON,46:34,46:37,4:39,23:04
+25,288,Rebecca,Holloway,F,38,F35-39,10K Open,,Peterborough ON,47:01,47:04,4:42,23:18
+26,134,Daniel,Hartwell,M,42,M40-44,10K Masters,Peterborough Runners,Peterborough ON,47:28,47:32,4:44,23:31
+27,217,Sophie,Vaillancourt,F,28,F25-29,10K Open,Trent University,Peterborough ON,47:55,47:58,4:47,23:44
+28,79,Thomas,Reinholt,M,39,M35-39,10K Open,,Toronto ON,48:22,48:26,4:50,23:58
+29,195,Megan,Ashworth,F,34,F30-34,10K Open,Kawartha AC,Lindsay ON,48:48,48:52,4:52,24:11
+30,162,Brian,Czerwinski,M,46,M45-49,10K Masters,Peterborough Runners,Peterborough ON,49:15,49:18,4:55,24:24
+31,283,Lauren,Sinclair,F,41,F40-44,10K Masters,,Peterborough ON,49:42,49:46,4:58,24:38
+32,128,Matthew,Ravensdale,M,32,M30-34,10K Open,Trent Tri Club,Peterborough ON,50:08,50:12,5:00,24:51
+33,206,Natalie,Beauchamp,F,25,F25-29,10K Open,Peterborough Runners,Peterborough ON,50:34,50:38,5:03,25:04
+34,85,Gregory,Pendleton,M,58,M55-59,10K Masters,Lakefield Runners,Lakefield ON,51:01,51:05,5:06,25:18
+35,241,Victoria,Hutchins,F,32,F30-34,10K Open,,Peterborough ON,51:28,51:32,5:08,25:31`;
+</script>
+
+</body>
+</html>

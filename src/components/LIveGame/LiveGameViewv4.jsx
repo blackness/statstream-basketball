@@ -23,10 +23,6 @@ const LiveGameView = ({
   const [homeScore, setHomeScore] = useState(existingGame?.home_score || 0);
   const [awayScore, setAwayScore] = useState(existingGame?.away_score || 0);
   const [currentPeriod, setCurrentPeriod] = useState(existingGame?.period || 1);
-  // Track score at start of each period so we can calculate period deltas
-  const [periodStartScores, setPeriodStartScores] = useState(
-    existingGame?.game_settings?.periodStartScores || { 1: { home: 0, away: 0 } }
-  );
   const [gameTime, setGameTime] = useState(existingGame?.time_remaining || (gameSettings.periodLength * 60));
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [liveStats, setLiveStats] = useState(existingGame?.stats || {});
@@ -182,12 +178,10 @@ const LiveGameView = ({
         setPlusMinus(existingGame.plus_minus || {});
         if (existingGame.recent_plays?.length) {
           setRecentPlays(existingGame.recent_plays);
-          recentPlaysRef.current = existingGame.recent_plays;
           setLastFivePlays(existingGame.recent_plays);
         }
         if (existingGame.play_log?.length) {
           setPlayLog(existingGame.play_log);
-          playLogRef.current = existingGame.play_log;
         }
         toast?.success('Game resumed!');
       } else if (existingSessionGameId && !currentGameId) {
@@ -422,10 +416,8 @@ const LiveGameView = ({
       setHomeFouls(result.newHomeFouls);
       setAwayFouls(result.newAwayFouls);
       setRecentPlays(updatedPlays);
-      recentPlaysRef.current = updatedPlays;
       setLastFivePlays(updatedPlays);
       setPlayLog(updatedPlayLog);
-      playLogRef.current = updatedPlayLog;
 
       if (points > 0) {
         setPlusMinus(updatedPlusMinus);
@@ -541,10 +533,8 @@ const LiveGameView = ({
       setHomeFouls(newHomeFouls);
       setAwayFouls(newAwayFouls);
       setRecentPlays(updatedOpponentPlays);
-      recentPlaysRef.current = updatedOpponentPlays;
       setLastFivePlays(updatedOpponentPlays);
       setPlayLog(updatedOpponentPlayLog);
-      playLogRef.current = updatedOpponentPlayLog;
     }
   };
 
@@ -624,9 +614,7 @@ const LiveGameView = ({
 
     setActivePlayers(newActivePlayers);
     setPlayLog(newPlayLog);
-    playLogRef.current = newPlayLog; // sync ref immediately
     setRecentPlays(newRecentPlays);
-    recentPlaysRef.current = newRecentPlays; // sync ref immediately
     setLastFivePlays(newRecentPlays);
     if (dntRemoved.length) setNotPresent(newNotPresent);
     setPlayersOut([]);
@@ -912,81 +900,17 @@ const LiveGameView = ({
   };
 
   const confirmNextPeriod = (resetFouls) => {
-    const nextPeriod = currentPeriod + 1;
-    const newPeriodLength = gameSettings.periodLength * 60;
-
-    // Snapshot this period's scores
-    const startHome = periodStartScores[currentPeriod]?.home || 0;
-    const startAway = periodStartScores[currentPeriod]?.away || 0;
-    const newPeriodStartScores = {
-      ...periodStartScores,
-      [currentPeriod]: { home: startHome, away: startAway }, // already stored at period start
-      [nextPeriod]:    { home: homeScore, away: awayScore },  // next period starts at current total
-    };
-    setPeriodStartScores(newPeriodStartScores);
-
-    // Log period markers for minutes tracking
-    const now = Date.now();
-    const periodMarkers = activePlayers.flatMap((playerId, i) => {
-      const player = team.roster?.find(p => p.id === playerId);
-      return [
-        {
-          id: now + i * 2,
-          description: `PERIOD_END: ${player?.name || playerId}`,
-          time: '0:00',
-          period: currentPeriod,
-          points: 0,
-          team: 'home',
-          isSub: true,
-          playerOutId: playerId,
-          playerInId: playerId,
-          timeRemaining: 0,
-          isPeriodMarker: true,
-        },
-        {
-          id: now + i * 2 + 1,
-          description: `PERIOD_START: ${player?.name || playerId}`,
-          time: `${gameSettings.periodLength}:00`,
-          period: nextPeriod,
-          points: 0,
-          team: 'home',
-          isSub: true,
-          playerInId: playerId,
-          playerOutId: null,
-          timeRemaining: newPeriodLength,
-          isPeriodMarker: true,
-        },
-      ];
-    });
-
-    const newPlayLog     = [...periodMarkers, ...playLogRef.current];
-    const newRecentPlays = recentPlaysRef.current;
-    const newGameSettings = {
-      ...gameSettings,
-      homeFouls: resetFouls ? 0 : gameSettings.homeFouls,
-      awayFouls: resetFouls ? 0 : gameSettings.awayFouls,
-      periodStartScores: newPeriodStartScores,
-    };
-
-    setCurrentPeriod(nextPeriod);
-    setGameTime(newPeriodLength);
+    setCurrentPeriod(prev => prev + 1);
+    setGameTime(gameSettings.periodLength * 60);
     setIsTimerRunning(false);
-    setPlayLog(newPlayLog);
-    playLogRef.current = newPlayLog;
-    if (resetFouls) { setHomeFouls(0); setAwayFouls(0); }
-
-    setShowPeriodSummary(false);
-    toast?.info(`Starting Period ${nextPeriod}`);
-
-    if (currentGameId) {
-      const manager = createManager(currentGameId);
-      manager.saveGameState({
-        homeScore, awayScore, period: nextPeriod, timeRemaining: newPeriodLength,
-        timerRunning: false, stats: liveStats, opponentStats,
-        activePlayers, plusMinus, gameSettings: newGameSettings,
-        recentPlays: newRecentPlays, playLog: newPlayLog,
-      });
+    
+    if (resetFouls) {
+      setHomeFouls(0);
+      setAwayFouls(0);
     }
+    
+    setShowPeriodSummary(false);
+    toast?.info(`Starting Period ${currentPeriod + 1}`);
   };
 
   const handleEndGame = async () => {
@@ -1023,45 +947,38 @@ const LiveGameView = ({
   // Calculate exact minutes played per player from sub log
   const calcMinutes = (playerId) => {
     const periodLen = gameSettings.periodLength * 60;
+    const totalPer  = gameSettings.totalPeriods || 4;
+    // Convert period+timeRemaining to absolute seconds elapsed
     const toSecs = (period, timeRemaining) =>
       ((period - 1) * periodLen) + Math.max(0, periodLen - timeRemaining);
 
-    const subs = [...playLogRef.current].reverse()
-      .filter(p => p.isSub && (p.playerInId || p.playerOutId));
+    // Build sub events oldest-first
+    const subs = [...playLog].reverse().filter(p => p.isSub && (p.playerInId || p.playerOutId));
 
-    let intervals = [];
+    let intervals = []; // [{start, end}]
     let timeIn = null;
 
-    if (starters.includes(playerId)) timeIn = 0;
+    // Was this player a starter?
+    const isStarter = starters.includes(playerId);
+    if (isStarter) timeIn = 0;
 
     subs.forEach(sub => {
       const t = toSecs(sub.period || 1, sub.timeRemaining ?? (periodLen - (gameTime || 0)));
-
-      // Period marker — same player in/out, just a boundary checkpoint
-      if (sub.isPeriodMarker && sub.playerInId === sub.playerOutId) {
-        if (sub.playerOutId === playerId && timeIn !== null) {
-          intervals.push({ start: timeIn, end: t });
-          timeIn = null;
-        }
-        if (sub.playerInId === playerId && sub.playerOutId === playerId) {
-          timeIn = t;
-        }
-        return;
-      }
-
-      if (sub.playerInId === playerId) timeIn = t;
-      else if (sub.playerOutId === playerId && timeIn !== null) {
+      if (sub.playerInId === playerId) {
+        timeIn = t; // came in
+      } else if (sub.playerOutId === playerId && timeIn !== null) {
         intervals.push({ start: timeIn, end: t });
-        timeIn = null;
+        timeIn = null; // went out
       }
     });
 
+    // Still on floor
     if (timeIn !== null) {
       const currentSecs = toSecs(currentPeriod, gameTime);
       intervals.push({ start: timeIn, end: currentSecs });
     }
 
-    const totalSecs = intervals.reduce((sum, i) => sum + Math.max(0, i.end - i.start), 0);
+    const totalSecs = intervals.reduce((sum, i) => sum + (i.end - i.start), 0);
     return Math.round(totalSecs / 60);
   };
 

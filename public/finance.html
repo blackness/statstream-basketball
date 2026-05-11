@@ -80,13 +80,38 @@ tr:last-child td { border-bottom: none; }
 .filter-group input, .filter-group select { width: 100%; }
 .overflow-x { overflow-x: auto; }
 .divider { height: 0.5px; background: var(--border); margin: 12px 0; }
-.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+
 .profile-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
 .profile-header img { width: 44px; height: 44px; border-radius: 8px; object-fit: contain; border: 0.5px solid var(--border); background: var(--bg2); }
 .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
 .tag-blue { background: var(--blue-bg); color: var(--blue); }
 .tag-green { background: var(--green-bg); color: var(--green); }
 .tag-red { background: var(--red-bg); color: var(--red); }
+.calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+.card { position: relative; }
+.card-expand-btn { position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer; color: var(--text2); font-size: 14px; padding: 2px 5px; border-radius: 4px; line-height: 1; }
+.card-expand-btn:hover { color: var(--text); background: var(--bg2); }
+.calc-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: var(--bg3); flex-direction: column; overflow: hidden; }
+.calc-overlay.open { display: flex; }
+.calc-overlay-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; border-bottom: 0.5px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.calc-overlay-header h2 { font-size: 15px; font-weight: 600; }
+.calc-overlay-body { display: grid; grid-template-columns: 280px 1fr; flex: 1; overflow: hidden; }
+.calc-overlay-inputs { padding: 16px 18px; overflow-y: auto; border-right: 0.5px solid var(--border); background: var(--bg); }
+.calc-overlay-inputs .filter-group { margin-bottom: 10px; }
+.calc-overlay-inputs .filter-group input, .calc-overlay-inputs .filter-group select { width: 100%; }
+.calc-overlay-inputs .big-result { font-size: 22px; }
+.calc-overlay-right { display: flex; flex-direction: column; overflow: hidden; }
+.calc-overlay-result { padding: 8px 16px; background: var(--bg); border-bottom: 0.5px solid var(--border); display: flex; gap: 20px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+.calc-overlay-result .metric-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; }
+.calc-overlay-result .big-result { font-size: 20px; font-weight: 600; margin: 0; }
+.calc-overlay-schedule { flex: 1; overflow: auto; }
+.calc-overlay-schedule table { width: 100%; border-collapse: collapse; }
+.calc-overlay-schedule th { position: sticky; top: 0; background: var(--bg2); z-index: 1; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text2); border-bottom: 0.5px solid var(--border); text-align: left; }
+.calc-overlay-schedule th:last-child { text-align: right; }
+.calc-overlay-schedule td { padding: 7px 12px; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+.calc-overlay-schedule td:last-child { text-align: right; font-weight: 500; }
+.calc-overlay-schedule tr:last-child td { border-bottom: none; }
+.calc-overlay-schedule tr:hover td { background: var(--bg2); }
 </style>
 </head>
 <body>
@@ -214,6 +239,8 @@ tr:last-child td { border-bottom: none; }
         <div class="filter-group" style="margin-bottom:12px;"><label>Years</label><input type="number" id="cagr-yrs" value="10" oninput="calcCAGR()" /></div>
         <div class="metric-label">CAGR</div><div class="big-result" id="cagr-result">9.6%</div>
         <div class="result-sub" id="cagr-sub"></div>
+        <button class="btn btn-sm" style="margin-top:10px;" onclick="toggleSchedule('cagr-schedule',this)">Show Year-by-Year ▾</button>
+        <div id="cagr-schedule" style="display:none;margin-top:10px;overflow-x:auto;"></div>
       </div>
       <div class="card">
         <h3>Reverse CAGR</h3>
@@ -231,15 +258,19 @@ tr:last-child td { border-bottom: none; }
         <div class="metric-label" id="rcagr-label">End Value</div>
         <div class="big-result" id="rcagr-result">—</div>
         <div class="result-sub" id="rcagr-sub"></div>
+        <div id="rcagr-schedule-wrap" style="display:none;"><button class="btn btn-sm" style="margin-top:10px;" onclick="toggleSchedule('rcagr-schedule',this)">Show Year-by-Year ▾</button>
+        <div id="rcagr-schedule" style="display:none;margin-top:10px;overflow-x:auto;"></div></div>
       </div>
       <div class="card">
-        <h3>DRIP Calculator</h3>
+        <h3>DRIP Calculator</h3><button class="card-expand-btn" onclick="openOverlay('drip')" title="Expand">⛶</button>
         <div class="filter-group" style="margin-bottom:8px;"><label>Initial Investment ($)</label><input type="number" id="drip-init" value="10000" oninput="calcDRIP()" /></div>
         <div class="filter-group" style="margin-bottom:8px;"><label>Annual Dividend Yield (%)</label><input type="number" id="drip-yield" value="3" step="0.1" oninput="calcDRIP()" /></div>
         <div class="filter-group" style="margin-bottom:8px;"><label>Annual Price Growth (%)</label><input type="number" id="drip-ap" value="7" step="0.1" oninput="calcDRIP()" /></div>
         <div class="filter-group" style="margin-bottom:12px;"><label>Years</label><input type="number" id="drip-yrs" value="20" oninput="calcDRIP()" /></div>
         <div class="metric-label">Final Portfolio Value</div><div class="big-result" id="drip-result">—</div>
         <div class="result-sub" id="drip-sub"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="toggleSchedule('drip-schedule',this)">Show Year-by-Year ▾</button><button class="btn btn-sm" onclick="exportDRIPCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('drip-',calcDRIP)">↺ Reset</button></div>
+        <div id="drip-schedule" style="display:none;margin-top:10px;overflow-x:auto;"></div>
       </div>
       <div class="card">
         <h3>Fair Value Estimator</h3>
@@ -284,8 +315,92 @@ tr:last-child td { border-bottom: none; }
           <div class="metric"><div class="metric-label">EV/EBITDA</div><div class="metric-value" id="ev-multiple">—</div></div>
         </div>
       </div>
+      <div class="card">
+        <h3>Future Value</h3><button class="card-expand-btn" onclick="openOverlay('fv')" title="Expand">⛶</button>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Present Value ($)</label><input type="number" id="fv-pv" value="10000" step="0.01" oninput="calcFV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Annual Interest Rate (%)</label><input type="number" id="fv-rate" value="8" step="0.1" oninput="calcFV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Years</label><input type="number" id="fv-years" value="10" oninput="calcFV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Compounding</label>
+          <select id="fv-comp" onchange="calcFV()" style="width:100%;">
+            <option value="1">Annually</option>
+            <option value="2">Semi-annually</option>
+            <option value="4">Quarterly</option>
+            <option value="12">Monthly</option>
+            <option value="365">Daily</option>
+          </select>
+        </div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>Additional Contribution ($/period)</label><input type="number" id="fv-contrib" value="0" step="0.01" oninput="calcFV()" style="width:100%;" /></div>
+        <div class="metric-label">Future Value</div>
+        <div class="big-result" id="fv-result">—</div>
+        <div class="result-sub" id="fv-sub"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="toggleSchedule('fv-schedule',this)">Show Year-by-Year ▾</button><button class="btn btn-sm" onclick="exportFVCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('fv-',calcFV)">↺ Reset</button></div>
+        <div id="fv-schedule" style="display:none;margin-top:10px;overflow-x:auto;"></div>
+      </div>
+      <div class="card">
+        <h3>Present Value</h3><button class="card-expand-btn" onclick="openOverlay('pv')" title="Expand">⛶</button>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Future Value ($)</label><input type="number" id="pv-fv" value="50000" step="0.01" oninput="calcPV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Discount Rate (%)</label><input type="number" id="pv-rate" value="8" step="0.1" oninput="calcPV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Years</label><input type="number" id="pv-years" value="10" oninput="calcPV()" style="width:100%;" /></div>
+        <div class="filter-group" style="margin-bottom:8px;"><label>Compounding</label>
+          <select id="pv-comp" onchange="calcPV()" style="width:100%;">
+            <option value="1">Annually</option>
+            <option value="2">Semi-annually</option>
+            <option value="4">Quarterly</option>
+            <option value="12">Monthly</option>
+            <option value="365">Daily</option>
+          </select>
+        </div>
+        <div class="filter-group" style="margin-bottom:12px;"><label>Periodic Payment ($/period) — annuity</label><input type="number" id="pv-pmt" value="0" step="0.01" oninput="calcPV()" style="width:100%;" /></div>
+        <div class="metric-label">Present Value</div>
+        <div class="big-result" id="pv-result">—</div>
+        <div class="result-sub" id="pv-sub"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><button class="btn btn-sm" onclick="toggleSchedule('pv-schedule',this)">Show Year-by-Year ▾</button><button class="btn btn-sm" onclick="exportPVCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('pv-',calcPV)">↺ Reset</button></div>
+        <div id="pv-schedule" style="display:none;margin-top:10px;overflow-x:auto;"></div>
+      </div>
     </div>
   </div>
+
+  <!-- FULLSCREEN CALC OVERLAYS -->
+  <div class="calc-overlay" id="overlay-fv">
+    <div class="calc-overlay-header">
+      <h2>Future Value Calculator</h2>
+      <div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm" onclick="exportFVCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('fv-',calcFV)">↺ Reset</button><button class="btn" onclick="closeOverlay('fv')">✕ Close</button></div>
+    </div>
+    <div class="calc-overlay-body">
+      <div class="calc-overlay-inputs" id="overlay-fv-inputs"></div>
+      <div class="calc-overlay-right">
+        <div class="calc-overlay-result" id="overlay-fv-result"></div>
+        <div class="calc-overlay-schedule" id="overlay-fv-schedule"></div>
+      </div>
+    </div>
+  </div>
+  <div class="calc-overlay" id="overlay-pv">
+    <div class="calc-overlay-header">
+      <h2>Present Value Calculator</h2>
+      <div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm" onclick="exportPVCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('pv-',calcPV)">↺ Reset</button><button class="btn" onclick="closeOverlay('pv')">✕ Close</button></div>
+    </div>
+    <div class="calc-overlay-body">
+      <div class="calc-overlay-inputs" id="overlay-pv-inputs"></div>
+      <div class="calc-overlay-right">
+        <div class="calc-overlay-result" id="overlay-pv-result"></div>
+        <div class="calc-overlay-schedule" id="overlay-pv-schedule"></div>
+      </div>
+    </div>
+  </div>
+  <div class="calc-overlay" id="overlay-drip">
+    <div class="calc-overlay-header">
+      <h2>DRIP Calculator</h2>
+      <div style="display:flex;gap:8px;align-items:center;"><button class="btn btn-sm" onclick="exportDRIPCSV()">⬇ Save CSV</button><button class="btn btn-sm" style="color:var(--red);" onclick="resetCalc('drip-',calcDRIP)">↺ Reset</button><button class="btn" onclick="closeOverlay('drip')">✕ Close</button></div>
+    </div>
+    <div class="calc-overlay-body">
+      <div class="calc-overlay-inputs" id="overlay-drip-inputs"></div>
+      <div class="calc-overlay-right">
+        <div class="calc-overlay-result" id="overlay-drip-result"></div>
+        <div class="calc-overlay-schedule" id="overlay-drip-schedule"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -615,6 +730,36 @@ async function loadFundamentals() {
 }
 
 // --- CALCULATORS ---
+function toggleSchedule(id, btn) {
+  const el = document.getElementById(id);
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? 'Show Year-by-Year ▾' : 'Hide Year-by-Year ▴';
+}
+function makeTable(headers, rows) {
+  let h = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => { h += '<tr>' + r.map((c,i) => `<td${i===r.length-1?' style="font-weight:500;"':''}>${c}</td>`).join('') + '</tr>'; });
+  return h + '</tbody></table>';
+}
+function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
+
+function calcCAGR() {
+  const s = parseFloat(document.getElementById('cagr-start').value);
+  const e = parseFloat(document.getElementById('cagr-end').value);
+  const y = parseFloat(document.getElementById('cagr-yrs').value);
+  if (!s || !e || !y || s <= 0) return;
+  const cagr = (Math.pow(e/s, 1/y) - 1) * 100;
+  document.getElementById('cagr-result').textContent = cagr.toFixed(2) + '%';
+  document.getElementById('cagr-sub').textContent = '$' + Math.round(s).toLocaleString() + ' → $' + Math.round(e).toLocaleString() + ' over ' + y + ' years';
+  const rows = [];
+  for (let i = 1; i <= y; i++) {
+    const val = s * Math.pow(1 + cagr/100, i);
+    const gain = val - s;
+    rows.push([i, fmt$(val), fmt$(gain), (cagr).toFixed(2) + '%']);
+  }
+  document.getElementById('cagr-schedule').innerHTML = makeTable(['Year','Value','Total Gain','Annual Rate'], rows);
+}
+
 function calcRCAGR() {
   const mode = document.getElementById('rcagr-mode').value;
   const rate = parseFloat(document.getElementById('rcagr-rate').value) / 100;
@@ -624,55 +769,476 @@ function calcRCAGR() {
   const label = document.getElementById('rcagr-label');
   const result = document.getElementById('rcagr-result');
   const sub = document.getElementById('rcagr-sub');
+  const scheduleWrap = document.getElementById('rcagr-schedule-wrap');
   startWrap.style.display = mode === 'start' ? 'none' : '';
   endWrap.style.display = mode === 'end' ? 'none' : '';
   yearsWrap.style.display = mode === 'years' ? 'none' : '';
+  let startVal, years;
   if (mode === 'end') {
-    const start = parseFloat(document.getElementById('rcagr-start').value);
-    const years = parseFloat(document.getElementById('rcagr-years').value);
-    if (isNaN(start)||isNaN(years)||rate<=-1) return;
-    const end = start * Math.pow(1 + rate, years);
+    startVal = parseFloat(document.getElementById('rcagr-start').value);
+    years = parseFloat(document.getElementById('rcagr-years').value);
+    if (isNaN(startVal)||isNaN(years)||rate<=-1) { scheduleWrap.style.display='none'; return; }
+    const end = startVal * Math.pow(1 + rate, years);
     label.textContent = 'End Value';
-    result.textContent = '$' + Math.round(end).toLocaleString();
-    sub.textContent = '$' + Math.round(start).toLocaleString() + ' growing at ' + (rate*100).toFixed(1) + '% for ' + years + ' years';
+    result.textContent = fmt$(end);
+    sub.textContent = fmt$(startVal) + ' growing at ' + (rate*100).toFixed(1) + '% for ' + years + ' years';
   } else if (mode === 'start') {
     const end = parseFloat(document.getElementById('rcagr-end').value);
-    const years = parseFloat(document.getElementById('rcagr-years').value);
-    if (isNaN(end)||isNaN(years)||rate<=-1) return;
-    const start = end / Math.pow(1 + rate, years);
+    years = parseFloat(document.getElementById('rcagr-years').value);
+    if (isNaN(end)||isNaN(years)||rate<=-1) { scheduleWrap.style.display='none'; return; }
+    startVal = end / Math.pow(1 + rate, years);
     label.textContent = 'Required Starting Value';
-    result.textContent = '$' + Math.round(start).toLocaleString();
-    sub.textContent = 'To reach $' + Math.round(end).toLocaleString() + ' in ' + years + ' yrs at ' + (rate*100).toFixed(1) + '%/yr';
+    result.textContent = fmt$(startVal);
+    sub.textContent = 'To reach ' + fmt$(end) + ' in ' + years + ' yrs at ' + (rate*100).toFixed(1) + '%/yr';
   } else {
-    const start = parseFloat(document.getElementById('rcagr-start').value);
+    startVal = parseFloat(document.getElementById('rcagr-start').value);
     const end = parseFloat(document.getElementById('rcagr-end').value);
-    if (isNaN(start)||isNaN(end)||start<=0||end<=0||rate<=0) return;
-    const years = Math.log(end / start) / Math.log(1 + rate);
+    if (isNaN(startVal)||isNaN(end)||startVal<=0||end<=0||rate<=0) { scheduleWrap.style.display='none'; return; }
+    years = Math.log(end / startVal) / Math.log(1 + rate);
     label.textContent = 'Years Required';
     result.textContent = years.toFixed(1) + ' yrs';
-    sub.textContent = '$' + Math.round(start).toLocaleString() + ' → $' + Math.round(end).toLocaleString() + ' at ' + (rate*100).toFixed(1) + '%/yr';
+    sub.textContent = fmt$(startVal) + ' → ' + fmt$(end) + ' at ' + (rate*100).toFixed(1) + '%/yr';
+  }
+  if (mode !== 'years' && years > 0 && years <= 100) {
+    scheduleWrap.style.display = '';
+    const rows = [];
+    const wholeYears = Math.min(Math.ceil(years), 100);
+    for (let i = 1; i <= wholeYears; i++) {
+      const val = startVal * Math.pow(1 + rate, i);
+      const gain = val - startVal;
+      rows.push([i, fmt$(val), fmt$(gain), '+' + (rate*100).toFixed(1) + '%']);
+    }
+    document.getElementById('rcagr-schedule').innerHTML = makeTable(['Year','Value','Total Gain','Rate/yr'], rows);
+  } else {
+    scheduleWrap.style.display = 'none';
   }
 }
-function calcCAGR() {
-  const s = parseFloat(document.getElementById('cagr-start').value);
-  const e = parseFloat(document.getElementById('cagr-end').value);
-  const y = parseFloat(document.getElementById('cagr-yrs').value);
-  if (!s || !e || !y || s <= 0) return;
-  const cagr = (Math.pow(e/s, 1/y) - 1) * 100;
-  document.getElementById('cagr-result').textContent = cagr.toFixed(2) + '%';
-  document.getElementById('cagr-sub').textContent = '$' + Math.round(s).toLocaleString() + ' → $' + Math.round(e).toLocaleString() + ' over ' + y + ' years';
+
+// Per-year overrides: { 'drip-ap-3': val, 'fv-rate-5': val, 'pv-pmt-2': val, ... }
+const yearVals = {};
+
+function getYV(key, def) { return key in yearVals ? yearVals[key] : def; }
+
+// Track which input field is focused so we never re-render it
+let _focusedKey = null;
+
+function editInput(key, def, fn, step='0.1', width='72px', isText=false) {
+  const v = getYV(key, def);
+  const displayVal = isText ? (v || '') : ((typeof v === 'number' && !Number.isInteger(v)) ? v.toFixed(2) : (v ?? def));
+  const type = isText ? 'text' : 'number';
+  const handler = isText
+    ? `yearVals['${key}']=this.value;`
+    : `yearVals['${key}']=parseFloat(this.value)||0;${fn}(true);`;
+  return `<input type="${type}" data-key="${key}" data-fn="${fn}" value="${displayVal}" step="${isText?'':step}"
+    style="width:${width};font-size:12px;padding:3px 6px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);color:var(--text);"
+    onfocus="_focusedKey='${key}'"
+    onblur="_focusedKey=null;${isText?'':fn+'(true)'}"
+    oninput="${handler}">`;
 }
-function calcDRIP() {
+
+function patchOrRender(containerId, newHtml, computedCells) {
+  // computedCells: array of { selector, value, className }
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  // If no input is focused in this container, full re-render is safe
+  const focused = container.querySelector('input:focus, input[data-key="' + _focusedKey + '"]');
+  if (!focused || !_focusedKey) {
+    container.innerHTML = newHtml;
+    return;
+  }
+  // Focused input exists — only patch computed output cells
+  computedCells.forEach(({ selector, value, cls }) => {
+    const el = container.querySelector(selector);
+    if (el) {
+      el.textContent = value;
+      if (cls !== undefined) el.className = cls;
+    }
+  });
+}
+
+function buildScheduleTable(html, targetId) {
+  const el = document.getElementById(targetId);
+  if (el) el.innerHTML = html;
+  const overlayEl = document.getElementById('overlay-' + targetId.split('-')[0] + '-schedule');
+  if (overlayEl) overlayEl.innerHTML = '<div class="calc-overlay-schedule">' + html + '</div>';
+}
+
+function calcDRIP(keepRates) {
   const init = parseFloat(document.getElementById('drip-init').value);
   const dy = parseFloat(document.getElementById('drip-yield').value) / 100;
   const ap = parseFloat(document.getElementById('drip-ap').value) / 100;
   const yrs = parseInt(document.getElementById('drip-yrs').value);
   if (isNaN(init)||isNaN(dy)||isNaN(ap)||isNaN(yrs)) return;
   let val = init;
-  for (let i = 0; i < yrs; i++) val = val * (1 + ap + dy);
-  document.getElementById('drip-result').textContent = '$' + Math.round(val).toLocaleString();
-  document.getElementById('drip-sub').textContent = 'vs $' + Math.round(init).toLocaleString() + ' — ' + ((val/init-1)*100).toFixed(0) + '% total return over ' + yrs + ' yrs';
+  let html = '<table><thead><tr><th>Year</th><th>Price Growth %</th><th>Div Yield %</th><th>Div Income</th><th>Portfolio Value</th><th>Total Return</th></tr></thead><tbody>';
+  for (let i = 1; i <= yrs; i++) {
+    const apY = getYV('drip-ap-'+i, ap * 100) / 100;
+    const dyY = getYV('drip-dy-'+i, dy * 100) / 100;
+    const divIncome = val * dyY;
+    val = val * (1 + apY) + divIncome;
+    const ret = ((val/init-1)*100).toFixed(1);
+    html += `<tr data-yr="${i}"><td>${i}</td><td>${editInput('drip-ap-'+i, ap*100, 'calcDRIP')}</td><td>${editInput('drip-dy-'+i, dy*100, 'calcDRIP')}</td><td data-cell="divincome">${fmt$(divIncome)}</td><td data-cell="portval"><strong>${fmt$(val)}</strong></td><td data-cell="ret" class="${val>=init?'pos':'neg'}">${ret}%</td></tr>`;
+  }
+  html += '</tbody></table>';
+  const sub = 'vs ' + fmt$(init) + ' — ' + ((val/init-1)*100).toFixed(0) + '% total return over ' + yrs + ' yrs';
+  document.getElementById('drip-result').textContent = fmt$(val);
+  document.getElementById('drip-sub').textContent = sub;
+  // Patch-safe render for drip
+  const dripTargets = [document.getElementById('drip-schedule'), document.getElementById('overlay-drip-schedule')];
+  dripTargets.forEach(container => {
+    if (!container) return;
+    const existingTable = container.querySelector('table');
+    const focusedIn = _focusedKey && container.querySelector(`[data-key="${_focusedKey}"]`);
+    if (!existingTable || !focusedIn) {
+      container.innerHTML = html;
+    } else {
+      let v2 = init;
+      for (let i2 = 1; i2 <= yrs; i2++) {
+        const apY2 = getYV('drip-ap-'+i2, ap * 100) / 100;
+        const dyY2 = getYV('drip-dy-'+i2, dy * 100) / 100;
+        const div2 = v2 * dyY2;
+        v2 = v2 * (1 + apY2) + div2;
+        const row = container.querySelector(`tr[data-yr="${i2}"]`);
+        if (!row) continue;
+        const di = row.querySelector('[data-cell="divincome"]'); if (di) di.textContent = fmt$(div2);
+        const pv2 = row.querySelector('[data-cell="portval"]'); if (pv2) pv2.innerHTML = '<strong>'+fmt$(v2)+'</strong>';
+        const rv = row.querySelector('[data-cell="ret"]');
+        if (rv) { rv.textContent = ((v2/init-1)*100).toFixed(1)+'%'; rv.className = v2>=init?'pos':'neg'; }
+      }
+    }
+  });
+  if (document.getElementById('overlay-drip').classList.contains('open')) {
+    document.getElementById('overlay-drip-result').innerHTML = `<div><div class="metric-label">Final Value</div><div class="big-result pos">${fmt$(val)}</div></div><div style="font-size:13px;color:var(--text2);">${sub}</div>`;
+  }
 }
+
+function calcFV(keepRates) {
+  const pv = parseFloat(document.getElementById('fv-pv').value);
+  const rate = parseFloat(document.getElementById('fv-rate').value);
+  const years = parseInt(document.getElementById('fv-years').value);
+  const n = parseInt(document.getElementById('fv-comp').value);
+  const baseContrib = parseFloat(document.getElementById('fv-contrib').value) || 0;
+  if (isNaN(pv)||isNaN(rate)||isNaN(years)||years<1) return;
+  let balance = pv, totalInterest = 0, totalContrib = 0;
+  const yearData = [];
+  for (let yr = 1; yr <= years; yr++) {
+    const rY = getYV('fv-rate-'+yr, rate) / 100;
+    const contribY = getYV('fv-contrib-'+yr, baseContrib * n);
+    const rPer = rY / n;
+    const startBal = balance;
+    const contribPer = contribY / n;
+    for (let j = 0; j < n; j++) balance = balance * (1 + rPer) + contribPer;
+    const interestYear = balance - startBal - contribY;
+    totalInterest += interestYear;
+    totalContrib += contribY;
+    yearData.push({ yr, balance, interestYear, contribY, totalGain: balance - pv });
+  }
+  const totalIn = pv + totalContrib;
+  const resultText = fmt$(balance);
+  const subText = 'Total invested: ' + fmt$(totalIn) + ' · Interest earned: ' + fmt$(totalInterest);
+  document.getElementById('fv-result').textContent = resultText;
+  document.getElementById('fv-sub').textContent = subText;
+
+  const schedEl = document.getElementById('fv-schedule');
+  const overlaySchedEl = document.getElementById('overlay-fv-schedule');
+  const targets = [schedEl, overlaySchedEl];
+
+  targets.forEach(container => {
+    if (!container) return;
+    const existingTable = container.querySelector('table');
+    const focusedInContainer = _focusedKey && container.querySelector(`[data-key="${_focusedKey}"]`);
+
+    if (!existingTable || !focusedInContainer) {
+      // Full render
+      let html = '<table><thead><tr><th>Year</th><th>Label</th><th>Rate %</th><th>Contributions ($/yr)</th><th>Interest</th><th>Balance</th><th>Total Gain</th></tr></thead><tbody>';
+      yearData.forEach(({ yr, balance, interestYear, contribY, totalGain }) => {
+        const gainCls = totalGain >= 0 ? 'pos' : 'neg';
+        html += `<tr data-yr="${yr}">
+          <td>${yr}</td>
+          <td>${editInput('fv-label-'+yr, '', 'calcFV', '', '110px', true)}</td>
+          <td>${editInput('fv-rate-'+yr, rate, 'calcFV')}</td>
+          <td>${editInput('fv-contrib-'+yr, baseContrib*n, 'calcFV', '1', '90px')}</td>
+          <td data-cell="interest">${fmt$(interestYear)}</td>
+          <td data-cell="balance"><strong>${fmt$(balance)}</strong></td>
+          <td data-cell="gain" class="${gainCls}">${fmt$(totalGain)}</td>
+        </tr>`;
+      });
+      html += `</tbody><tfoot><tr style="background:var(--bg2);">
+        <td colspan="4" style="font-weight:600;padding:8px 12px;">Total</td>
+        <td style="font-weight:600;">${fmt$(totalInterest)}</td>
+        <td style="font-weight:600;">${resultText}</td>
+        <td style="font-weight:600;">${fmt$(balance-pv)}</td>
+      </tr></tfoot></table>`;
+      container.innerHTML = html;
+    } else {
+      // Patch only output cells — don't touch inputs
+      yearData.forEach(({ yr, balance, interestYear, totalGain }) => {
+        const row = container.querySelector(`tr[data-yr="${yr}"]`);
+        if (!row) return;
+        const gainCls = totalGain >= 0 ? 'pos' : 'neg';
+        const interestEl = row.querySelector('[data-cell="interest"]');
+        const balanceEl = row.querySelector('[data-cell="balance"]');
+        const gainEl = row.querySelector('[data-cell="gain"]');
+        if (interestEl) interestEl.textContent = fmt$(interestYear);
+        if (balanceEl) balanceEl.innerHTML = '<strong>' + fmt$(balance) + '</strong>';
+        if (gainEl) { gainEl.textContent = fmt$(totalGain); gainEl.className = gainCls; }
+      });
+      // Update footer
+      const foot = container.querySelector('tfoot td:nth-child(5)');
+      if (foot) { foot.textContent = fmt$(totalInterest); }
+      const foot2 = container.querySelector('tfoot td:nth-child(6)');
+      if (foot2) foot2.textContent = resultText;
+      const foot3 = container.querySelector('tfoot td:nth-child(7)');
+      if (foot3) foot3.textContent = fmt$(balance - pv);
+    }
+  });
+
+  if (document.getElementById('overlay-fv').classList.contains('open')) {
+    document.getElementById('overlay-fv-result').innerHTML = `<div><div class="metric-label">Future Value</div><div class="big-result pos">${resultText}</div></div><div style="font-size:13px;color:var(--text2);">${subText}</div>`;
+  }
+}
+
+function exportFVCSV() {
+  const pv = parseFloat(document.getElementById('fv-pv').value);
+  const rate = parseFloat(document.getElementById('fv-rate').value);
+  const years = parseInt(document.getElementById('fv-years').value);
+  const n = parseInt(document.getElementById('fv-comp').value);
+  const baseContrib = parseFloat(document.getElementById('fv-contrib').value) || 0;
+  let rows = [['Year','Label','Rate %','Contributions','Interest','Balance','Total Gain']];
+  let balance = pv, totalInterest = 0, totalContrib = 0;
+  for (let yr = 1; yr <= years; yr++) {
+    const rY = getYV('fv-rate-'+yr, rate) / 100;
+    const contribY = getYV('fv-contrib-'+yr, baseContrib * n);
+    const label = getYV('fv-label-'+yr, '');
+    const rPer = rY / n;
+    const startBal = balance;
+    const contribPer = contribY / n;
+    for (let j = 0; j < n; j++) balance = balance * (1 + rPer) + contribPer;
+    const interestYear = balance - startBal - contribY;
+    totalInterest += interestYear; totalContrib += contribY;
+    rows.push([yr, label, (rY*100).toFixed(2), Math.round(contribY), Math.round(interestYear), Math.round(balance), Math.round(balance-pv)]);
+  }
+  rows.push(['Total','','','',Math.round(totalInterest),Math.round(balance),Math.round(balance-pv)]);
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'fv-projection.csv';
+  a.click();
+}
+
+function calcPV(keepRates) {
+  const fv = parseFloat(document.getElementById('pv-fv').value);
+  const rate = parseFloat(document.getElementById('pv-rate').value);
+  const years = parseInt(document.getElementById('pv-years').value);
+  const n = parseInt(document.getElementById('pv-comp').value);
+  const basePmt = parseFloat(document.getElementById('pv-pmt').value) || 0;
+  if (isNaN(fv)||isNaN(rate)||isNaN(years)||years<1) return;
+  const annualRates = [];
+  const annualPmts = [];
+  for (let yr = 1; yr <= years; yr++) {
+    annualRates.push(getYV('pv-rate-'+yr, rate) / 100);
+    annualPmts.push(getYV('pv-pmt-'+yr, basePmt * n));
+  }
+  let discountProduct = 1;
+  for (let yr = 0; yr < years; yr++) discountProduct *= (1 + annualRates[yr]);
+  const pvLump = fv / discountProduct;
+  let pvPayments = 0, runDisc = 1;
+  for (let yr = 0; yr < years; yr++) {
+    runDisc *= (1 + annualRates[yr]);
+    pvPayments += annualPmts[yr] / runDisc;
+  }
+  const pvTotal = pvLump + pvPayments;
+  const subText = 'Discount applied: ' + fmt$(fv - pvLump) + ' · Effective over ' + years + ' yrs';
+  document.getElementById('pv-result').textContent = fmt$(pvTotal);
+  document.getElementById('pv-sub').textContent = subText;
+
+  // Pre-compute row data
+  const rowData = [];
+  let cumulPV = 0, runD = 1;
+  for (let yr = 1; yr <= years; yr++) {
+    runD *= (1 + annualRates[yr-1]);
+    const pvFVthisYear = fv / runD;
+    const pvPmtThisYear = annualPmts[yr-1] / runD;
+    cumulPV += pvPmtThisYear;
+    const pctDone = pvTotal > 0 ? (cumulPV / pvTotal * 100).toFixed(1) : '0.0';
+    rowData.push({ yr, pvPmtThisYear, pvFVthisYear, cumulPV, pctDone, isWithdrawal: annualPmts[yr-1] < 0 });
+  }
+
+  const pvTargets = [document.getElementById('pv-schedule'), document.getElementById('overlay-pv-schedule')];
+  pvTargets.forEach(container => {
+    if (!container) return;
+    const existingTable = container.querySelector('table');
+    const focusedIn = _focusedKey && container.querySelector(`[data-key="${_focusedKey}"]`);
+    if (!existingTable || !focusedIn) {
+      let html = '<table><thead><tr><th>Year</th><th>Discount Rate %</th><th>Cashflow ($/yr)</th><th>PV of Cashflow</th><th>Cumulative PV</th><th>% Accrued</th></tr></thead><tbody>';
+      rowData.forEach(({ yr, pvPmtThisYear, pvFVthisYear, cumulPV, pctDone, isWithdrawal }) => {
+        html += `<tr data-yr="${yr}">
+          <td>${yr}</td>
+          <td>${editInput('pv-rate-'+yr, rate, 'calcPV')}</td>
+          <td>${editInput('pv-pmt-'+yr, basePmt*n, 'calcPV', '1', '90px')}</td>
+          <td data-cell="pvpmt" class="${isWithdrawal?'neg':'pos'}">${fmt$(pvPmtThisYear)}</td>
+          <td data-cell="cumulpv"><strong>${fmt$(pvFVthisYear + cumulPV)}</strong></td>
+          <td data-cell="pctdone" style="font-size:12px;color:var(--text2);">${pctDone}%</td>
+        </tr>`;
+      });
+      html += `</tbody><tfoot><tr style="background:var(--bg2);">
+        <td colspan="3" style="font-weight:600;padding:8px 12px;">Future Value</td>
+        <td colspan="2" style="font-weight:600;">${fmt$(fv)}</td>
+        <td>100%</td>
+      </tr></tfoot></table>`;
+      container.innerHTML = html;
+    } else {
+      rowData.forEach(({ yr, pvPmtThisYear, pvFVthisYear, cumulPV, pctDone, isWithdrawal }) => {
+        const row = container.querySelector(`tr[data-yr="${yr}"]`);
+        if (!row) return;
+        const pvpmt = row.querySelector('[data-cell="pvpmt"]');
+        if (pvpmt) { pvpmt.textContent = fmt$(pvPmtThisYear); pvpmt.className = isWithdrawal ? 'neg' : 'pos'; }
+        const cpv = row.querySelector('[data-cell="cumulpv"]');
+        if (cpv) cpv.innerHTML = '<strong>' + fmt$(pvFVthisYear + cumulPV) + '</strong>';
+        const pct = row.querySelector('[data-cell="pctdone"]');
+        if (pct) pct.textContent = pctDone + '%';
+      });
+    }
+  });
+
+  if (document.getElementById('overlay-pv').classList.contains('open')) {
+    document.getElementById('overlay-pv-result').innerHTML = `<div><div class="metric-label">Present Value</div><div class="big-result">${fmt$(pvTotal)}</div></div><div style="font-size:13px;color:var(--text2);">${subText}</div>`;
+  }
+}
+
+
+function resetCalc(prefix, calcFn) {
+  if (!confirm('Reset all per-year overrides for this calculator?')) return;
+  for (const k of Object.keys(yearVals)) { if (k.startsWith(prefix)) delete yearVals[k]; }
+  calcFn(false);
+  // Force full re-render by clearing tables
+  const schedId = prefix === 'fv-' ? 'fv-schedule' : prefix === 'pv-' ? 'pv-schedule' : 'drip-schedule';
+  const sched = document.getElementById(schedId);
+  if (sched) sched.innerHTML = '';
+  calcFn(true);
+}
+function exportDRIPCSV() {
+  const init = parseFloat(document.getElementById('drip-init').value);
+  const dy = parseFloat(document.getElementById('drip-yield').value) / 100;
+  const ap = parseFloat(document.getElementById('drip-ap').value) / 100;
+  const yrs = parseInt(document.getElementById('drip-yrs').value);
+  let rows = [['Year','Price Growth %','Div Yield %','Div Income','Portfolio Value','Total Return %']];
+  let val = init;
+  for (let i = 1; i <= yrs; i++) {
+    const apY = getYV('drip-ap-'+i, ap*100) / 100;
+    const dyY = getYV('drip-dy-'+i, dy*100) / 100;
+    const divIncome = val * dyY;
+    val = val * (1 + apY) + divIncome;
+    rows.push([i, (apY*100).toFixed(2), (dyY*100).toFixed(2), Math.round(divIncome), Math.round(val), ((val/init-1)*100).toFixed(1)]);
+  }
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'drip-projection.csv'; a.click();
+}
+
+function exportPVCSV() {
+  const fv = parseFloat(document.getElementById('pv-fv').value);
+  const rate = parseFloat(document.getElementById('pv-rate').value);
+  const years = parseInt(document.getElementById('pv-years').value);
+  const n = parseInt(document.getElementById('pv-comp').value);
+  const basePmt = parseFloat(document.getElementById('pv-pmt').value) || 0;
+  const annualRates = [], annualPmts = [];
+  for (let yr = 1; yr <= years; yr++) {
+    annualRates.push(getYV('pv-rate-'+yr, rate) / 100);
+    annualPmts.push(getYV('pv-pmt-'+yr, basePmt * n));
+  }
+  let discountProduct = 1;
+  for (let yr = 0; yr < years; yr++) discountProduct *= (1 + annualRates[yr]);
+  const pvLump = fv / discountProduct;
+  let pvPayments = 0, runDisc2 = 1;
+  for (let yr = 0; yr < years; yr++) { runDisc2 *= (1+annualRates[yr]); pvPayments += annualPmts[yr]/runDisc2; }
+  const pvTotal = pvLump + pvPayments;
+  let rows = [['Year','Discount Rate %','Cashflow','PV of Cashflow','Cumulative PV','% Accrued']];
+  let cumulPV = 0, runD = 1;
+  for (let yr = 1; yr <= years; yr++) {
+    runD *= (1 + annualRates[yr-1]);
+    const pvFV = fv / runD, pvPmt = annualPmts[yr-1] / runD;
+    cumulPV += pvPmt;
+    rows.push([yr, (annualRates[yr-1]*100).toFixed(2), Math.round(annualPmts[yr-1]), Math.round(pvPmt), Math.round(pvFV+cumulPV), (cumulPV/pvTotal*100).toFixed(1)+'%']);
+  }
+  rows.push(['FV','','','',Math.round(fv),'100%']);
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'pv-projection.csv'; a.click();
+}
+
+// --- OVERLAY SYSTEM ---
+function openOverlay(id) {
+  const overlay = document.getElementById('overlay-' + id);
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Clone inputs into overlay panel
+  const card = document.querySelector(`#tab-calculators .card:has(#${id}-pv, #${id}-fv, #${id}-init, #${id === 'fv' ? 'fv-pv' : id === 'pv' ? 'pv-fv' : 'drip-init'})`);
+  // Build inputs HTML from current card inputs
+  const inputsEl = document.getElementById('overlay-' + id + '-inputs');
+  // Mirror all filter-groups from the card
+  const srcCard = findCalcCard(id);
+  if (srcCard) {
+    const groups = srcCard.querySelectorAll('.filter-group, .metric-label, .big-result, .result-sub');
+    let html = '';
+    groups.forEach(g => {
+      if (g.classList.contains('filter-group')) {
+        const label = g.querySelector('label');
+        const inp = g.querySelector('input, select');
+        if (!label || !inp) return;
+        const isSelect = inp.tagName === 'SELECT';
+        if (isSelect) {
+          html += `<div class="filter-group"><label>${label.textContent}</label><select onchange="syncAndCalc('${id}','${inp.id}',this.value)" id="ov-${inp.id}">`;
+          Array.from(inp.options).forEach(o => { html += `<option value="${o.value}"${o.selected?' selected':''}>${o.text}</option>`; });
+          html += `</select></div>`;
+        } else {
+          html += `<div class="filter-group"><label>${label.textContent}</label><input type="number" id="ov-${inp.id}" value="${inp.value}" step="${inp.step||'any'}" oninput="syncAndCalc('${id}','${inp.id}',this.value)"></div>`;
+        }
+      }
+    });
+    html += `<div style="margin-top:12px;"><div class="metric-label" id="ov-${id}-label">${id === 'fv' ? 'Future Value' : id === 'pv' ? 'Present Value' : 'Final Value'}</div><div class="big-result" id="ov-${id}-result">—</div><div class="result-sub" id="ov-${id}-sub"></div></div>`;
+    inputsEl.innerHTML = html;
+  }
+  // Trigger calc to populate schedule
+  if (id === 'fv') calcFV(true);
+  else if (id === 'pv') calcPV(true);
+  else if (id === 'drip') calcDRIP(true);
+  // Sync result into overlay header bar
+  syncOverlayResult(id);
+}
+
+function findCalcCard(id) {
+  const idMap = { fv: 'fv-pv', pv: 'pv-fv', drip: 'drip-init' };
+  const inp = document.getElementById(idMap[id]);
+  return inp ? inp.closest('.card') : null;
+}
+
+function syncAndCalc(calcId, realId, val) {
+  const realInput = document.getElementById(realId);
+  if (realInput) { realInput.value = val; }
+  if (calcId === 'fv') calcFV(false);
+  else if (calcId === 'pv') calcPV(false);
+  else if (calcId === 'drip') calcDRIP(false);
+  syncOverlayResult(calcId);
+}
+
+function syncOverlayResult(id) {
+  const resEl = document.getElementById(id + '-result');
+  const subEl = document.getElementById(id + '-sub');
+  const ovResult = document.getElementById('overlay-' + id + '-result');
+  const sched = document.getElementById(id + '-schedule');
+  if (resEl && ovResult) {
+    ovResult.innerHTML = `<div><div class="metric-label">${id === 'fv' ? 'Future Value' : id === 'pv' ? 'Present Value' : 'Final Value'}</div><div class="big-result pos">${resEl.textContent}</div></div><div style="font-size:13px;color:var(--text2);">${subEl ? subEl.textContent : ''}</div>`;
+  }
+  const ovSched = document.getElementById('overlay-' + id + '-schedule');
+  if (sched && ovSched) ovSched.innerHTML = sched.innerHTML;
+}
+
+function closeOverlay(id) {
+  document.getElementById('overlay-' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { ['fv','pv','drip'].forEach(closeOverlay); } });
+
 function updatePEMethod() {
   const method = document.getElementById('pe-method').value;
   const label = document.getElementById('pe-extra-label');
@@ -727,7 +1293,7 @@ function calcEV() {
   document.getElementById('ev-multiple').textContent = ebitda > 0 ? (ev/ebitda).toFixed(1) + 'x' : '—';
 }
 
-renderPortfolio(); calcDCF(); calcRCAGR(); calcCAGR(); calcDRIP(); calcPE(); calcMOS(); calcDY(); calcEV();
+renderPortfolio(); calcDCF(); calcRCAGR(); calcCAGR(); calcDRIP(); calcPE(); calcMOS(); calcDY(); calcEV(); calcFV(); calcPV();
 </script>
 </body>
 </html>

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pexip Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#00B894;--teal-dark:#007A63;--teal-bg:#E6F7F4;
+  --amber:#F0A500;--amber-bg:#FEF6E4;
+  --red:#D63031;--red-bg:#FDEAEA;
+  --blue:#3730A3;--blue-bg:#EEF2FF;
+  --purple:#7B5EA7;--purple-bg:#F3EEFF;
+  --slate:#0F1F2E;
+  --bg:#F0F2F5;--surface:#fff;--surface2:#F7F8FA;
+  --border:#E2E6EA;--border2:#C8CDD4;
+  --text:#0F1F2E;--text2:#4A5568;--text3:#9AA5B4;
+  --r:10px;--r-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:216px;background:var(--slate);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-icon{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:17px;height:17px;fill:#fff}
+.sb-name{font-size:15px;font-weight:600;color:#fff}
+.sb-tag{font-size:10px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.07em}
+.nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nav-sec{font-size:10px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.09em;padding:8px 8px 3px;font-weight:500}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:var(--r-sm);border:none;background:none;color:rgba(255,255,255,.48);font-size:13px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;text-align:left;transition:all .13s;margin-bottom:1px}
+.nav-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;opacity:.7}
+.nav-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82)}
+.nav-btn.active{background:rgba(0,184,148,.18);color:var(--teal);font-weight:500}
+.nav-btn.active svg{opacity:1}
+.sb-foot{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.node-pill{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.04);margin-bottom:4px;cursor:pointer;transition:background .12s}
+.node-pill:hover{background:rgba(255,255,255,.08)}
+.ndot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .3s}
+.ndot.ok{background:var(--teal)}.ndot.err{background:var(--red)}.ndot.load{background:var(--amber);animation:blink .8s infinite}.ndot.sim{background:#A78BFA}
+.node-label{font-size:11px;color:rgba(255,255,255,.28);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.node-edit{font-size:10px;color:rgba(255,255,255,.2);flex-shrink:0}
+
+/* Sim banner */
+.sim-banner{background:linear-gradient(90deg,#7C3AED,#A78BFA);color:white;padding:6px 14px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sim-banner svg{width:13px;height:13px;fill:white;flex-shrink:0}
+.sim-banner .sp{flex:1}
+.sim-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:white;padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-weight:500}
+.sim-banner button:hover{background:rgba(255,255,255,.3)}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:56px;padding:0 24px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tb-title{flex:1}
+.tb-title h1{font-size:16px;font-weight:600}
+.tb-title p{font-size:11.5px;color:var(--text3);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn svg{width:13px;height:13px;fill:currentColor}
+.btn.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:var(--teal-dark)}
+.btn-sim{background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff;border-color:#7C3AED}
+.btn-sim:hover{opacity:.9;background:linear-gradient(135deg,#6D28D9,#7C3AED)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-val{font-size:28px;font-weight:600;line-height:1;font-family:'IBM Plex Mono',monospace}
+.stat-val.green{color:var(--teal)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--blue)}.stat-val.red{color:var(--red)}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:160px}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;fill:var(--text3);pointer-events:none}
+.search input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .12s}
+.pill.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal);font-weight:500}
+
+/* Strip */
+.strip{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:14px;font-size:12px;color:var(--text2)}
+.strip .sp{flex:1}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.idle{background:var(--border2)}.dot.live{background:var(--teal);animation:blink 2s infinite}.dot.load{background:var(--amber);animation:blink .7s infinite}.dot.err{background:var(--red)}.dot.sim{background:#A78BFA}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-head-title{font-size:13px;font-weight:600;flex:1}
+.card-count{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
+
+/* Table */
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:8px 16px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody tr.clickable{cursor:pointer}
+td{padding:10px 16px;vertical-align:middle}
+.cell-name{display:flex;align-items:center;gap:10px}
+.ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.row-name{font-size:13.5px;font-weight:500}
+.row-sub{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.conf{background:var(--teal-bg);color:var(--teal-dark)}.badge.test{background:var(--blue-bg);color:var(--blue)}.badge.lecture{background:var(--amber-bg);color:#7A5006}.badge.pin{background:var(--red-bg);color:var(--red)}.badge.open{background:var(--teal-bg);color:var(--teal-dark)}.badge.ok{background:var(--teal-bg);color:var(--teal-dark)}.badge.warn{background:var(--amber-bg);color:#7A5006}.badge.alarm{background:var(--red-bg);color:var(--red)}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--teal);animation:blink 2s infinite;margin-right:4px;vertical-align:middle}
+
+/* Detail */
+.conf-detail-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow)}
+.conf-detail-top{display:flex;align-items:flex-start;gap:16px}
+.conf-detail-ava{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#fff;flex-shrink:0}
+.conf-detail-name{font-size:20px;font-weight:600;line-height:1.2}
+.alias-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.alias-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:3px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.alias-chip button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0}
+.alias-chip button:hover{color:var(--teal)}
+.conf-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.detail-cols{grid-template-columns:1fr}}
+
+/* Participants */
+.participant-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.participant-row:last-child{border-bottom:none}
+.participant-row:hover{background:var(--surface2)}
+.p-ava{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.p-name{font-size:13px;font-weight:500}
+.p-detail{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.p-role-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0}
+.p-role-badge.host{background:var(--teal-bg);color:var(--teal-dark)}
+.p-role-badge.guest{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.p-actions{display:flex;gap:5px;margin-left:auto;flex-shrink:0}
+
+/* Add participant */
+.add-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
+.add-panel-head{padding:11px 16px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center}
+.add-panel-head h3{font-size:13px;font-weight:600;flex:1}
+.add-tabs{display:flex;border-bottom:1px solid var(--border)}
+.add-tab{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Sans',sans-serif;transition:all .12s}
+.add-tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
+.add-body{padding:14px 16px}
+.add-status{font-size:12px;margin-top:10px;padding:8px 10px;border-radius:var(--r-sm);display:none}
+.add-status.show{display:block}
+.add-status.ok{background:var(--teal-bg);color:var(--teal-dark)}
+.add-status.err{background:var(--red-bg);color:var(--red)}
+.add-status.info{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.add-status.sim-ok{background:#F3EEFF;color:#7C3AED;border:1px solid #C4B5FD}
+.invite-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;margin-top:10px}
+.invite-url{font-family:'IBM Plex Mono',monospace;font-size:12px;word-break:break-all;line-height:1.5;margin-bottom:10px}
+.webrtc-video-area{background:#0a0a0a;border-radius:var(--r-sm);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;margin-bottom:12px;position:relative;overflow:hidden}
+.webrtc-video-area video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.webrtc-video-area video.active{display:block}
+#localVideo{width:25%!important;height:25%!important;inset:auto!important;bottom:10px!important;right:10px!important;border-radius:6px;border:2px solid rgba(255,255,255,.2)}
+.webrtc-placeholder{display:flex;flex-direction:column;align-items:center;gap:8px;color:#555;z-index:1}
+.webrtc-placeholder svg{width:36px;height:36px;fill:#333}
+.webrtc-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.webrtc-status{font-size:12px;color:var(--text3);flex:1}
+
+/* Settings */
+.settings-wrap{max-width:700px}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.settings-section-head{padding:12px 18px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:8px}
+.settings-section-head h3{font-size:13px;font-weight:600;flex:1}
+.settings-body{padding:18px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;font-weight:500;color:var(--text2)}
+.field input,.field select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hint{font-size:12px;color:var(--text3);line-height:1.6;margin-top:4px}
+.conn-test-row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.conn-test-msg{font-size:12px;color:var(--text3)}
+.profile-list{display:flex;flex-direction:column;gap:8px}
+.profile-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all .12s}
+.profile-item:hover{border-color:var(--teal);background:var(--teal-bg)}
+.profile-item.active-profile{border-color:var(--teal);background:var(--teal-bg)}
+.profile-item.sim-profile{border-color:#C4B5FD;background:#F5F3FF}
+.profile-item.sim-profile:hover{background:#EDE9FE;border-color:#A78BFA}
+.profile-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.profile-dot.active{background:var(--teal)}
+.profile-dot.sim{background:#A78BFA}
+.profile-name{font-size:13px;font-weight:500;flex:1}
+.profile-host{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.sim-tag{font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:#EDE9FE;color:#7C3AED;flex-shrink:0}
+
+/* System */
+.sys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.sys-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.sys-card-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.sys-card-val{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.sys-card-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+.panel{display:none}
+.panel.show{display:block;animation:fadeUp .2s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--slate);color:#fff;padding:10px 18px;border-radius:var(--r-sm);font-size:13px;box-shadow:var(--shadow-md);opacity:0;transition:all .2s;pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:28px;margin-bottom:8px;opacity:.4}
+.no-cfg{display:flex;flex-direction:column;align-items:center;justify-content:center;height:calc(100vh - 112px);text-align:center;padding:40px}
+.no-cfg-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.no-cfg h2{font-size:18px;font-weight:600;margin-bottom:8px}
+.no-cfg p{font-size:13px;color:var(--text2);margin-bottom:20px;max-width:360px;line-height:1.6}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+    <div><div class="sb-name">Pexip</div><div class="sb-tag" id="sbVersion">Dashboard</div></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Monitor</div>
+    <button class="nav-btn active" id="nav-conf" onclick="showPanel('conf')">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+      Conferences
+    </button>
+    <button class="nav-btn" id="nav-hist" onclick="showPanel('hist')">
+      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      Call History
+    </button>
+    <button class="nav-btn" id="nav-sys" onclick="showPanel('sys')">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      System
+    </button>
+    <div class="nav-sec" style="margin-top:10px">Directory</div>
+    <button class="nav-btn" id="nav-ab" onclick="showPanel('ab')">
+      <svg viewBox="0 0 24 24"><path d="M20 0H4v2h16V0zM4 24h16v-2H4v2zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 2.75c1.24 0 2.25 1.01 2.25 2.25S13.24 11.25 12 11.25 9.75 10.24 9.75 9s1.01-2.25 2.25-2.25zM17 17H7v-.75c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V17z"/></svg>
+      Address Book
+    </button>
+    <button class="nav-btn" id="nav-users" onclick="showPanel('users')">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      Users
+    </button>
+    <div class="nav-sec" style="margin-top:10px">Config</div>
+    <button class="nav-btn" id="nav-settings" onclick="showPanel('settings')">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Settings
+    </button>
+  </nav>
+  <div class="sb-foot" onclick="showPanel('settings')" title="Edit settings">
+    <div class="node-pill"><div class="ndot" id="dotConf"></div><div class="node-label" id="sbConfHost">Not configured</div><span class="node-edit">✎</span></div>
+    <div class="node-pill"><div class="ndot" id="dotMgmt"></div><div class="node-label" id="sbMgmtHost">Not configured</div><span class="node-edit">✎</span></div>
+  </div>
+</aside>
+
+<div class="main">
+  <!-- Sim banner -->
+  <div class="sim-banner" id="simBanner" style="display:none">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    Simulation mode — data is simulated, no real node connected
+    <span class="sp"></span>
+    <button onclick="showPanel('settings')">Switch to live node →</button>
+  </div>
+
+  <div class="topbar">
+    <div class="tb-title"><h1 id="pageTitle">Conferences</h1><p id="pageSub">Click a conference to view details and participants</p></div>
+    <button class="btn on" id="autoBtn" onclick="toggleAuto()" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+      <span id="autoBtnTxt">Auto ON</span>
+    </button>
+    <button class="btn" onclick="onRefresh()">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- No config -->
+    <div id="noConfigOverlay" style="display:none">
+      <div class="no-cfg">
+        <div class="no-cfg-icon">⚙️</div>
+        <h2>Configure your Pexip node</h2>
+        <p>Enter your node details in Settings, or load a simulation profile to explore the dashboard without a live connection.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="showPanel('settings')">Open Settings</button>
+          <button class="btn btn-sim" onclick="loadSimProfile('Calgary HQ')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Try simulation
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conferences -->
+    <div id="panel-conf" class="panel show">
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total VMRs</div></div>
+        <div class="stat"><div class="stat-val green" id="s-live">—</div><div class="stat-lbl">Active now</div></div>
+        <div class="stat"><div class="stat-val blue" id="s-parts">—</div><div class="stat-lbl">Participants</div></div>
+        <div class="stat"><div class="stat-val amber" id="s-pin">—</div><div class="stat-lbl">PIN required</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="confQ" placeholder="Search conferences…" oninput="renderConf()"/></div>
+        <div class="pills"><button class="pill on" onclick="setConfF('all',this)">All</button><button class="pill" onclick="setConfF('live',this)">Active</button><button class="pill" onclick="setConfF('pin',this)">PIN required</button></div>
+      </div>
+      <div class="strip"><div class="dot load" id="confDot"></div><span id="confMsg">Loading…</span><span class="sp"></span><span id="confCd" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)"></span></div>
+      <div class="card"><div class="card-head"><span class="card-head-title">Virtual Meeting Rooms</span><span class="card-count" id="confCount">—</span></div><div id="confBody"><div class="empty-state"><div class="empty-icon">▣</div>Loading…</div></div></div>
+    </div>
+
+    <!-- Detail -->
+    <div id="panel-detail" class="panel">
+      <div style="margin-bottom:16px"><button class="btn" onclick="backToList()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>Back to conferences</button></div>
+      <div class="conf-detail-header">
+        <div class="conf-detail-top">
+          <div class="conf-detail-ava" id="detailAva"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="conf-detail-name" id="detailName">—</div><span id="detailTypeBadge"></span><span id="detailLiveBadge"></span></div>
+            <div style="font-size:13px;color:var(--text3);margin-top:3px" id="detailDesc"></div>
+            <div class="alias-list" id="detailAliases"></div>
+          </div>
+        </div>
+        <div class="conf-actions" id="detailActions"></div>
+      </div>
+      <div class="detail-cols">
+        <div><div class="card"><div class="card-head"><span class="card-head-title">Configuration</span></div><div id="detailConfig"></div></div></div>
+        <div>
+          <div class="add-panel">
+            <div class="add-panel-head"><h3>Add Participant</h3></div>
+            <div class="add-tabs">
+              <button class="add-tab active" id="addtab-dialout" onclick="switchAddTab('dialout')">📞 Dial Out</button>
+              <button class="add-tab" id="addtab-invite" onclick="switchAddTab('invite')">🔗 Invite Link</button>
+              <button class="add-tab" id="addtab-webrtc" onclick="switchAddTab('webrtc')">🎥 Join Browser</button>
+            </div>
+            <!-- Dial Out -->
+            <div class="add-body" id="addbody-dialout">
+              <div class="field-row3"><div class="field" style="grid-column:1/3"><label>Destination URI</label><input id="doUri" placeholder="user@domain.com or IP"/></div><div class="field"><label>Protocol</label><select id="doProtocol"><option value="sip">SIP</option><option value="h323">H.323</option><option value="mssip">MS-SIP</option><option value="rtmp">RTMP</option></select></div></div>
+              <div class="field-row"><div class="field"><label>Display name</label><input id="doName" placeholder="Optional"/></div><div class="field"><label>Role</label><select id="doRole"><option value="guest">Guest</option><option value="host">Host</option></select></div></div>
+              <div class="field-row"><div class="field"><label>System location</label><select id="doLocation"></select></div><div class="field"><label>Call type</label><select id="doCallType"><option value="video">Video</option><option value="audio">Audio only</option><option value="api">API (no media)</option></select></div></div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doDialOut()"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>Dial participant into conference</button>
+              <div class="add-status" id="doStatus"></div>
+            </div>
+            <!-- Invite -->
+            <div class="add-body" id="addbody-invite" style="display:none">
+              <div class="field"><label>Guest name</label><input id="invName" placeholder="e.g. John Smith"/></div>
+              <div class="field-row"><div class="field"><label>Role</label><select id="invRole"><option value="">Auto (guest)</option><option value="host">Host</option><option value="guest">Guest</option></select></div><div class="field"><label>PIN hint</label><select id="invShowPin"><option value="no">Don't include PIN</option><option value="yes">Include guest PIN</option></select></div></div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="generateInvite()"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>Generate invite link</button>
+              <div id="inviteResult" style="display:none"><div class="invite-box"><div class="invite-url" id="inviteUrl"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm btn-primary" onclick="copyTxt(document.getElementById('inviteUrl').textContent,'Link copied')">Copy link</button><button class="btn btn-sm" onclick="window.open(document.getElementById('inviteUrl').textContent,'_blank')">Open</button><button class="btn btn-sm" onclick="document.getElementById('inviteResult').style.display='none'">Clear</button></div></div></div>
+            </div>
+            <!-- WebRTC -->
+            <div class="add-body" id="addbody-webrtc" style="display:none">
+              <div class="webrtc-video-area" id="webrtcVideoArea"><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><div class="webrtc-placeholder" id="webrtcPlaceholder"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><span>Video will appear here when connected</span></div></div>
+              <div class="field-row" style="margin-bottom:10px"><div class="field"><label>Your display name</label><input id="rtcName" value="Dashboard User"/></div><div class="field"><label>Role</label><select id="rtcRole"><option value="guest">Guest</option><option value="host">Host</option></select></div></div>
+              <div class="field" style="margin-bottom:10px"><label>PIN (if required)</label><input id="rtcPin" type="password" placeholder="Leave blank if none"/></div>
+              <div class="webrtc-controls"><button class="btn btn-primary" id="rtcJoinBtn" onclick="rtcJoin()"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>Join via browser</button><button class="btn btn-danger btn-sm" id="rtcHangupBtn" onclick="rtcHangup()" style="display:none">Hang up</button><span class="webrtc-status" id="rtcStatus">Not connected</span></div>
+              <div class="add-status" id="rtcStatusBox"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-head-title">Live Participants</span><span class="card-count" id="partCount">—</span><button class="btn btn-sm" onclick="refreshParticipants()" style="margin-left:4px"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button></div>
+            <div class="strip" id="partStrip" style="margin:10px 12px 6px;border-radius:var(--r-sm)"><div class="dot idle" id="partDot"></div><span id="partMsg">Loading…</span></div>
+            <div id="partBody"><div class="empty-state"><div class="empty-icon">👥</div>Loading…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div id="panel-hist" class="panel">
+      <div class="toolbar"><div class="search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="histQ" placeholder="Search history…" oninput="renderHist()"/></div><div class="pills"><button class="pill on" onclick="setHistF('all',this)">All</button><button class="pill" onclick="setHistF('conference',this)">Conferences</button><button class="pill" onclick="setHistF('test_call',this)">Test Calls</button><button class="pill" onclick="setHistF('lecture',this)">Lectures</button></div></div>
+      <div class="strip"><div class="dot idle" id="histDot"></div><span id="histMsg">Loading…</span><span class="sp"></span><span id="histCount" style="font-size:11px;color:var(--text3)"></span></div>
+      <div class="card"><div class="card-head"><span class="card-head-title">Call History</span><span class="card-count" id="histTableCount">—</span></div><div id="histBody"><div class="empty-state"><div class="empty-icon">📋</div>Loading…</div></div></div>
+    </div>
+
+    <!-- System -->
+    <div id="panel-sys" class="panel">
+      <div class="strip"><div class="dot idle" id="sysDot"></div><span id="sysMsg">Loading…</span></div>
+      <div class="sys-grid" id="sysCards"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-head"><span class="card-head-title">Active Alarms</span><span class="card-count" id="alarmCount">—</span></div><div id="alarmBody"><div class="empty-state"><div class="empty-icon">🔔</div>Loading…</div></div></div>
+        <div class="card"><div class="card-head"><span class="card-head-title">Worker Nodes</span><span class="card-count" id="workerCount">—</span></div><div id="workerBody"><div class="empty-state"><div class="empty-icon">🖥</div>Loading…</div></div></div>
+      </div>
+    </div>
+
+    <!-- Address Book -->
+    <div id="panel-ab" class="panel">
+      <div class="toolbar"><div class="search" style="max-width:300px"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="abQ" placeholder="Search VMRs & aliases…" oninput="renderAB()"/></div><div class="pills"><button class="pill on" onclick="setAbF('all',this)">All</button><button class="pill" onclick="setAbF('conference',this)">Conferences</button><button class="pill" onclick="setAbF('lecture',this)">Lectures</button><button class="pill" onclick="setAbF('test_call',this)">Test Calls</button></div></div>
+      <div class="strip"><div class="dot idle" id="abDot"></div><span id="abMsg">Loading…</span><span class="sp"></span><span id="abCount" style="font-size:11px;color:var(--text3)"></span></div>
+      <div id="abBody"><div class="empty-state"><div class="empty-icon">👤</div>Loading…</div></div>
+    </div>
+
+    <!-- Users -->
+    <div id="panel-users" class="panel">
+      <div class="toolbar"><div class="search" style="max-width:300px"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="userQ" placeholder="Search users…" oninput="renderUsers()"/></div></div>
+      <div class="strip"><div class="dot idle" id="usersDot"></div><span id="usersMsg">Loading…</span><span class="sp"></span><span id="usersCount" style="font-size:11px;color:var(--text3)"></span></div>
+      <div id="usersBody"><div class="empty-state"><div class="empty-icon">👥</div>Loading…</div></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="panel-settings" class="panel">
+      <div class="settings-wrap">
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Active Connection</h3><span class="badge ok" id="activeEnvBadge" style="font-size:10px;padding:2px 8px">—</span></div>
+          <div class="settings-body">
+            <div class="field-row"><div class="field"><label>Conferencing node (calls)</label><input id="cfgConfHost" placeholder="sandboxconf.example.com"/></div><div class="field"><label>Management node (admin API)</label><input id="cfgMgmtHost" placeholder="sandbox.example.com"/></div></div>
+            <div class="field-row"><div class="field"><label>Admin username</label><input id="cfgUser" placeholder="admin"/></div><div class="field"><label>Admin password</label><input id="cfgPass" type="password" placeholder="••••••••"/></div></div>
+            <div class="field-row"><div class="field"><label>Proxy address</label><input id="cfgProxy" placeholder="localhost:3000"/></div><div class="field"><label>Proxy protocol</label><select id="cfgProxyProto"><option value="http">HTTP</option><option value="https">HTTPS</option></select></div></div>
+            <div class="field-row"><div class="field"><label>System location</label><input id="cfgSysLoc" placeholder="DEV"/></div><div class="field"><label>Auto-refresh (seconds)</label><input id="cfgInterval" type="number" value="30" min="5" max="300"/></div></div>
+            <div class="field"><label>Environment label</label><input id="cfgLabel" placeholder="e.g. Queens Sandbox, Calgary HQ, Production"/></div>
+            <div class="conn-test-row">
+              <button class="btn btn-primary" onclick="saveSettings()"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>Save & connect</button>
+              <button class="btn" onclick="testConnection()">Test connection</button>
+              <span class="conn-test-msg" id="connTestMsg"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved profiles -->
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Saved Environments</h3><button class="btn btn-sm" onclick="saveAsProfile()">+ Save current as profile</button></div>
+          <div class="settings-body"><div id="profileList" class="profile-list"></div></div>
+        </div>
+
+        <!-- Simulation profiles -->
+        <div class="settings-section" style="border-color:#C4B5FD">
+          <div class="settings-section-head" style="background:#F5F3FF;border-color:#C4B5FD">
+            <h3 style="color:#6D28D9">🎭 Demo / Simulation Environments</h3>
+          </div>
+          <div class="settings-body">
+            <p class="hint" style="margin-bottom:14px">Load a simulated environment to explore the full dashboard without a real Pexip node or proxy. All data is realistic but fake — dial-outs will be simulated, invite links will be generated, and the WebRTC tab will show a mock connection flow.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#F5F3FF;border:1px solid #C4B5FD;border-radius:var(--r);padding:14px">
+                <div style="font-size:14px;font-weight:600;color:#6D28D9;margin-bottom:4px">🏢 Calgary HQ</div>
+                <div style="font-size:12px;color:#7C3AED;font-family:'IBM Plex Mono',monospace;margin-bottom:8px">pex-yyc.smithvcs.ca</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">8 VMRs · 3 active · 14 participants<br>Cisco endpoints · SIP infrastructure</div>
+                <button class="btn btn-sim btn-sm" style="width:100%;justify-content:center" onclick="loadSimProfile('Calgary HQ')">Load Calgary HQ →</button>
+              </div>
+              <div style="background:#F5F3FF;border:1px solid #C4B5FD;border-radius:var(--r);padding:14px">
+                <div style="font-size:14px;font-weight:600;color:#6D28D9;margin-bottom:4px">🌐 Toronto Cloud</div>
+                <div style="font-size:12px;color:#7C3AED;font-family:'IBM Plex Mono',monospace;margin-bottom:8px">pex-yyz.smithvcs.ca</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">12 VMRs · 5 active · 31 participants<br>Poly endpoints · H.323 + SIP</div>
+                <button class="btn btn-sim btn-sm" style="width:100%;justify-content:center" onclick="loadSimProfile('Toronto Cloud')">Load Toronto Cloud →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proxy help -->
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Proxy setup (for live nodes)</h3></div>
+          <div class="settings-body">
+            <p class="hint" style="margin-bottom:12px">Run <code>node proxy.cjs</code> in a terminal and keep it open while using the dashboard. The proxy handles CORS and routes requests to both your conferencing and management nodes.</p>
+            <div style="background:var(--slate);color:#e2e8f0;padding:12px 14px;border-radius:var(--r-sm);font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7">node proxy.cjs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Simulation data ───────────────────────────────────────────
+const SIM_PROFILES = {
+  'Calgary HQ': {
+    confHost:'pex-yyc.smithvcs.ca', mgmtHost:'mgmt-yyc.smithvcs.ca',
+    user:'admin', pass:'Calgary2024!', proxy:'localhost:3000', proxyProto:'http',
+    sysLoc:'YYC-MAIN', interval:30, label:'Calgary HQ', sim:true,
+    vmrs:[
+      {name:'Executive Boardroom',alias:'exec.board',type:'conference',pin:'9911',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:20,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'C-suite meetings',live:true,participants:5},
+      {name:'All Hands',alias:'allhands',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:500,enableChat:'default',liveCaption:'enabled',muteGuests:true,guestsCanPresent:false,breakoutRooms:false,description:'Company-wide meetings',live:true,participants:47},
+      {name:'IT Support Room',alias:'it.support',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:10,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:false,description:'IT helpdesk VMR',live:true,participants:2},
+      {name:'Training Room A',alias:'training.a',type:'lecture',pin:'1234',guestPin:'5678',allowGuests:true,callType:'video',hostView:'one_main_zero_pips',guestView:'one_main_zero_pips',participantLimit:50,enableChat:'default',liveCaption:'enabled',muteGuests:true,guestsCanPresent:false,breakoutRooms:false,description:'Webinar & training',live:false,participants:0},
+      {name:'Sales Team',alias:'sales.team',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:null,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:true,description:'Sales department VMR',live:false,participants:0},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:null,enableChat:'disabled',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Pexip Test Call Service',live:false,participants:0},
+      {name:'Reception',alias:'reception',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_zero_pips',guestView:'one_main_zero_pips',participantLimit:2,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Virtual reception desk',live:false,participants:0},
+      {name:'HR Confidential',alias:'hr.conf',type:'conference',pin:'7777',guestPin:'8888',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:5,enableChat:'disabled',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'HR private meetings',live:false,participants:0},
+    ],
+    participants:{
+      'exec.board':[{name:'Dr. Sarah Chen',role:'host',protocol:'SIP',uri:'schen@cisco.yyc.ca',duration:1842},{name:'Marcus Webb',role:'guest',protocol:'H.323',uri:'mwebb@poly.yyc.ca',duration:1720},{name:'Priya Nair',role:'guest',protocol:'WebRTC',uri:'pnair@smithvcs.ca',duration:1680},{name:'Tom Okafor',role:'guest',protocol:'SIP',uri:'tokafor@cisco.yyc.ca',duration:900},{name:'Lisa Park',role:'guest',protocol:'SIP',uri:'lpark@cisco.yyc.ca',duration:600}],
+      'allhands':[{name:'James Liu (Host)',role:'host',protocol:'SIP',uri:'jliu@cisco.yyc.ca',duration:3600},{name:'Alice Tremblay',role:'guest',protocol:'WebRTC',uri:'atremblay@smithvcs.ca',duration:3580},{name:'Bob Singh',role:'guest',protocol:'H.323',uri:'bsingh@poly.yyc.ca',duration:3400}],
+      'it.support':[{name:'Mike Torres (IT)',role:'host',protocol:'SIP',uri:'mtorres@smithvcs.ca',duration:420},{name:'Jane Doe',role:'guest',protocol:'WebRTC',uri:'jdoe@smithvcs.ca',duration:380}],
+    },
+    history:[
+      {name:'Executive Boardroom',alias:'exec.board',type:'conference',start:'2026-05-07T14:00:00',end:'2026-05-07T15:30:00',duration:5400,participants:6},
+      {name:'All Hands',alias:'allhands',type:'conference',start:'2026-05-07T10:00:00',end:'2026-05-07T11:00:00',duration:3600,participants:89},
+      {name:'Training Room A',alias:'training.a',type:'lecture',start:'2026-05-06T13:00:00',end:'2026-05-06T14:30:00',duration:5400,participants:32},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',start:'2026-05-06T09:15:00',end:'2026-05-06T09:22:00',duration:420,participants:1},
+      {name:'Sales Team',alias:'sales.team',type:'conference',start:'2026-05-05T15:00:00',end:'2026-05-05T16:00:00',duration:3600,participants:8},
+      {name:'IT Support Room',alias:'it.support',type:'conference',start:'2026-05-05T11:30:00',end:'2026-05-05T12:00:00',duration:1800,participants:2},
+      {name:'HR Confidential',alias:'hr.conf',type:'conference',start:'2026-05-02T14:00:00',end:'2026-05-02T14:45:00',duration:2700,participants:3},
+    ],
+    users:[{name:'James Liu',email:'jliu@smithvcs.ca',role:'admin'},{name:'Sarah Chen',email:'schen@smithvcs.ca',role:'user'},{name:'Mike Torres',email:'mtorres@smithvcs.ca',role:'admin'},{name:'Alice Tremblay',email:'atremblay@smithvcs.ca',role:'user'},{name:'Marcus Webb',email:'mwebb@smithvcs.ca',role:'user'}],
+    alarms:[{name:'High CPU on worker node YYC-01',severity:'WARNING',details:'CPU usage at 87% for 5 minutes'}],
+    workers:[{name:'YYC-WORKER-01',address:'10.10.1.51',status:'active'},{name:'YYC-WORKER-02',address:'10.10.1.52',status:'active'},{name:'YYC-WORKER-03',address:'10.10.1.53',status:'maintenance'}],
+  },
+  'Toronto Cloud': {
+    confHost:'pex-yyz.smithvcs.ca', mgmtHost:'mgmt-yyz.smithvcs.ca',
+    user:'admin', pass:'Toronto2024!', proxy:'localhost:3000', proxyProto:'http',
+    sysLoc:'YYZ-CLOUD', interval:30, label:'Toronto Cloud', sim:true,
+    vmrs:[
+      {name:'Main Conference',alias:'main.conf',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:null,enableChat:'default',liveCaption:'enabled',muteGuests:false,guestsCanPresent:true,breakoutRooms:true,description:'Primary conference room',live:true,participants:8},
+      {name:'Product Demo',alias:'product.demo',type:'conference',pin:'2468',guestPin:'1357',allowGuests:true,callType:'video',hostView:'one_main_zero_pips',guestView:'one_main_zero_pips',participantLimit:25,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:false,description:'Customer product demos',live:true,participants:6},
+      {name:'Engineering',alias:'engineering',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:50,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:true,description:'Engineering team VMR',live:true,participants:11},
+      {name:'Customer Success',alias:'cs.room',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:10,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Customer onboarding & support',live:true,participants:4},
+      {name:'Webinar Stage',alias:'webinar',type:'lecture',pin:'3030',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_zero_pips',guestView:'one_main_zero_pips',participantLimit:1000,enableChat:'default',liveCaption:'enabled',muteGuests:true,guestsCanPresent:false,breakoutRooms:false,description:'Public webinar VMR',live:true,participants:142},
+      {name:'Finance Team',alias:'finance',type:'conference',pin:'6543',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:8,enableChat:'disabled',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Finance department',live:false,participants:0},
+      {name:'Partner Portal',alias:'partner',type:'conference',pin:'',guestPin:'9999',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:null,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:false,description:'Partner & reseller meetings',live:false,participants:0},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:null,enableChat:'disabled',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Pexip Test Call Service',live:false,participants:0},
+      {name:'Board Room',alias:'board',type:'conference',pin:'1111',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_zero_pips',participantLimit:12,enableChat:'disabled',liveCaption:'enabled',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Executive board room',live:false,participants:0},
+      {name:'Marketing Hub',alias:'marketing',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:30,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:true,description:'Marketing team VMR',live:false,participants:0},
+      {name:'Dev Standup',alias:'dev.standup',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'audio',hostView:'one_main_seven_pips',guestView:'one_main_seven_pips',participantLimit:20,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:true,breakoutRooms:false,description:'Daily dev standups',live:false,participants:0},
+      {name:'Lobby / Reception',alias:'lobby',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',hostView:'one_main_zero_pips',guestView:'one_main_zero_pips',participantLimit:2,enableChat:'default',liveCaption:'default',muteGuests:false,guestsCanPresent:false,breakoutRooms:false,description:'Virtual lobby',live:false,participants:0},
+    ],
+    participants:{
+      'main.conf':[{name:'Aisha Okonkwo',role:'host',protocol:'SIP',uri:'aokonkwo@poly.yyz.ca',duration:2100},{name:'Carlos Mendez',role:'guest',protocol:'H.323',uri:'cmendez@cisco.yyz.ca',duration:1980},{name:'Jenny Wu',role:'guest',protocol:'WebRTC',uri:'jwu@smithvcs.ca',duration:1800},{name:'David Park',role:'guest',protocol:'SIP',uri:'dpark@poly.yyz.ca',duration:1650},{name:'Rachel Green',role:'guest',protocol:'WebRTC',uri:'rgreen@smithvcs.ca',duration:900},{name:'Sam Taylor',role:'guest',protocol:'SIP',uri:'staylor@cisco.yyz.ca',duration:750},{name:'Nadia Kovac',role:'guest',protocol:'H.323',uri:'nkovac@poly.yyz.ca',duration:600},{name:'Liam Chen',role:'guest',protocol:'WebRTC',uri:'lchen@smithvcs.ca',duration:300}],
+      'product.demo':[{name:'Emma Larsson (Host)',role:'host',protocol:'WebRTC',uri:'elarsson@smithvcs.ca',duration:840},{name:'Client - Apex Corp',role:'guest',protocol:'WebRTC',uri:'contact@apexcorp.com',duration:820},{name:'Client - Apex IT',role:'guest',protocol:'SIP',uri:'it@apexcorp.com',duration:780},{name:'Maria Santos',role:'guest',protocol:'WebRTC',uri:'msantos@smithvcs.ca',duration:750},{name:'Jordan Lee',role:'guest',protocol:'WebRTC',uri:'jlee@smithvcs.ca',duration:600},{name:'Apex CFO',role:'guest',protocol:'H.323',uri:'cfo@apexcorp.com',duration:420}],
+      'engineering':[{name:'Tech Lead: Raj Patel',role:'host',protocol:'WebRTC',uri:'rpatel@smithvcs.ca',duration:5400},{name:'Dev #1: Ana Lima',role:'guest',protocol:'WebRTC',uri:'alima@smithvcs.ca',duration:5200},{name:'Dev #2: Chris Kim',role:'guest',protocol:'WebRTC',uri:'ckim@smithvcs.ca',duration:5100},{name:'Dev #3: Yuki Tanaka',role:'guest',protocol:'SIP',uri:'ytanaka@cisco.yyz.ca',duration:4800},{name:'QA Lead: Fatima Al-Hassan',role:'guest',protocol:'WebRTC',uri:'falhassan@smithvcs.ca',duration:4500}],
+      'cs.room':[{name:'CS Manager: Dan Novak',role:'host',protocol:'SIP',uri:'dnovak@smithvcs.ca',duration:1200},{name:'Client: TechFlow Inc.',role:'guest',protocol:'WebRTC',uri:'support@techflow.io',duration:1150},{name:'Client Technical Lead',role:'guest',protocol:'H.323',uri:'tech@techflow.io',duration:1000},{name:'Onboarding Specialist',role:'guest',protocol:'WebRTC',uri:'onboard@smithvcs.ca',duration:900}],
+      'webinar':[{name:'Host: VP Marketing',role:'host',protocol:'SIP',uri:'vp.mkt@smithvcs.ca',duration:3200},{name:'Panelist 1',role:'guest',protocol:'WebRTC',uri:'panelist1@smithvcs.ca',duration:3100},{name:'Panelist 2',role:'guest',protocol:'WebRTC',uri:'panelist2@smithvcs.ca',duration:3000}],
+    },
+    history:[
+      {name:'Main Conference',alias:'main.conf',type:'conference',start:'2026-05-07T09:00:00',end:'2026-05-07T10:30:00',duration:5400,participants:12},
+      {name:'Webinar Stage',alias:'webinar',type:'lecture',start:'2026-05-07T14:00:00',end:'2026-05-07T15:00:00',duration:3600,participants:187},
+      {name:'Engineering',alias:'engineering',type:'conference',start:'2026-05-06T10:00:00',end:'2026-05-06T11:00:00',duration:3600,participants:9},
+      {name:'Product Demo',alias:'product.demo',type:'conference',start:'2026-05-06T14:00:00',end:'2026-05-06T15:00:00',duration:3600,participants:5},
+      {name:'Board Room',alias:'board',type:'conference',start:'2026-05-05T13:00:00',end:'2026-05-05T14:00:00',duration:3600,participants:8},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',start:'2026-05-05T08:00:00',end:'2026-05-05T08:05:00',duration:300,participants:1},
+      {name:'Finance Team',alias:'finance',type:'conference',start:'2026-05-02T11:00:00',end:'2026-05-02T12:00:00',duration:3600,participants:6},
+      {name:'Dev Standup',alias:'dev.standup',type:'conference',start:'2026-05-08T09:00:00',end:'2026-05-08T09:15:00',duration:900,participants:7},
+      {name:'Partner Portal',alias:'partner',type:'conference',start:'2026-05-01T15:00:00',end:'2026-05-01T16:00:00',duration:3600,participants:4},
+    ],
+    users:[{name:'Aisha Okonkwo',email:'aokonkwo@smithvcs.ca',role:'admin'},{name:'Emma Larsson',email:'elarsson@smithvcs.ca',role:'user'},{name:'Raj Patel',email:'rpatel@smithvcs.ca',role:'admin'},{name:'Dan Novak',email:'dnovak@smithvcs.ca',role:'user'},{name:'Maria Santos',email:'msantos@smithvcs.ca',role:'user'},{name:'Jordan Lee',email:'jlee@smithvcs.ca',role:'user'}],
+    alarms:[],
+    workers:[{name:'YYZ-CLOUD-01',address:'10.20.1.51',status:'active'},{name:'YYZ-CLOUD-02',address:'10.20.1.52',status:'active'},{name:'YYZ-CLOUD-03',address:'10.20.1.53',status:'active'},{name:'YYZ-CLOUD-04',address:'10.20.1.54',status:'active'}],
+  }
+};
+
+// ── Config / Settings ─────────────────────────────────────────
+const STORE_KEY='pexip_cfg_v2', PROFILES_KEY='pexip_profiles_v2';
+let CFG={confHost:'',mgmtHost:'',user:'',pass:'',proxy:'localhost:3000',proxyProto:'http',sysLoc:'DEV',interval:30,label:'',sim:false};
+let SIM_DATA=null; // active simulation data
+
+function loadCfg(){try{const s=localStorage.getItem(STORE_KEY);if(s)CFG=JSON.parse(s);}catch{}applyConfigToFields();updateSidebarLabels();}
+function saveCfg(){localStorage.setItem(STORE_KEY,JSON.stringify(CFG));}
+function applyConfigToFields(){
+  document.getElementById('cfgConfHost').value=CFG.confHost||'';document.getElementById('cfgMgmtHost').value=CFG.mgmtHost||'';document.getElementById('cfgUser').value=CFG.user||'';document.getElementById('cfgProxy').value=CFG.proxy||'localhost:3000';document.getElementById('cfgProxyProto').value=CFG.proxyProto||'http';document.getElementById('cfgSysLoc').value=CFG.sysLoc||'DEV';document.getElementById('cfgInterval').value=CFG.interval||30;document.getElementById('cfgLabel').value=CFG.label||'';document.getElementById('activeEnvBadge').textContent=CFG.label||CFG.confHost||'Unconfigured';
+}
+function updateSidebarLabels(){
+  document.getElementById('sbConfHost').textContent=CFG.confHost||'Not configured';document.getElementById('sbMgmtHost').textContent=CFG.mgmtHost||'Not configured';document.getElementById('sbVersion').textContent=CFG.label||'Dashboard';document.getElementById('activeEnvBadge').textContent=CFG.label||CFG.confHost||'Unconfigured';
+  const simMode=!!(CFG.sim&&SIM_DATA);
+  document.getElementById('simBanner').style.display=simMode?'flex':'none';
+  const d=document.getElementById('dotConf');const m=document.getElementById('dotMgmt');
+  if(simMode){d.className='ndot sim';m.className='ndot sim';}
+}
+function saveSettings(){
+  CFG.confHost=document.getElementById('cfgConfHost').value.trim();CFG.mgmtHost=document.getElementById('cfgMgmtHost').value.trim();CFG.user=document.getElementById('cfgUser').value.trim();CFG.pass=document.getElementById('cfgPass').value;CFG.proxy=document.getElementById('cfgProxy').value.trim()||'localhost:3000';CFG.proxyProto=document.getElementById('cfgProxyProto').value;CFG.sysLoc=document.getElementById('cfgSysLoc').value.trim()||'DEV';CFG.interval=parseInt(document.getElementById('cfgInterval').value)||30;CFG.label=document.getElementById('cfgLabel').value.trim();CFG.sim=false;SIM_DATA=null;
+  saveCfg();updateSidebarLabels();updateNoConfigState();resetLoadedFlags();loadSysLocations();showConnTestMsg('✓ Settings saved','var(--teal)');toast('Settings saved — reconnecting…');setTimeout(()=>{showPanel('conf');fetchConf();if(autoOn)startAuto();},400);
+}
+
+function loadSimProfile(name){
+  const p=SIM_PROFILES[name];if(!p)return;
+  CFG={...p};SIM_DATA=p;saveCfg();applyConfigToFields();updateSidebarLabels();updateNoConfigState();resetLoadedFlags();
+  document.getElementById('doLocation').innerHTML=`<option value="${CFG.sysLoc}">${CFG.sysLoc}</option>`;
+  toast('Simulation loaded: '+name);setTimeout(()=>{showPanel('conf');loadSimData();},300);
+}
+
+async function testConnection(){
+  if(CFG.sim){showConnTestMsg('⚡ Simulation mode — no real connection','#7C3AED');return;}
+  showConnTestMsg('Testing…','var(--text3)');
+  const proxy=`${CFG.proxyProto}://${CFG.proxy}`;const headers={Authorization:'Basic '+btoa(`${CFG.user}:${CFG.pass}`),'Content-Type':'application/json'};const results=[];
+  try{const r=await fetch(`${proxy}/mgmt/api/admin/configuration/v1/conference/?limit=1`,{headers});results.push(r.ok?'✓ Mgmt API':'✗ Mgmt API (HTTP '+r.status+')');}catch(e){results.push('✗ Mgmt API: '+e.message);}
+  try{const r=await fetch(`${proxy}/api/client/v2/conferences/test/request_token`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({display_name:'test'})});results.push(r.status===404||r.ok?'✓ Conf node':'✗ Conf node ('+r.status+')');}catch(e){results.push('✗ Conf node: '+e.message);}
+  showConnTestMsg(results.join(' · '),results.every(r=>r.startsWith('✓'))?'var(--teal)':'var(--amber)');
+}
+function showConnTestMsg(msg,color){const el=document.getElementById('connTestMsg');el.textContent=msg;el.style.color=color;setTimeout(()=>el.textContent='',6000);}
+
+// ── Profiles ──────────────────────────────────────────────────
+function loadProfiles(){try{return JSON.parse(localStorage.getItem(PROFILES_KEY)||'[]');}catch{return[];}}
+function saveProfiles(p){localStorage.setItem(PROFILES_KEY,JSON.stringify(p));}
+function saveAsProfile(){const label=CFG.label||CFG.confHost||'Profile '+(loadProfiles().length+1);const profiles=loadProfiles().filter(p=>p.label!==label);profiles.push({...CFG,label});saveProfiles(profiles);renderProfiles();toast('Saved: '+label);}
+function loadProfile(label){
+  const p=loadProfiles().find(p=>p.label===label);if(!p)return;
+  CFG={...p};SIM_DATA=null;saveCfg();applyConfigToFields();updateSidebarLabels();updateNoConfigState();resetLoadedFlags();loadSysLocations();toast('Switched to: '+label);setTimeout(()=>{showPanel('conf');fetchConf();if(autoOn)startAuto();},300);
+}
+function deleteProfile(label){const profiles=loadProfiles().filter(p=>p.label!==label);saveProfiles(profiles);renderProfiles();toast('Deleted: '+label);}
+function renderProfiles(){
+  const profiles=loadProfiles();const el=document.getElementById('profileList');
+  if(!profiles.length){el.innerHTML='<p style="font-size:13px;color:var(--text3)">No saved profiles yet.</p>';return;}
+  el.innerHTML=profiles.map(p=>`<div class="profile-item ${p.label===CFG.label?'active-profile':''}" onclick="loadProfile('${esc(p.label)}')">
+    <div class="profile-dot ${p.label===CFG.label?'active':''}"></div>
+    <div style="flex:1;min-width:0"><div class="profile-name">${p.label}</div><div class="profile-host">${p.confHost||'—'} · ${p.mgmtHost||'—'}</div></div>
+    <button class="btn btn-xs" onclick="event.stopPropagation();loadProfile('${esc(p.label)}')" style="border-color:var(--teal);color:var(--teal)">Use</button>
+    <button class="btn btn-xs" onclick="event.stopPropagation();deleteProfile('${esc(p.label)}')" style="color:var(--red);border-color:var(--red)">✕</button>
+  </div>`).join('');
+}
+function updateNoConfigState(){const has=!!(CFG.confHost&&CFG.mgmtHost)||(CFG.sim&&SIM_DATA);document.getElementById('noConfigOverlay').style.display=has?'none':'flex';}
+function resetLoadedFlags(){histLoaded=false;sysLoaded=false;abLoaded=false;usersLoaded=false;}
+
+// ── API / Sim routing ─────────────────────────────────────────
+function proxyBase(){return`${CFG.proxyProto}://${CFG.proxy||'localhost:3000'}`;}
+function apiHdrs(){return{Authorization:'Basic '+btoa(`${CFG.user}:${CFG.pass}`),'Content-Type':'application/json'};}
+async function apiFetch(path,method='GET',body=null){const opts={method,headers:apiHdrs()};if(body)opts.body=JSON.stringify(body);const r=await fetch(proxyBase()+path,opts);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+async function clientPost(path,body){const r=await fetch(proxyBase()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
+async function fetchAll(path){let all=[],url=path+'?limit=500&offset=0';while(url){const d=await apiFetch(url);all.push(...(d.objects||d.results||[]));url=d.meta?.next?'/mgmt'+d.meta.next:null;}return all;}
+
+// ── Helpers ───────────────────────────────────────────────────
+const COLORS=['#00B894','#2D7DD2','#7B5EA7','#E05252','#F5A623','#16A085','#8E44AD','#E67E22','#C0392B','#2980B9'];
+function colorFor(s){let h=0;for(const c of s||'')h=(h*31+c.charCodeAt(0))&0xffff;return COLORS[h%COLORS.length];}
+function inits(n){return(n||'?').split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')||'?';}
+function setDot(id,t){const el=document.getElementById(id);if(el)el.className='dot '+t;}
+function setNDot(id,t){const el=document.getElementById(id);if(el)el.className='ndot '+t;}
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function fmtDur(s){if(!s)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`;}
+function fmtDt(iso){if(!iso)return'—';return new Date(iso).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function typeLabel(t){return t==='test_call'?'Test Call':t==='lecture'?'Lecture':'Conference';}
+function typeCls(t){return t==='test_call'?'test':t==='lecture'?'lecture':'conf';}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+function copyTxt(txt,msg){navigator.clipboard.writeText(txt).then(()=>toast((msg||'Copied')+': '+txt)).catch(()=>toast(txt));}
+function showAddStatus(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='add-status show '+type;if(type==='ok'||type==='sim-ok')setTimeout(()=>el.classList.remove('show'),4000);}
+
+// ── Navigation ────────────────────────────────────────────────
+const PANELS=['conf','detail','hist','sys','ab','users','settings'];
+const PAGES={conf:['Conferences','Click a conference to view details and participants'],detail:['Conference Detail','Full config, participants and add participant tools'],hist:['Call History','All call records'],sys:['System','Licensing, alarms and worker nodes'],ab:['Address Book','VMRs and aliases'],users:['Users','End user accounts'],settings:['Settings','Connection, credentials and saved environments']};
+let activePanel='conf';
+function showPanel(id){
+  activePanel=id;PANELS.forEach(k=>{document.getElementById('panel-'+k).classList.toggle('show',k===id);const nb=document.getElementById('nav-'+k);if(nb)nb.classList.toggle('active',k===id||(k==='conf'&&id==='detail'));});
+  document.getElementById('pageTitle').textContent=PAGES[id][0];document.getElementById('pageSub').textContent=PAGES[id][1];document.getElementById('autoBtn').style.display=id==='conf'?'inline-flex':'none';
+  if(id==='settings'){renderProfiles();applyConfigToFields();}
+  if(id==='hist'&&!histLoaded)fetchHist();if(id==='sys'&&!sysLoaded)fetchSys();if(id==='ab'&&!abLoaded)fetchAB();if(id==='users'&&!usersLoaded)fetchUsers();
+}
+function onRefresh(){if(activePanel==='conf'||activePanel==='detail'){SIM_DATA?loadSimData():fetchConf();if(autoOn)startAuto();}if(activePanel==='hist')fetchHist();if(activePanel==='sys')fetchSys();if(activePanel==='ab')fetchAB();if(activePanel==='users')fetchUsers();}
+function backToList(){showPanel('conf');}
+
+// ── Conferences ───────────────────────────────────────────────
+let confData=[], confF='all', autoOn=true, autoTimer=null, countdown=30;
+function toggleAuto(){autoOn=!autoOn;document.getElementById('autoBtn').classList.toggle('on',autoOn);document.getElementById('autoBtnTxt').textContent=autoOn?'Auto ON':'Auto OFF';if(autoOn){SIM_DATA?loadSimData():fetchConf();startAuto();}else{clearInterval(autoTimer);document.getElementById('confCd').textContent='';}}
+function startAuto(){clearInterval(autoTimer);countdown=CFG.interval||30;autoTimer=setInterval(()=>{countdown--;document.getElementById('confCd').textContent=`Refresh in ${countdown}s`;if(countdown<=0){countdown=CFG.interval||30;SIM_DATA?loadSimData():fetchConf();}},1000);}
+function setConfF(f,el){confF=f;document.querySelectorAll('#panel-conf .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderConf();}
+
+// Simulation data loader
+function loadSimData(){
+  const sd=SIM_DATA;
+  setDot('confDot','sim');setNDot('dotConf','sim');setNDot('dotMgmt','sim');
+  document.getElementById('confMsg').textContent=`Simulation · ${sd.vmrs.length} VMRs · ${sd.vmrs.filter(v=>v.live).length} active`;
+  confData=sd.vmrs.map(v=>({...v,primaryAlias:v.alias,aliases:[v.alias],id:v.alias}));
+  document.getElementById('s-total').textContent=confData.length;
+  document.getElementById('s-live').textContent=confData.filter(c=>c.live).length;
+  document.getElementById('s-parts').textContent=confData.reduce((s,c)=>s+(c.participants||0),0);
+  document.getElementById('s-pin').textContent=confData.filter(c=>c.pin||c.guestPin).length;
+  renderConf();
+}
+
+async function fetchConf(){
+  if(SIM_DATA){loadSimData();return;}
+  if(!CFG.confHost||!CFG.mgmtHost){setDot('confDot','err');document.getElementById('confMsg').textContent='Configure your node in Settings first';return;}
+  setDot('confDot','load');setNDot('dotMgmt','load');setNDot('dotConf','load');document.getElementById('confMsg').textContent='Fetching VMR config…';
+  let vmrs=[],liveConfs=[];
+  try{const d=await apiFetch('/mgmt/api/admin/configuration/v1/conference/?limit=500');vmrs=d.objects||[];setNDot('dotMgmt','ok');}catch(e){setNDot('dotMgmt','err');setDot('confDot','err');document.getElementById('confMsg').textContent='Mgmt error: '+e.message;return;}
+  try{const d=await apiFetch('/mgmt/api/admin/status/v1/conference/?limit=500');liveConfs=d.objects||[];setNDot('dotConf','ok');}catch{setNDot('dotConf','ok');}
+  confData=vmrs.map(v=>{const live=liveConfs.find(l=>l.name===v.name);return{id:v.id,name:v.name,description:v.description||'',aliases:(v.aliases||[]).map(a=>a.alias),primaryAlias:v.aliases?.[0]?.alias||'',type:v.service_type||'conference',pin:v.pin||'',guestPin:v.guest_pin||'',allowGuests:v.allow_guests,callType:v.call_type||'video',hostView:v.host_view||'',guestView:v.guest_view||'',participantLimit:v.participant_limit,enableChat:v.enable_chat,liveCaption:v.live_captions_enabled,muteGuests:v.mute_all_guests,guestsCanPresent:v.guests_can_present,breakoutRooms:v.breakout_rooms,live:!!live,participants:live?.participant_count??0};});
+  setDot('confDot','live');document.getElementById('confMsg').textContent=`${confData.length} VMRs · ${liveConfs.length} active · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('s-total').textContent=confData.length;document.getElementById('s-live').textContent=liveConfs.length;document.getElementById('s-parts').textContent=liveConfs.reduce((s,c)=>s+(c.participant_count||0),0)||'—';document.getElementById('s-pin').textContent=confData.filter(c=>c.pin||c.guestPin).length;
+  renderConf();if(activePanel==='detail'&&currentConf){const u=confData.find(c=>c.primaryAlias===currentConf.primaryAlias);if(u){currentConf=u;renderDetail(u);}}
+}
+
+function renderConf(){
+  const q=document.getElementById('confQ').value.toLowerCase();
+  const list=confData.filter(c=>{const ms=!q||c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q));const mf=confF==='all'?true:confF==='live'?c.live:confF==='pin'?(c.pin||c.guestPin):true;return ms&&mf;}).sort((a,b)=>(b.live?1:0)-(a.live?1:0)||a.name.localeCompare(b.name));
+  document.getElementById('confCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('confBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">▣</div>No conferences match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Name</th><th>Type</th><th>Alias</th><th>Status</th><th>Participants</th><th>Access</th><th></th></tr></thead><tbody>
+    ${list.map(c=>{const cls=typeCls(c.type);const liveBadge=c.live?`<span class="badge ok"><span class="live-dot"></span>Active</span>`:'<span style="font-size:12px;color:var(--text3)">Idle</span>';const access=[];if(c.pin)access.push('<span class="badge pin">Host PIN</span>');if(c.guestPin)access.push('<span class="badge pin">Guest PIN</span>');if(!c.pin&&!c.guestPin&&c.allowGuests)access.push('<span class="badge open">Open</span>');
+    return`<tr class="clickable" onclick="openDetail('${esc(c.primaryAlias)}')"><td><div class="cell-name"><div class="ava ${cls}" style="background:${colorFor(c.name)};color:#fff">${inits(c.name)}</div><div><div class="row-name">${c.name}</div>${c.description?`<div class="row-sub">${c.description}</div>`:''}</div></div></td><td><span class="badge ${cls}">${typeLabel(c.type)}</span></td><td><span class="row-sub">${c.primaryAlias||'—'}</span></td><td>${liveBadge}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${c.live?c.participants:'—'}</td><td><div style="display:flex;gap:4px;flex-wrap:wrap">${access.join('')||'—'}</div></td><td><span style="font-size:12px;color:var(--teal);font-weight:500">View →</span></td></tr>`;}).join('')}</tbody></table>`;
+}
+
+// ── Detail ────────────────────────────────────────────────────
+let currentConf=null;
+function openDetail(alias){const conf=confData.find(c=>c.primaryAlias===alias);if(!conf)return;currentConf=conf;renderDetail(conf);showPanel('detail');fetchParticipants(conf);loadSysLocations();}
+function renderDetail(c){
+  const cls=typeCls(c.type);document.getElementById('detailAva').style.cssText=`background:${colorFor(c.name)};color:#fff`;document.getElementById('detailAva').textContent=inits(c.name);document.getElementById('detailName').textContent=c.name;document.getElementById('detailDesc').textContent=c.description||'';document.getElementById('detailTypeBadge').innerHTML=`<span class="badge ${cls}">${typeLabel(c.type)}</span>`;document.getElementById('detailLiveBadge').innerHTML=c.live?`<span class="badge ok"><span class="live-dot"></span>Active · ${c.participants} participant${c.participants!==1?'s':''}</span>`:'<span style="font-size:12px;color:var(--text3)">Idle</span>';document.getElementById('detailAliases').innerHTML=c.aliases.map(a=>`<div class="alias-chip">${a}<button onclick="copyTxt('${esc(a)}','Alias copied')" title="Copy">⎘</button></div>`).join('');
+  const meta=[['Call type',c.callType||'video'],['Service type',typeLabel(c.type)],['Host PIN',c.pin||'None'],['Guest PIN',c.guestPin||'None'],['Allow guests',c.allowGuests?'Yes':'No'],['Guests can present',c.guestsCanPresent?'Yes':'No'],['Mute all guests',c.muteGuests?'Yes':'No'],['Breakout rooms',c.breakoutRooms?'Enabled':'Disabled'],['Chat',c.enableChat||'Default'],['Live captions',c.liveCaption||'Default'],['Participant limit',c.participantLimit||'Unlimited'],['Host view',c.hostView||'Default'],['Guest view',c.guestView||'Default']];
+  document.getElementById('detailConfig').innerHTML=`<div style="font-size:13px">${meta.map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border)"><span style="color:var(--text3)">${l}</span><span style="font-weight:500">${v}</span></div>`).join('')}</div>`;
+  document.getElementById('detailActions').innerHTML=`<button class="btn" onclick="openWebApp('${esc(c.primaryAlias)}')"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59L7.76 14.83l1.41 1.41L19 5.41V9h2V3h-7z"/></svg>Open Web App</button><button class="btn" onclick="copyTxt('${esc(c.primaryAlias)}','Alias copied')"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copy alias</button><button class="btn" onclick="refreshParticipants()"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>Refresh participants</button>`;
+}
+
+// ── Participants ──────────────────────────────────────────────
+let currentParticipants=[];
+function refreshParticipants(){if(currentConf)fetchParticipants(currentConf);}
+async function fetchParticipants(conf){
+  setDot('partDot','load');document.getElementById('partMsg').textContent='Fetching…';document.getElementById('partCount').textContent='—';currentParticipants=[];
+  if(SIM_DATA){
+    await new Promise(r=>setTimeout(r,300));
+    currentParticipants=SIM_DATA.participants[conf.primaryAlias]||[];
+    setDot('partDot','sim');document.getElementById('partMsg').textContent=currentParticipants.length?`${currentParticipants.length} participants · simulated`:'No active participants (simulated)';document.getElementById('partCount').textContent=currentParticipants.length;renderParticipants(conf);return;
+  }
+  try{
+    const d=await apiFetch(`/mgmt/api/admin/status/v1/participant/?conference__name=${encodeURIComponent(conf.name)}&limit=500`);currentParticipants=d.objects||d.results||[];
+    if(!currentParticipants.length){const d2=await apiFetch('/mgmt/api/admin/status/v1/participant/?limit=500');const all=d2.objects||d2.results||[];currentParticipants=all.filter(p=>(p.conference_name||'').toLowerCase()===conf.name.toLowerCase());}
+    setDot('partDot','live');document.getElementById('partMsg').textContent=currentParticipants.length?`${currentParticipants.length} participants · live`:'No active participants';document.getElementById('partCount').textContent=currentParticipants.length;
+  }catch(e){setDot('partDot','err');document.getElementById('partMsg').textContent='Status unavailable: '+e.message;}
+  renderParticipants(conf);
+}
+function renderParticipants(conf){
+  const body=document.getElementById('partBody');
+  if(!currentParticipants.length){body.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div><div style="margin-bottom:8px">${conf.live?'Conference active':'No active session'}</div><div style="font-size:12px;color:var(--text3)">Use "Add Participant" above to start the conference or invite someone</div></div>`;return;}
+  body.innerHTML=currentParticipants.map(p=>{const name=p.display_name||p.name||'Unknown';const role=p.role||'guest';const uri=p.remote_alias||p.source_alias||p.uri||'';const duration=p.duration?fmtDur(p.duration):'';const protocol=p.protocol||'';
+  return`<div class="participant-row"><div class="p-ava" style="background:${colorFor(name)}">${inits(name)}</div><div style="flex:1;min-width:0"><div class="p-name">${name}</div><div class="p-detail">${[uri,protocol,duration].filter(Boolean).join(' · ')}</div></div><span class="p-role-badge ${role}">${role}</span><div class="p-actions"><button class="btn btn-xs btn-primary" onclick="prefillDialOut('${esc(uri||name)}')">Re-dial</button>${uri?`<button class="btn btn-xs" onclick="copyTxt('${esc(uri)}','Copied')">⎘</button>`:''}</div></div>`;}).join('')
+  +`<div style="padding:10px 16px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--text3)">${currentParticipants.length} participant${currentParticipants.length!==1?'s':''} in conference</div>`;
+}
+
+// ── Add Participant ───────────────────────────────────────────
+let addTab='dialout';
+function switchAddTab(t){addTab=t;['dialout','invite','webrtc'].forEach(id=>{document.getElementById('addtab-'+id).classList.toggle('active',id===t);document.getElementById('addbody-'+id).style.display=id===t?'block':'none';});}
+async function loadSysLocations(){
+  if(SIM_DATA){document.getElementById('doLocation').innerHTML=`<option value="${esc(CFG.sysLoc)}">${CFG.sysLoc}</option>`;return;}
+  try{const d=await apiFetch('/mgmt/api/admin/configuration/v1/system_location/?limit=100');const locs=d.objects||[];const sel=document.getElementById('doLocation');sel.innerHTML=locs.length?locs.map(l=>`<option value="${esc(l.name)}">${l.name}</option>`).join(''):`<option value="${esc(CFG.sysLoc)}">${CFG.sysLoc||'DEV'}</option>`;}
+  catch{document.getElementById('doLocation').innerHTML=`<option value="${esc(CFG.sysLoc)}">${CFG.sysLoc||'DEV'}</option>`;}
+}
+function prefillDialOut(uri){switchAddTab('dialout');document.getElementById('doUri').value=uri;document.getElementById('doUri').focus();}
+
+async function doDialOut(){
+  const uri=document.getElementById('doUri').value.trim();const name=document.getElementById('doName').value.trim();const role=document.getElementById('doRole').value;const location=document.getElementById('doLocation').value||CFG.sysLoc||'DEV';const callType=document.getElementById('doCallType').value;const protocol=document.getElementById('doProtocol').value;
+  if(!uri){showAddStatus('doStatus','Enter a destination URI','err');return;}
+  if(!currentConf){showAddStatus('doStatus','No conference selected','err');return;}
+  if(SIM_DATA){
+    showAddStatus('doStatus','Simulating dial-out…','info');
+    await new Promise(r=>setTimeout(r,800));
+    const fakeId=Math.random().toString(36).slice(2,10);
+    const simPart={name:name||uri,role,protocol,uri,duration:0};
+    if(!SIM_DATA.participants[currentConf.primaryAlias])SIM_DATA.participants[currentConf.primaryAlias]=[];
+    SIM_DATA.participants[currentConf.primaryAlias].push(simPart);
+    showAddStatus('doStatus',`⚡ Simulated · ${name||uri} dialled into ${currentConf.name} · ID: ${fakeId}`,'sim-ok');
+    toast(`[SIM] Dialling ${uri} into ${currentConf.name}`);
+    document.getElementById('doUri').value='';document.getElementById('doName').value='';
+    setTimeout(()=>refreshParticipants(),500);return;
+  }
+  showAddStatus('doStatus','Dialling…','info');
+  const body={conference_alias:currentConf.primaryAlias,destination:uri,protocol,system_location:location,call_type:callType};if(name)body.display_name=name;if(role)body.role=role;
+  try{const d=await apiFetch('/mgmt/api/admin/command/v1/participant/dial/','POST',body);if(d.status==='success'){showAddStatus('doStatus',`✓ Dial-out initiated · ID: ${d.data?.participant_id?.slice(0,8)||'—'}…`,'ok');toast(`Dialling ${uri} into ${currentConf.name}`);document.getElementById('doUri').value='';document.getElementById('doName').value='';setTimeout(()=>refreshParticipants(),2000);}else{showAddStatus('doStatus','Failed: '+JSON.stringify(d.dial||d),'err');}}
+  catch(e){showAddStatus('doStatus','Error: '+e.message,'err');}
+}
+
+function generateInvite(){
+  if(!currentConf)return;
+  const name=document.getElementById('invName').value.trim();const role=document.getElementById('invRole').value;const showPin=document.getElementById('invShowPin').value==='yes';
+  let url=`https://${CFG.confHost}/webapp3/?conference=${encodeURIComponent(currentConf.primaryAlias)}`;if(name)url+=`&name=${encodeURIComponent(name)}`;if(role)url+=`&role=${role}`;if(showPin&&currentConf.guestPin)url+=`&pin=${encodeURIComponent(currentConf.guestPin)}`;
+  document.getElementById('inviteUrl').textContent=url;document.getElementById('inviteResult').style.display='block';toast('Invite link generated');
+}
+
+// ── WebRTC ────────────────────────────────────────────────────
+let pexRTC=null;
+async function rtcJoin(){
+  if(!currentConf){setRtcStatus('No conference selected','err');return;}
+  if(SIM_DATA){setRtcStatus('Connecting…','info');await new Promise(r=>setTimeout(r,1000));setRtcStatus('Connected · [SIM] '+currentConf.name,'ok');document.getElementById('rtcJoinBtn').style.display='none';document.getElementById('rtcHangupBtn').style.display='inline-flex';showAddStatus('rtcStatusBox','⚡ Simulated WebRTC connection to '+currentConf.name+' — wire PexRTC.js for live video','sim-ok');toast('[SIM] Joined '+currentConf.name+' via WebRTC');return;}
+  const name=document.getElementById('rtcName').value.trim()||'Dashboard User';const pin=document.getElementById('rtcPin').value;setRtcStatus('Loading PexRTC.js…','info');
+  if(!window.PexRTC){try{await loadScript(`https://${CFG.confHost}/static/webrtc/js/pexrtc.js`);}catch{try{await loadScript(`https://${CFG.confHost}/static/webrtc/pexrtc.js`);}catch{setRtcStatus('Could not load PexRTC.js — try Open Web App instead','err');return;}}}
+  setRtcStatus('Connecting…','info');pexRTC=new window.PexRTC();
+  pexRTC.onSetup=(vid,pinStatus)=>{const callPin=pinStatus==='required'&&pin?pin:'';pexRTC.connect(callPin||undefined);};
+  pexRTC.onConnect=(vid)=>{setRtcStatus('In call · '+currentConf.name,'ok');document.getElementById('webrtcPlaceholder').style.display='none';const rv=document.getElementById('remoteVideo');rv.srcObject=vid;rv.classList.add('active');document.getElementById('rtcJoinBtn').style.display='none';document.getElementById('rtcHangupBtn').style.display='inline-flex';setTimeout(refreshParticipants,2000);};
+  pexRTC.onError=(e)=>{setRtcStatus('Error: '+e,'err');rtcCleanup();};pexRTC.onDisconnect=(r)=>{setRtcStatus('Disconnected'+(r?' · '+r:''),'info');rtcCleanup();};
+  try{await navigator.mediaDevices.getUserMedia({video:true,audio:true}).then(stream=>{const lv=document.getElementById('localVideo');lv.srcObject=stream;lv.classList.add('active');});}catch{}
+  pexRTC.makeCall(CFG.confHost,currentConf.primaryAlias,name,1280,'video');
+}
+function rtcHangup(){
+  if(SIM_DATA){setRtcStatus('Not connected','info');document.getElementById('rtcJoinBtn').style.display='inline-flex';document.getElementById('rtcHangupBtn').style.display='none';toast('[SIM] Call ended');return;}
+  if(pexRTC)pexRTC.disconnect();rtcCleanup();toast('Call ended');
+}
+function rtcCleanup(){pexRTC=null;['remoteVideo','localVideo'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById('webrtcPlaceholder').style.display='flex';document.getElementById('rtcJoinBtn').style.display='inline-flex';document.getElementById('rtcHangupBtn').style.display='none';}
+function setRtcStatus(msg,type){document.getElementById('rtcStatus').textContent=msg;const b=document.getElementById('rtcStatusBox');b.textContent=msg;b.className='add-status show '+(type==='ok'?'ok':type==='err'?'err':'info');}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+function openWebApp(alias){window.open(`https://${CFG.confHost}/webapp3/?conference=${encodeURIComponent(alias)}&name=Dashboard+User`,'_blank');}
+
+// ── Call History ──────────────────────────────────────────────
+let histData=[], histF='all', histLoaded=false;
+function setHistF(f,el){histF=f;document.querySelectorAll('#panel-hist .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderHist();}
+async function fetchHist(){
+  histLoaded=true;setDot('histDot','load');document.getElementById('histMsg').textContent='Fetching…';
+  if(SIM_DATA){histData=SIM_DATA.history.map(h=>({...h,service_type:h.type,start_time:h.start,end_time:h.end,participant_count:h.participants}));histData.sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));setDot('histDot','sim');document.getElementById('histMsg').textContent=`${histData.length} records · simulated`;document.getElementById('histCount').textContent=`${histData.length} total`;renderHist();return;}
+  try{histData=await fetchAll('/mgmt/api/admin/history/v1/conference/');histData.sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));setDot('histDot','live');document.getElementById('histMsg').textContent=`${histData.length} records · ${new Date().toLocaleTimeString()}`;document.getElementById('histCount').textContent=`${histData.length} total`;}
+  catch(e){setDot('histDot','err');document.getElementById('histMsg').textContent='History error: '+e.message;}
+  renderHist();
+}
+function renderHist(){
+  const q=document.getElementById('histQ').value.toLowerCase();const list=histData.filter(h=>{const ms=!q||(h.name||'').toLowerCase().includes(q);return ms&&(histF==='all'?true:(h.service_type||'conference')===histF);});
+  document.getElementById('histTableCount').textContent=`${list.length} shown`;const body=document.getElementById('histBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div>No records match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Conference</th><th>Started</th><th>Ended</th><th>Duration</th><th>Participants</th><th>Type</th></tr></thead><tbody>${list.map(h=>{const t=h.service_type||'conference',cls=typeCls(t);return`<tr><td><div class="cell-name"><div class="ava ${cls}" style="background:${colorFor(h.name||'')};color:#fff">${inits(h.name||'?')}</div><div><div class="row-name">${h.name||'Unknown'}</div></div></div></td><td style="font-size:12px;color:var(--text2)">${fmtDt(h.start_time)}</td><td style="font-size:12px;color:var(--text2)">${fmtDt(h.end_time)}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${h.duration?fmtDur(h.duration):'Active'}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${h.participant_count??'—'}</td><td><span class="badge ${cls}">${typeLabel(t)}</span></td></tr>`;}).join('')}</tbody></table>`;
+}
+
+// ── System ────────────────────────────────────────────────────
+let sysLoaded=false;
+async function fetchSys(){
+  sysLoaded=true;setDot('sysDot','load');document.getElementById('sysMsg').textContent='Loading…';
+  if(SIM_DATA){
+    const sd=SIM_DATA;const active=sd.alarms.filter(a=>!a.cleared);setDot('sysDot',active.length?'err':'sim');document.getElementById('sysMsg').textContent=active.length?`${active.length} active alarms · simulated`:'System healthy · simulated';
+    document.getElementById('sysCards').innerHTML=`<div class="sys-card"><div class="sys-card-title">Worker Nodes</div><div class="sys-card-val">${sd.workers.length}</div><div class="sys-card-sub">${sd.workers.filter(w=>w.status==='active').length} active</div></div><div class="sys-card"><div class="sys-card-title">Active Alarms</div><div class="sys-card-val" style="color:${active.length?'var(--red)':'var(--teal)'}">${active.length}</div><div class="sys-card-sub">${sd.alarms.length} total</div></div><div class="sys-card"><div class="sys-card-title">Environment</div><div class="sys-card-val" style="font-size:16px">${CFG.label}</div><div class="sys-card-sub">System location: ${CFG.sysLoc}</div></div><div class="sys-card"><div class="sys-card-title">Mgmt node</div><div class="sys-card-val" style="font-size:14px">${CFG.mgmtHost}</div><div class="sys-card-sub">Conf: ${CFG.confHost}</div></div>`;
+    document.getElementById('alarmCount').textContent=active.length;document.getElementById('alarmBody').innerHTML=active.length?active.map(a=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px"><span class="badge ${a.severity==='ERROR'||a.severity==='CRITICAL'?'alarm':'warn'}" style="margin-top:2px;flex-shrink:0">${a.severity||'WARNING'}</span><div><div style="font-size:13px;font-weight:500">${a.name}</div><div style="font-size:11.5px;color:var(--text3)">${a.details||''}</div></div></div>`).join(''):'<div class="empty-state"><div class="empty-icon">✅</div>No active alarms</div>';
+    document.getElementById('workerCount').textContent=sd.workers.length;document.getElementById('workerBody').innerHTML=sd.workers.map(w=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:${w.status==='active'?'var(--teal)':w.status==='maintenance'?'var(--amber)':'var(--red)'};flex-shrink:0"></div><div style="flex:1"><div style="font-size:13px;font-weight:500">${w.name}</div><div style="font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${w.address}</div></div><span style="font-size:11px;color:var(--text3)">${w.status}</span></div>`).join('');return;
+  }
+  try{const[alarms,workers]=await Promise.all([apiFetch('/mgmt/api/admin/status/v1/alarm/?limit=500').catch(()=>({objects:[]})),apiFetch('/mgmt/api/admin/status/v1/worker_vm/?limit=500').catch(()=>({objects:[]}))]);const alarmList=alarms.objects||[],workerList=workers.objects||[],active=alarmList.filter(a=>!a.cleared);setDot('sysDot',active.length?'err':'live');document.getElementById('sysMsg').textContent=active.length?`${active.length} active alarms`:'System healthy · '+new Date().toLocaleTimeString();document.getElementById('sysCards').innerHTML=`<div class="sys-card"><div class="sys-card-title">Worker Nodes</div><div class="sys-card-val">${workerList.length}</div><div class="sys-card-sub">${workerList.filter(w=>w.status==='active'||w.active).length} active</div></div><div class="sys-card"><div class="sys-card-title">Active Alarms</div><div class="sys-card-val" style="color:${active.length?'var(--red)':'var(--teal)'}">${active.length}</div><div class="sys-card-sub">${alarmList.length} total</div></div><div class="sys-card"><div class="sys-card-title">Environment</div><div class="sys-card-val" style="font-size:16px">${CFG.label||CFG.confHost||'—'}</div><div class="sys-card-sub">Location: ${CFG.sysLoc||'—'}</div></div><div class="sys-card"><div class="sys-card-title">Mgmt node</div><div class="sys-card-val" style="font-size:14px">${CFG.mgmtHost||'—'}</div><div class="sys-card-sub">Conf: ${CFG.confHost||'—'}</div></div>`;document.getElementById('alarmCount').textContent=active.length;document.getElementById('alarmBody').innerHTML=active.length?active.map(a=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px"><span class="badge ${a.severity==='ERROR'||a.severity==='CRITICAL'?'alarm':'warn'}" style="margin-top:2px;flex-shrink:0">${a.severity||'WARN'}</span><div><div style="font-size:13px;font-weight:500">${a.name||'Alarm'}</div><div style="font-size:11.5px;color:var(--text3)">${a.details||''}</div></div></div>`).join(''):'<div class="empty-state"><div class="empty-icon">✅</div>No active alarms</div>';document.getElementById('workerCount').textContent=workerList.length;document.getElementById('workerBody').innerHTML=workerList.length?workerList.map(w=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:${w.status==='active'||w.active?'var(--teal)':'var(--amber)'};flex-shrink:0"></div><div style="flex:1"><div style="font-size:13px;font-weight:500">${w.name||w.hostname||'Node'}</div><div style="font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${w.address||w.ip_address||''}</div></div><span style="font-size:11px;color:var(--text3)">${w.status||''}</span></div>`).join(''):'<div class="empty-state"><div class="empty-icon">🖥</div>No worker nodes found</div>';}catch(e){setDot('sysDot','err');document.getElementById('sysMsg').textContent='System error: '+e.message;}
+}
+
+// ── Address Book ──────────────────────────────────────────────
+let abData=[], abF='all', abLoaded=false;
+function setAbF(f,el){abF=f;document.querySelectorAll('#panel-ab .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderAB();}
+async function fetchAB(){
+  abLoaded=true;setDot('abDot','load');document.getElementById('abMsg').textContent='Fetching…';
+  if(SIM_DATA){abData=SIM_DATA.vmrs.map(v=>({name:v.name,description:v.description||'',type:v.type,aliases:[v.alias],primaryAlias:v.alias,pin:!!(v.pin),guestPin:!!(v.guestPin),allowGuests:v.allowGuests,callType:v.callType}));setDot('abDot','sim');document.getElementById('abMsg').textContent=`${abData.length} VMRs · simulated`;document.getElementById('abCount').textContent=`${abData.length}`;renderAB();return;}
+  try{const d=await apiFetch('/mgmt/api/admin/configuration/v1/conference/?limit=500');abData=(d.objects||[]).map(v=>({name:v.name,description:v.description||'',type:v.service_type||'conference',aliases:(v.aliases||[]).map(a=>a.alias),primaryAlias:v.aliases?.[0]?.alias||'',pin:!!(v.pin),guestPin:!!(v.guest_pin),allowGuests:v.allow_guests,callType:v.call_type||'video'}));setDot('abDot','live');document.getElementById('abMsg').textContent=`${abData.length} VMRs · ${new Date().toLocaleTimeString()}`;document.getElementById('abCount').textContent=`${abData.length}`;}
+  catch(e){setDot('abDot','err');document.getElementById('abMsg').textContent='Error: '+e.message;}
+  renderAB();
+}
+function renderAB(){
+  const q=document.getElementById('abQ').value.toLowerCase();const list=abData.filter(c=>{const ms=!q||c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q));return ms&&(abF==='all'?true:abF===c.type);});
+  document.getElementById('abCount').textContent=`${list.length} result${list.length!==1?'s':''}`;const body=document.getElementById('abBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>No results</div>';return;}
+  body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">${list.map(c=>{const col=colorFor(c.name),cls=typeCls(c.type);const tags=[`<span class="badge ${cls}">${typeLabel(c.type)}</span>`];if(c.pin)tags.push('<span class="badge pin">Host PIN</span>');if(c.guestPin)tags.push('<span class="badge pin">Guest PIN</span>');if(!c.pin&&!c.guestPin&&c.allowGuests)tags.push('<span class="badge open">Open</span>');
+  return`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:9px"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:10px;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0">${inits(c.name)}</div><div><div style="font-size:13.5px;font-weight:500">${c.name}</div><div style="font-size:11.5px;color:var(--text3)">${c.description||typeLabel(c.type)}</div></div></div><div style="display:flex;gap:5px;flex-wrap:wrap">${tags.join('')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text2)">${c.primaryAlias||'—'}</div><div style="display:flex;gap:6px"><button style="flex:1;padding:6px;font-size:12px;font-weight:500;border-radius:var(--r-sm);border:none;background:var(--teal);color:#fff;cursor:pointer;font-family:'IBM Plex Sans',sans-serif" onclick="openDetail('${esc(c.primaryAlias)}')">Open</button><button style="flex:1;padding:6px;font-size:12px;font-weight:500;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans',sans-serif" onclick="copyTxt('${esc(c.primaryAlias)}','Alias copied')">Copy</button></div></div>`;}).join('')}</div>`;
+}
+
+// ── Users ─────────────────────────────────────────────────────
+let usersData=[], usersLoaded=false;
+async function fetchUsers(){
+  usersLoaded=true;setDot('usersDot','load');document.getElementById('usersMsg').textContent='Fetching…';
+  if(SIM_DATA){usersData=SIM_DATA.users;setDot('usersDot','sim');document.getElementById('usersMsg').textContent=`${usersData.length} users · simulated`;document.getElementById('usersCount').textContent=`${usersData.length} total`;renderUsers();return;}
+  try{usersData=await fetchAll('/mgmt/api/admin/configuration/v1/end_user/');setDot('usersDot','live');document.getElementById('usersMsg').textContent=`${usersData.length} users`;document.getElementById('usersCount').textContent=`${usersData.length} total`;}
+  catch(e){setDot('usersDot','err');document.getElementById('usersMsg').textContent='Users API: '+e.message;usersData=[];}
+  renderUsers();
+}
+function renderUsers(){
+  const q=document.getElementById('userQ').value.toLowerCase();const list=usersData.filter(u=>{const n=(u.display_name||u.username||u.name||'').toLowerCase();const e=(u.primary_email_address||u.email||'').toLowerCase();return!q||n.includes(q)||e.includes(q);});
+  document.getElementById('usersCount').textContent=`${list.length} shown`;const body=document.getElementById('usersBody');
+  if(!list.length){body.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div>${usersData.length===0?'No end users configured on this node yet.':'No users match'}</div>`;return;}
+  body.innerHTML=list.map(u=>{const n=u.display_name||u.username||u.name||'Unknown';const e=u.primary_email_address||u.email||'';const role=u.role||'user';return`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:50%;background:${colorFor(n)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">${inits(n)}</div><div style="flex:1"><div style="font-size:13.5px;font-weight:500">${n}</div><div style="font-size:12px;color:var(--text3)">${e}</div></div><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:${role==='admin'?'var(--purple-bg)':'var(--blue-bg)'};color:${role==='admin'?'var(--purple)':'var(--blue)'}">${role}</span></div>`;}).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadCfg();renderProfiles();
+// Restore sim data if last session was a sim
+if(CFG.sim&&CFG.label&&SIM_PROFILES[CFG.label]){SIM_DATA=SIM_PROFILES[CFG.label];}
+updateNoConfigState();updateSidebarLabels();
+showPanel('conf');
+if(SIM_DATA){loadSimData();if(autoOn)startAuto();}
+else if(CFG.confHost&&CFG.mgmtHost){fetchConf();if(autoOn)startAuto();}
+else{showPanel('settings');}
+</script>
+</body>
+</html>

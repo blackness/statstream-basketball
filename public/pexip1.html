@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0e1a;--panel:#121929;--panel2:#141d30;--border:rgba(100,140,220,0.12);--border2:rgba(100,140,220,0.22);
+    --accent:#4a9eff;--accent2:#2d7be8;--green:#22d3a0;--red:#ff4d6a;--amber:#ffa928;--purple:#a78bfa;
+    --text:#e2e8f8;--text2:#8899bb;--text3:#5a6a88;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--navy);color:var(--text);font-family:var(--sans);font-size:13px;min-height:700px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between}
+  .hlogo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+  .hlogo::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+  .hright{display:flex;align-items:center;gap:10px}
+  .pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+  .pill.ok{background:rgba(34,211,160,.1);color:var(--green);border:1px solid rgba(34,211,160,.2)}
+  .pill.warn{background:rgba(255,169,40,.1);color:var(--amber);border:1px solid rgba(255,169,40,.2)}
+  .pill.err{background:rgba(255,77,106,.1);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+  .pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .pdot.blink{animation:pulse 1.5s infinite}
+
+  .content{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .two-col{display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:slideIn .2s ease}
+  .ph{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .pt{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+  .pbadge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px}
+  .pbadge.green{background:rgba(34,211,160,.1);color:var(--green)}
+  .pbadge.blue{background:rgba(74,158,255,.15);color:var(--accent)}
+  .pbadge.purple{background:rgba(167,139,250,.1);color:var(--purple)}
+  .pbadge.amber{background:rgba(255,169,40,.1);color:var(--amber)}
+
+  .btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.04em;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+  .btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.danger{background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25);color:var(--red)}
+  .btn.danger:hover{background:rgba(255,77,106,.18)}
+  .btn.success{background:rgba(34,211,160,.1);border-color:rgba(34,211,160,.3);color:var(--green)}
+  .btn.success:hover{background:rgba(34,211,160,.2)}
+  .btn.purple{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.25);color:var(--purple)}
+  .btn.purple:hover{background:rgba(167,139,250,.2)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-xs{padding:3px 8px;font-size:9px;border-radius:4px}
+
+  .vmr-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-left:2px solid transparent;cursor:pointer;transition:all .12s}
+  .vmr-item:hover{background:rgba(74,158,255,.05)}
+  .vmr-item.sel{background:rgba(74,158,255,.09);border-left-color:var(--accent)}
+  .vmr-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+  .vmr-sub{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);animation:pulse 1.8s infinite;flex-shrink:0}
+  .idot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+
+  .tmpl-card{border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+  .tmpl-card:hover{border-color:rgba(100,140,220,.4)}
+  .tmpl-card.active-tmpl{border-color:var(--accent)}
+  .tmpl-head{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background .12s;user-select:none}
+  .tmpl-head:hover{background:rgba(255,255,255,.02)}
+  .tmpl-card.active-tmpl .tmpl-head{background:rgba(74,158,255,.06)}
+  .tmpl-color{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .tmpl-info{flex:1;min-width:0}
+  .tmpl-name{font-size:12px;font-weight:500;color:var(--text)}
+  .tmpl-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px}
+  .tmpl-btns{display:flex;gap:5px;flex-shrink:0}
+  .tmpl-body{border-top:1px solid var(--border);padding:12px;background:rgba(0,0,0,.12);display:none}
+  .tmpl-body.open{display:block}
+  .chevron{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:2px;flex-shrink:0;transition:color .15s}
+  .tmpl-card.active-tmpl .chevron{color:var(--accent)}
+
+  .dev-table{width:100%;border-collapse:collapse;margin-bottom:10px}
+  .dev-table th{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;text-align:left;border-bottom:1px solid var(--border)}
+  .dev-table td{padding:6px 8px;border-bottom:1px solid rgba(100,140,220,.06);font-size:11px}
+  .dev-table tr:last-child td{border-bottom:none}
+  .proto-tag{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(74,158,255,.1);color:var(--accent)}
+
+  .launch-summary{background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+  .launch-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+  .launch-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+  .launch-val{font-family:var(--mono);font-size:11px;color:var(--text);font-weight:500}
+  .launch-val.green{color:var(--green)}.launch-val.purple{color:var(--purple)}.launch-val.amber{color:var(--amber)}
+
+  .dial-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+  .ds{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;display:flex;align-items:center;gap:8px;transition:border-color .3s}
+  .ds.calling{border-color:var(--amber)}.ds.connected{border-color:var(--green)}.ds.failed{border-color:var(--red)}
+  .dsdot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+  .dsdot.calling{background:var(--amber);animation:pulse 1s infinite}.dsdot.connected{background:var(--green)}.dsdot.failed{background:var(--red)}
+  .ds-name{font-size:11px;font-weight:500;color:var(--text);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ds-addr{font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ds-st{font-family:var(--mono);font-size:9px;margin-left:auto;flex-shrink:0}
+  .ds-st.calling{color:var(--amber)}.ds-st.connected{color:var(--green)}.ds-st.failed{color:var(--red)}
+
+  .dial-log{font-family:var(--mono);font-size:10px;line-height:1.8;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;max-height:130px;overflow-y:auto;margin-bottom:10px;white-space:pre-wrap}
+  .dl-ok{color:var(--green)}.dl-err{color:var(--red)}.dl-info{color:var(--accent)}.dl-warn{color:var(--amber)}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#0f1525;border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;animation:slideIn .2s ease}
+  .modal h3{font-size:15px;font-weight:600;margin-bottom:18px;color:var(--text)}
+  .mfl{margin-bottom:12px}
+  .mfl label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .mfi{width:100%;background:rgba(10,14,26,.9);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+  .mfi:focus{border-color:var(--accent)}
+  .color-picks{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0}
+  .cpick{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s}
+  .cpick.sel{border-color:white;transform:scale(1.2)}
+  .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+
+  /* DEVICE ROWS IN MODAL */
+  .dev-row-edit{display:grid;grid-template-columns:18px 1fr 1fr 76px 22px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(100,140,220,.06)}
+  .dev-row-edit:last-child{border-bottom:none}
+  .dev-num{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center}
+  .dev-fi{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%;transition:border-color .15s}
+  .dev-fi:focus{border-color:var(--accent)}
+  .dev-fi::placeholder{color:var(--text3)}
+  .dev-sel{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:5px 6px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%;cursor:pointer}
+  .dev-sel option{background:#0f1525}
+  .btn-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px;line-height:1;transition:color .15s}
+  .btn-del:hover{color:var(--red)}
+
+  .notif{position:fixed;top:54px;right:14px;background:var(--panel);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:10px;color:var(--text);z-index:999;transform:translateX(130%);transition:transform .3s;max-width:320px;line-height:1.4}
+  .notif.show{transform:translateX(0)}.notif.warn{border-left-color:var(--amber)}.notif.err{border-left-color:var(--red)}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
+  .empty{padding:28px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:11px;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="hlogo">PEXIP CTRL</div>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em">Device Templates</span>
+  </div>
+  <div class="hright">
+    <div class="pill ok"><div class="pdot blink"></div>sandbox.smithvcs.queensu.ca</div>
+    <div class="pill ok" id="store-pill"><div class="pdot"></div>localStorage</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="two-col">
+
+    <!-- VMR list -->
+    <div class="panel">
+      <div class="ph">
+        <span class="pt">Target VMR</span>
+        <span class="pbadge blue" id="vmr-badge">loading…</span>
+      </div>
+      <div id="vmr-list"><div class="empty">Connecting to bridge…</div></div>
+    </div>
+
+    <!-- Launch panel -->
+    <div class="panel">
+      <div class="ph">
+        <span class="pt">Launch</span>
+        <span class="pbadge purple" id="launch-badge">Select VMR + Template</span>
+      </div>
+      <div style="padding:14px">
+        <div class="launch-summary">
+          <div class="launch-row"><span class="launch-lbl">VMR</span><span class="launch-val" id="lv-vmr">—</span></div>
+          <div class="launch-row"><span class="launch-lbl">Template</span><span class="launch-val purple" id="lv-tmpl">—</span></div>
+          <div class="launch-row"><span class="launch-lbl">Devices</span><span class="launch-val green" id="lv-devs">0 endpoints</span></div>
+          <div class="launch-row"><span class="launch-lbl">Protocol</span><span class="launch-val" id="lv-proto">—</span></div>
+        </div>
+        <button class="btn primary" id="btn-launch" onclick="launchDial()" disabled style="width:100%;justify-content:center;padding:11px;font-size:12px;margin-bottom:12px">⏎ Dial All Devices</button>
+        <div id="dial-grid" class="dial-grid" style="display:none"></div>
+        <div id="dial-log" class="dial-log" style="display:none"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Template manager -->
+  <div class="panel">
+    <div class="ph">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="pt">Device Templates</span>
+        <span class="pbadge purple" id="tmpl-badge">0 templates</span>
+      </div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-xs" onclick="exportJSON()">↓ Export JSON</button>
+        <button class="btn btn-xs" onclick="document.getElementById('imp').click()">↑ Import JSON</button>
+        <button class="btn primary btn-xs" onclick="openModal(null)">+ New Template</button>
+      </div>
+    </div>
+    <div id="tmpl-list" style="padding:10px"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">New Template</h3>
+    <div class="mfl"><label>Template Name</label><input class="mfi" id="m-name" placeholder="e.g. Boardroom Set, Lecture Hall A…"/></div>
+    <div class="mfl"><label>Description</label><input class="mfi" id="m-desc" placeholder="Optional description…"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mfl"><label>Default Protocol</label>
+        <select class="mfi" id="m-proto">
+          <option value="sip">SIP</option>
+          <option value="h323">H.323</option>
+          <option value="mssip">MS-SIP / Teams</option>
+          <option value="rtmp">RTMP</option>
+        </select>
+      </div>
+      <div class="mfl"><label>Colour Tag</label><div class="color-picks" id="cpicks"></div></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 8px">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Devices</span>
+      <button class="btn purple btn-xs" onclick="addDevRow()">+ Add Device</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:8px;padding:4px 8px;background:rgba(74,158,255,.05);border-radius:4px;border-left:2px solid rgba(74,158,255,.2)">
+      SIP: user@domain.com &nbsp;·&nbsp; H.323: 192.168.1.100 &nbsp;·&nbsp; Alias: h323:roomname
+    </div>
+    <div id="m-devs"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveTmpl()">Save Template</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(this)"/>
+<div class="notif" id="notif"></div>
+
+<script>
+const PROXY    = 'http://localhost:3000';
+const AUTH     = 'Basic ' + btoa('admin:Sandbox2024');
+const LS_KEY   = 'pexip_device_templates_v1';
+const COLORS   = ['#4a9eff','#22d3a0','#a78bfa','#ffa928','#ff4d6a','#5ee7df','#f472b6','#34d399'];
+
+// ── STATE ─────────────────────────────────────────────────────
+let templates   = [];
+let vmrs        = [];
+let selVMR      = null;
+let selTmplId   = null;
+let editingId   = null;
+let mDevs       = [];
+let mColor      = COLORS[0];
+let dialSt      = {};
+
+// ── STORAGE (localStorage) ────────────────────────────────────
+function loadTemplates() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      templates = JSON.parse(raw);
+      notify(`${templates.length} template${templates.length!==1?'s':''} loaded from storage`, 'ok');
+    } else {
+      templates = defaultTemplates();
+      saveTemplates();
+      notify('Default templates created — edit to match your endpoints', 'ok');
+    }
+  } catch(e) {
+    templates = defaultTemplates();
+    notify('Storage read error — using defaults', 'warn');
+  }
+  renderTemplates();
+  updateLaunch();
+}
+
+function saveTemplates() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(templates));
+    document.getElementById('store-pill').innerHTML = '<div class="pdot" style="background:var(--green)"></div>SAVED';
+    document.getElementById('store-pill').className = 'pill ok';
+  } catch(e) {
+    notify('Could not save to localStorage: ' + e.message, 'err');
+  }
+}
+
+function defaultTemplates() {
+  return [
+    { id:uid(), name:'Boardroom Set', desc:'Main boardroom endpoints', color:'#4a9eff', protocol:'sip',
+      devices:[
+        {name:'Boardroom Display', address:'boardroom@smithvcs.queensu.ca', protocol:'sip'},
+        {name:'Boardroom Camera',  address:'boardroom-cam@smithvcs.queensu.ca', protocol:'sip'},
+      ]},
+    { id:uid(), name:'Lecture Hall A', desc:'Physics lecture hall', color:'#22d3a0', protocol:'sip',
+      devices:[
+        {name:'Lectern Display',  address:'lectern-a@smithvcs.queensu.ca', protocol:'sip'},
+        {name:'Audience Camera',  address:'audience-cam-a@smithvcs.queensu.ca', protocol:'sip'},
+        {name:'Overflow Monitor', address:'overflow-a@smithvcs.queensu.ca', protocol:'sip'},
+      ]},
+    { id:uid(), name:'Remote H.323 Panel', desc:'Off-campus H.323 endpoints', color:'#a78bfa', protocol:'h323',
+      devices:[
+        {name:'Kingston Studio', address:'192.168.10.50', protocol:'h323'},
+        {name:'Ottawa Office',   address:'192.168.20.75', protocol:'h323'},
+      ]},
+  ];
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function apiGet(path) {
+  const r = await fetch(PROXY+'/mgmt'+path, {headers:{Authorization:AUTH}});
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function apiPost(path, body) {
+  const r = await fetch(PROXY+'/mgmt'+path, {method:'POST', headers:{Authorization:AUTH,'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  return r.json().catch(()=>({}));
+}
+async function getAll(path) {
+  let out=[], url=path+(path.includes('?')?'&':'?')+'limit=100&offset=0';
+  while(url){const d=await apiGet(url);out=out.concat(d.objects||d.results||[]);const nx=d.meta?.next||null;url=nx?nx.replace(/^https?:\/\/[^/]+/,''):null;}
+  return out;
+}
+
+// ── VMRs ──────────────────────────────────────────────────────
+async function loadVMRs() {
+  try {
+    vmrs = await getAll('/api/admin/configuration/v1/conference/');
+    const live = await getAll('/api/admin/status/v1/conference/');
+    const lm={};live.forEach(s=>lm[s.name]=s.participant_count||0);
+    vmrs = vmrs.map(v=>({...v,_live:lm[v.name]||0}));
+    vmrs.sort((a,b)=>b._live-a._live||a.name.localeCompare(b.name));
+    document.getElementById('vmr-badge').textContent = vmrs.length+' rooms';
+  } catch(e) {
+    vmrs=[{name:'Sandbox',primary_owner_alias_username:'sandbox',_live:0},{name:'Test Call Service',primary_owner_alias_username:'testcall',_live:0},{name:'Test VA',primary_owner_alias_username:'testva',_live:0}];
+    notify('Using cached VMR list (proxy offline?)', 'warn');
+  }
+  renderVMRs();
+}
+
+function renderVMRs() {
+  document.getElementById('vmr-list').innerHTML = vmrs.map(v=>{
+    const s=selVMR?.name===v.name;
+    return `<div class="vmr-item ${s?'sel':''}" onclick='selVMR_click(${JSON.stringify(JSON.stringify(v))})'>
+      <div><div class="vmr-name">${esc(v.name)}</div><div class="vmr-sub">${esc(v.primary_owner_alias_username||'')} · ${v._live>0?v._live+' participant'+(v._live!==1?'s':''):'idle'}</div></div>
+      <div class="${v._live>0?'ldot':'idot'}"></div>
+    </div>`;
+  }).join('');
+}
+
+function selVMR_click(json) { selVMR=JSON.parse(json); renderVMRs(); updateLaunch(); }
+
+// ── TEMPLATES RENDER ──────────────────────────────────────────
+function renderTemplates() {
+  const el = document.getElementById('tmpl-list');
+  document.getElementById('tmpl-badge').textContent = templates.length+' template'+(templates.length!==1?'s':'');
+  if (!templates.length) { el.innerHTML='<div class="empty">No templates yet.<br>Click <strong>+ New Template</strong> to create one.</div>'; return; }
+
+  el.innerHTML = templates.map(t=>{
+    const isSel = selTmplId===t.id;
+    const dc = t.devices?.length||0;
+    return `<div class="tmpl-card ${isSel?'active-tmpl':''}" id="tc-${t.id}">
+      <div class="tmpl-head" onclick="toggleTmpl('${t.id}')">
+        <div class="tmpl-color" style="background:${t.color}"></div>
+        <div class="tmpl-info">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+            <span class="tmpl-name">${esc(t.name)}</span>
+            <span style="font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:4px;background:${t.color}18;color:${t.color}">${(t.protocol||'sip').toUpperCase()}</span>
+          </div>
+          <div class="tmpl-meta">${esc(t.desc||'')}${t.desc?' · ':''}${dc} device${dc!==1?'s':''}</div>
+        </div>
+        <div class="tmpl-btns" onclick="event.stopPropagation()">
+          <button class="btn success btn-xs" onclick="useTmpl('${t.id}')">✓ Select</button>
+          <button class="btn btn-xs" onclick="openModal('${t.id}')">Edit</button>
+          <button class="btn btn-xs" onclick="dupTmpl('${t.id}')">Copy</button>
+          <button class="btn danger btn-xs" onclick="delTmpl('${t.id}')">Delete</button>
+        </div>
+        <span class="chevron">${isSel?'▾':'▸'}</span>
+      </div>
+      <div class="tmpl-body ${isSel?'open':''}" id="tb-${t.id}">
+        ${devTable(t)}
+        <div style="display:flex;gap:7px;margin-top:10px">
+          <button class="btn success btn-xs" onclick="useTmpl('${t.id}')">✓ Use This Template</button>
+          <button class="btn btn-xs" onclick="openModal('${t.id}')">Edit Devices</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function devTable(t) {
+  if (!t.devices?.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:4px 0">No devices — click Edit to add some.</div>';
+  return `<table class="dev-table"><thead><tr><th>#</th><th>Name</th><th>Address</th><th>Protocol</th></tr></thead><tbody>`
+    +t.devices.map((d,i)=>`<tr>
+      <td style="font-family:var(--mono);color:var(--text3)">${i+1}</td>
+      <td style="font-weight:500">${esc(d.name)}</td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">${esc(d.address)}</td>
+      <td><span class="proto-tag">${(d.protocol||t.protocol||'sip').toUpperCase()}</span></td>
+    </tr>`).join('')+'</tbody></table>';
+}
+
+function toggleTmpl(id) { selTmplId = selTmplId===id?null:id; renderTemplates(); updateLaunch(); }
+function useTmpl(id) { selTmplId=id; renderTemplates(); updateLaunch(); notify('Template selected — hit Dial All Devices','ok'); }
+
+// ── LAUNCH ────────────────────────────────────────────────────
+function updateLaunch() {
+  const t=templates.find(x=>x.id===selTmplId);
+  document.getElementById('lv-vmr').textContent   = selVMR?selVMR.name:'— none selected';
+  document.getElementById('lv-tmpl').textContent  = t?t.name:'— none selected';
+  document.getElementById('lv-devs').textContent  = t?(t.devices?.length||0)+' endpoints':'0 endpoints';
+  document.getElementById('lv-proto').textContent = t?(t.protocol||'sip').toUpperCase():'—';
+  const ready=selVMR&&t&&(t.devices?.length||0)>0;
+  document.getElementById('btn-launch').disabled=!ready;
+  document.getElementById('launch-badge').textContent=ready?'Ready to dial':'Select VMR + Template';
+  document.getElementById('launch-badge').className='pbadge '+(ready?'green':'purple');
+}
+
+async function launchDial() {
+  const t=templates.find(x=>x.id===selTmplId);
+  if(!t||!selVMR) return;
+  const devs=t.devices.filter(d=>d.address.trim());
+  if(!devs.length){notify('No devices in template','err');return;}
+
+  dialSt={};
+  devs.forEach((_,i)=>dialSt[i]='calling');
+  document.getElementById('dial-grid').style.display='grid';
+  document.getElementById('dial-log').style.display='block';
+  document.getElementById('dial-log').innerHTML='';
+  document.getElementById('btn-launch').disabled=true;
+  document.getElementById('btn-launch').innerHTML='<span class="spin">◌</span> Dialling…';
+  renderDialGrid(devs);
+
+  dlog(`Bulk dial → ${selVMR.name} · ${devs.length} device${devs.length!==1?'s':''}`, 'info');
+
+  const alias = selVMR.primary_owner_alias_username || selVMR.name;
+  const results = await Promise.allSettled(devs.map((d,i)=>dialOne(d,i,alias,t)));
+  const ok=results.filter(r=>r.status==='fulfilled'&&r.value).length;
+  dlog(`Done — ${ok} connected, ${devs.length-ok} failed`, ok===devs.length?'ok':'warn');
+  document.getElementById('btn-launch').disabled=false;
+  document.getElementById('btn-launch').innerHTML='⏎ Dial All Devices';
+  notify(`${ok}/${devs.length} devices connected to ${selVMR.name}`, ok===devs.length?'ok':'warn');
+}
+
+async function dialOne(d, i, alias, t) {
+  dlog(`Calling ${d.name||d.address}…`, 'info');
+  try {
+    const resp = await apiPost('/api/admin/command/v1/participant/dial/', {
+      conference_alias: alias,
+      destination: d.address,
+      protocol: d.protocol || t.protocol || 'sip',
+      system_location: 'DEV',
+      display_name: d.name || d.address,
+    });
+    const devs=templates.find(x=>x.id===selTmplId)?.devices||[];
+    if(resp.status==='success'){
+      dialSt[i]='connected';
+      renderDialGrid(devs);
+      dlog(`✓ ${d.name} connected (${resp.data?.participant_id?.slice(0,8)}…)`, 'ok');
+      return true;
+    } else {
+      dialSt[i]='failed';
+      renderDialGrid(devs);
+      dlog(`✗ ${d.name} — ${JSON.stringify(resp.dial||resp)}`, 'err');
+      return false;
+    }
+  } catch(e) {
+    dialSt[i]='failed';
+    renderDialGrid(templates.find(x=>x.id===selTmplId)?.devices||[]);
+    dlog(`✗ ${d.name} — ${e.message}`, 'err');
+    return false;
+  }
+}
+
+function renderDialGrid(devs) {
+  document.getElementById('dial-grid').innerHTML=devs.map((d,i)=>{
+    const st=dialSt[i]||'idle';
+    return `<div class="ds ${st}"><div class="dsdot ${st}"></div><div style="min-width:0;flex:1"><div class="ds-name">${esc(d.name||d.address)}</div><div class="ds-addr">${esc(d.address)}</div></div><span class="ds-st ${st}">${st.toUpperCase()}</span></div>`;
+  }).join('');
+}
+
+function dlog(msg,type='info'){
+  const el=document.getElementById('dial-log');
+  const cls={ok:'dl-ok',err:'dl-err',info:'dl-info',warn:'dl-warn'}[type]||'dl-info';
+  el.innerHTML+=`<span class="${cls}">${new Date().toLocaleTimeString()}  ${esc(msg)}\n</span>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(id) {
+  editingId=id;
+  const t=id?templates.find(x=>x.id===id):null;
+  mDevs=t?t.devices.map(d=>({...d})):[{name:'',address:'',protocol:'sip'}];
+  mColor=t?t.color:COLORS[0];
+  document.getElementById('modal-title').textContent=t?'Edit Template — '+t.name:'New Template';
+  document.getElementById('m-name').value=t?t.name:'';
+  document.getElementById('m-desc').value=t?t.desc||'':'';
+  document.getElementById('m-proto').value=t?t.protocol||'sip':'sip';
+  renderCPicks();renderMDevs();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('m-name').focus(),100);
+}
+
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+function renderCPicks(){
+  document.getElementById('cpicks').innerHTML=COLORS.map(c=>`<div class="cpick ${mColor===c?'sel':''}" style="background:${c}" onclick="mColor='${c}';renderCPicks()"></div>`).join('');
+}
+
+function addDevRow(){
+  const proto=document.getElementById('m-proto').value;
+  mDevs.push({name:'',address:'',protocol:proto});
+  renderMDevs();
+}
+
+function removeDevRow(i){ mDevs.splice(i,1); renderMDevs(); }
+
+function renderMDevs(){
+  const el=document.getElementById('m-devs');
+  if(!mDevs.length){el.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:8px 0 4px">No devices yet.</div>';return;}
+  el.innerHTML=mDevs.map((d,i)=>`<div class="dev-row-edit">
+    <div class="dev-num">${i+1}</div>
+    <input class="dev-fi" placeholder="Display name" value="${esc(d.name)}" oninput="mDevs[${i}].name=this.value"/>
+    <input class="dev-fi" placeholder="Address (SIP/IP)" value="${esc(d.address)}" oninput="mDevs[${i}].address=this.value"/>
+    <select class="dev-sel" onchange="mDevs[${i}].protocol=this.value">
+      <option value="sip" ${d.protocol==='sip'?'selected':''}>SIP</option>
+      <option value="h323" ${d.protocol==='h323'?'selected':''}>H.323</option>
+      <option value="mssip" ${d.protocol==='mssip'?'selected':''}>MS-SIP</option>
+      <option value="rtmp" ${d.protocol==='rtmp'?'selected':''}>RTMP</option>
+    </select>
+    <button class="btn-del" onclick="removeDevRow(${i})">✕</button>
+  </div>`).join('');
+}
+
+function saveTmpl(){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){notify('Template name required','err');return;}
+  const devs=mDevs.filter(d=>d.address.trim());
+  const tmpl={
+    id:editingId||uid(),
+    name,
+    desc:document.getElementById('m-desc').value.trim(),
+    color:mColor,
+    protocol:document.getElementById('m-proto').value,
+    devices:devs,
+    updatedAt:new Date().toISOString(),
+  };
+  if(editingId){const i=templates.findIndex(x=>x.id===editingId);if(i>=0)templates[i]=tmpl;}
+  else templates.push(tmpl);
+  saveTemplates();
+  renderTemplates();
+  updateLaunch();
+  closeModal();
+  notify(`"${name}" saved — ${devs.length} device${devs.length!==1?'s':''}`, 'ok');
+}
+
+// ── DUPLICATE / DELETE ────────────────────────────────────────
+function dupTmpl(id){
+  const t=templates.find(x=>x.id===id);if(!t)return;
+  const copy={...t,id:uid(),name:t.name+' (copy)',devices:t.devices.map(d=>({...d})),updatedAt:new Date().toISOString()};
+  templates.push(copy);saveTemplates();renderTemplates();notify(`Duplicated "${t.name}"`, 'ok');
+}
+
+function delTmpl(id){
+  const t=templates.find(x=>x.id===id);if(!t)return;
+  if(!confirm(`Delete template "${t.name}"?\nThis cannot be undone.`))return;
+  templates=templates.filter(x=>x.id!==id);
+  if(selTmplId===id){selTmplId=null;updateLaunch();}
+  saveTemplates();renderTemplates();notify(`Deleted "${t.name}"`, 'warn');
+}
+
+// ── IMPORT / EXPORT ───────────────────────────────────────────
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(templates,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='pexip-device-templates.json';a.click();
+  URL.revokeObjectURL(url);notify('Exported '+templates.length+' templates','ok');
+}
+
+async function importJSON(input){
+  const file=input.files[0];if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    if(!Array.isArray(data))throw new Error('Expected JSON array');
+    const fresh=data.map(t=>({...t,id:uid(),devices:(t.devices||[]).map(d=>({...d}))}));
+    templates=[...templates,...fresh];
+    saveTemplates();renderTemplates();notify(`Imported ${fresh.length} template${fresh.length!==1?'s':''}`, 'ok');
+  }catch(e){notify('Import failed: '+e.message,'err');}
+  input.value='';
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function uid(){ return Math.random().toString(36).slice(2,10)+Date.now().toString(36); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+let nTO;
+function notify(msg,type='ok'){
+  const n=document.getElementById('notif');
+  n.textContent=msg;n.className='notif show'+(type==='warn'?' warn':type==='err'?' err':'');
+  clearTimeout(nTO);nTO=setTimeout(()=>n.classList.remove('show'),3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadTemplates();
+loadVMRs();
+</script>
+</body>
+</html>

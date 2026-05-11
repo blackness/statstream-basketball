@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0e1a;--panel:#121929;--panel2:#141d30;--border:rgba(100,140,220,0.12);--border2:rgba(100,140,220,0.22);
+    --accent:#4a9eff;--accent2:#2d7be8;--green:#22d3a0;--red:#ff4d6a;--amber:#ffa928;--purple:#a78bfa;
+    --text:#e2e8f8;--text2:#8899bb;--text3:#5a6a88;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--navy);color:var(--text);font-family:var(--sans);font-size:13px;min-height:700px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── HEADER ── */
+  .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between}
+  .hlogo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+  .hlogo::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+  .hright{display:flex;align-items:center;gap:8px}
+  .pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+  .pill.ok{background:rgba(34,211,160,.1);color:var(--green);border:1px solid rgba(34,211,160,.2)}
+  .pill.warn{background:rgba(255,169,40,.1);color:var(--amber);border:1px solid rgba(255,169,40,.2)}
+  .pill.err{background:rgba(255,77,106,.1);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+  .pill.idle{background:rgba(100,140,220,.08);color:var(--text3);border:1px solid var(--border2)}
+  .pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .pdot.blink{animation:pulse 1.5s infinite}
+
+  /* ── SERVER SWITCHER BAR ── */
+  .srv-bar{background:var(--panel2);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:8px;min-height:40px;flex-wrap:wrap}
+  .srv-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0}
+  .srv-tab{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.02);font-family:var(--mono);font-size:10px;

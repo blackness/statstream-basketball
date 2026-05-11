@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pexip Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#00B894;--teal-dark:#007A63;--teal-bg:#E6F7F4;
+  --amber:#F0A500;--amber-bg:#FEF6E4;
+  --red:#D63031;--red-bg:#FDEAEA;
+  --blue:#3730A3;--blue-bg:#EEF2FF;
+  --purple:#7B5EA7;--purple-bg:#F3EEFF;
+  --violet:#7C3AED;--violet-bg:#F5F3FF;--violet-border:#C4B5FD;
+  --slate:#0F1F2E;
+  --bg:#F0F2F5;--surface:#fff;--surface2:#F7F8FA;
+  --border:#E2E6EA;--border2:#C8CDD4;
+  --text:#0F1F2E;--text2:#4A5568;--text3:#9AA5B4;
+  --r:10px;--r-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:216px;background:var(--slate);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-icon{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:17px;height:17px;fill:#fff}
+.sb-name{font-size:15px;font-weight:600;color:#fff}
+.sb-tag{font-size:10px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.07em}
+.nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nav-sec{font-size:10px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.09em;padding:8px 8px 3px;font-weight:500}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:var(--r-sm);border:none;background:none;color:rgba(255,255,255,.48);font-size:13px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;text-align:left;transition:all .13s;margin-bottom:1px}
+.nav-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;opacity:.7}
+.nav-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82)}
+.nav-btn.active{background:rgba(0,184,148,.18);color:var(--teal);font-weight:500}
+.nav-btn.active svg{opacity:1}
+.sb-foot{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.node-pill{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.04);margin-bottom:4px;cursor:pointer;transition:background .12s}
+.node-pill:hover{background:rgba(255,255,255,.08)}
+.ndot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .3s}
+.ndot.ok{background:var(--teal)}.ndot.err{background:var(--red)}.ndot.load{background:var(--amber);animation:blink .8s infinite}.ndot.sim{background:#A78BFA}
+.node-label{font-size:11px;color:rgba(255,255,255,.28);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+
+/* Sim banner */
+.sim-banner{background:linear-gradient(90deg,#7C3AED,#A78BFA);color:white;padding:6px 14px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.sim-banner svg{width:13px;height:13px;fill:white;flex-shrink:0}
+.sim-banner .sp{flex:1}
+.sim-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:white;padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-weight:500}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:56px;padding:0 24px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tb-title{flex:1}
+.tb-title h1{font-size:16px;font-weight:600}
+.tb-title p{font-size:11.5px;color:var(--text3);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn svg{width:13px;height:13px;fill:currentColor}
+.btn.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:var(--teal-dark)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-danger:hover{opacity:.85}
+.btn-sim{background:linear-gradient(135deg,#7C3AED,#A78BFA);color:#fff;border-color:#7C3AED}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px}
+.btn-launch{background:var(--teal);color:#fff;border-color:var(--teal);padding:10px 24px;font-size:14px;font-weight:600}
+.btn-launch:hover{background:var(--teal-dark)}
+.btn-launch:disabled{opacity:.4;cursor:not-allowed}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-val{font-size:28px;font-weight:600;line-height:1;font-family:'IBM Plex Mono',monospace}
+.stat-val.green{color:var(--teal)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--blue)}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:160px}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;fill:var(--text3);pointer-events:none}
+.search input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .12s}
+.pill.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal);font-weight:500}
+
+/* Strip */
+.strip{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:14px;font-size:12px;color:var(--text2)}
+.strip .sp{flex:1}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.idle{background:var(--border2)}.dot.live{background:var(--teal);animation:blink 2s infinite}.dot.load{background:var(--amber);animation:blink .7s infinite}.dot.err{background:var(--red)}.dot.sim{background:#A78BFA}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-head-title{font-size:13px;font-weight:600;flex:1}
+.card-count{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
+
+/* Table */
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:8px 14px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border)}
+thead th.center{text-align:center}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody tr.clickable{cursor:pointer}
+td{padding:9px 14px;vertical-align:middle}
+td.center{text-align:center}
+.cell-name{display:flex;align-items:center;gap:10px}
+.ava{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.row-name{font-size:13.5px;font-weight:500}
+.row-sub{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.conf{background:var(--teal-bg);color:var(--teal-dark)}.badge.test{background:var(--blue-bg);color:var(--blue)}.badge.lecture{background:var(--amber-bg);color:#7A5006}.badge.pin{background:var(--red-bg);color:var(--red)}.badge.open{background:var(--teal-bg);color:var(--teal-dark)}.badge.ok{background:var(--teal-bg);color:var(--teal-dark)}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--teal);animation:blink 2s infinite;margin-right:4px;vertical-align:middle}
+
+/* ── Wizard ── */
+.wizard{max-width:860px}
+.wizard-steps{display:flex;align-items:center;gap:0;margin-bottom:24px}
+.wstep{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text3);font-weight:400}
+.wstep.active{color:var(--text);font-weight:500}
+.wstep.done{color:var(--teal)}
+.wstep-num{width:24px;height:24px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:var(--text3)}
+.wstep.active .wstep-num{border-color:var(--teal);color:var(--teal);background:var(--teal-bg)}
+.wstep.done .wstep-num{border-color:var(--teal);background:var(--teal);color:#fff}
+.wstep-line{flex:1;height:1px;background:var(--border);margin:0 8px}
+.wstep-line.done{background:var(--teal)}
+
+/* Step cards */
+.step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.step-card-head{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:10px}
+.step-card-head h3{font-size:14px;font-weight:600;flex:1}
+.step-card-body{padding:18px}
+
+/* VMR picker grid */
+.vmr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.vmr-card{border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.vmr-card:hover{border-color:var(--teal);background:var(--teal-bg)}
+.vmr-card.selected{border-color:var(--teal);background:var(--teal-bg)}
+.vmr-card-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;margin-bottom:8px}
+.vmr-card-name{font-size:13.5px;font-weight:500;margin-bottom:3px}
+.vmr-card-alias{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px}
+.vmr-card-status{font-size:11px;display:flex;align-items:center;gap:4px}
+
+/* Template picker */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.tpl-card{border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;background:var(--surface2)}
+.tpl-card:hover{border-color:var(--violet);background:var(--violet-bg)}
+.tpl-card.selected{border-color:var(--violet);background:var(--violet-bg)}
+.tpl-card-name{font-size:13.5px;font-weight:600;color:var(--violet);margin-bottom:4px}
+.tpl-card-desc{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5}
+.tpl-card-sites{font-size:11px;color:var(--text3)}
+
+/* ── Conference Control Room ── */
+.ctrl-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.ctrl-title-row{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.ctrl-vmr-ava{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff;flex-shrink:0}
+.ctrl-vmr-name{font-size:18px;font-weight:600}
+.ctrl-vmr-sub{font-size:12px;color:var(--text3);margin-top:2px;font-family:'IBM Plex Mono',monospace}
+.ctrl-stats{display:flex;gap:16px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)}
+.ctrl-stat{display:flex;flex-direction:column;gap:2px}
+.ctrl-stat-val{font-size:18px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.ctrl-stat-val.green{color:var(--teal)}
+.ctrl-stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.ctrl-actions{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
+
+/* Participant control table */
+.ctrl-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.ctrl-table-head{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:10px}
+.ctrl-table-head h3{font-size:13px;font-weight:600;flex:1}
+
+/* Site row */
+.site-row{border-bottom:1px solid var(--border);transition:background .1s}
+.site-row:last-child{border-bottom:none}
+.site-row:hover{background:var(--surface2)}
+.site-row td{padding:10px 14px;vertical-align:middle}
+
+/* Status pill */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.status-pill.connected{background:var(--teal-bg);color:var(--teal-dark)}
+.status-pill.connecting{background:var(--amber-bg);color:#7A5006}
+.status-pill.idle{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.status-pill.failed{background:var(--red-bg);color:var(--red)}
+.status-pill.muted{background:var(--amber-bg);color:#7A5006}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.status-pill.connecting .status-dot{animation:blink .7s infinite}
+
+/* Toggle controls */
+.ctrl-toggle{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;font-size:14px}
+.ctrl-toggle:hover{background:var(--surface2)}
+.ctrl-toggle.active{background:var(--teal-bg);border-color:var(--teal)}
+.ctrl-toggle.muted-audio{background:var(--amber-bg);border-color:var(--amber)}
+.ctrl-toggle.muted-video{background:var(--red-bg);border-color:var(--red)}
+.ctrl-toggle:disabled{opacity:.35;cursor:not-allowed}
+
+/* Global controls bar */
+.global-ctrl{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.global-ctrl span{font-size:12px;color:var(--text2);font-weight:500}
+.global-ctrl .sp{flex:1}
+
+/* Settings */
+.settings-wrap{max-width:700px}
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.settings-section-head{padding:12px 18px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:8px}
+.settings-section-head h3{font-size:13px;font-weight:600;flex:1}
+.settings-body{padding:18px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;font-weight:500;color:var(--text2)}
+.field input,.field select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12px;color:var(--text3);line-height:1.6;margin-top:4px}
+.conn-test-row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.conn-test-msg{font-size:12px;color:var(--text3)}
+.profile-list{display:flex;flex-direction:column;gap:8px}
+.profile-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all .12s}
+.profile-item:hover{border-color:var(--teal);background:var(--teal-bg)}
+.profile-item.active-profile{border-color:var(--teal);background:var(--teal-bg)}
+.profile-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.profile-dot.active{background:var(--teal)}
+.profile-name{font-size:13px;font-weight:500;flex:1}
+.profile-host{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+
+.panel{display:none}
+.panel.show{display:block;animation:fadeUp .2s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--slate);color:#fff;padding:10px 18px;border-radius:var(--r-sm);font-size:13px;box-shadow:var(--shadow-md);opacity:0;transition:all .2s;pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:28px;margin-bottom:8px;opacity:.4}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+    <div><div class="sb-name">Pexip</div><div class="sb-tag" id="sbVersion">Dashboard</div></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Monitor</div>
+    <button class="nav-btn active" id="nav-conferences" onclick="showPanel('conferences')">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+      Conferences
+    </button>
+    <button class="nav-btn" id="nav-launch" onclick="showPanel('launch')">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      Launch Conference
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="showPanel('history')">
+      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      Call History
+    </button>
+    <div class="nav-sec" style="margin-top:10px">Config</div>
+    <button class="nav-btn" id="nav-settings" onclick="showPanel('settings')">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Settings
+    </button>
+  </nav>
+  <div class="sb-foot" onclick="showPanel('settings')">
+    <div class="node-pill"><div class="ndot" id="dotConf"></div><div class="node-label" id="sbConfHost">Not configured</div></div>
+    <div class="node-pill"><div class="ndot" id="dotMgmt"></div><div class="node-label" id="sbMgmtHost">Not configured</div></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="sim-banner" id="simBanner" style="display:none">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    Simulation mode — no real node connected
+    <span class="sp"></span>
+    <button onclick="showPanel('settings')">Switch to live node →</button>
+  </div>
+
+  <div class="topbar">
+    <div class="tb-title"><h1 id="pageTitle">Conferences</h1><p id="pageSub">Live VMR status</p></div>
+    <button class="btn on" id="autoBtn" onclick="toggleAuto()" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+      <span id="autoBtnTxt">Auto ON</span>
+    </button>
+    <button class="btn" onclick="onRefresh()">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ Conferences ══ -->
+    <div id="panel-conferences" class="panel show">
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total VMRs</div></div>
+        <div class="stat"><div class="stat-val green" id="s-live">—</div><div class="stat-lbl">Active now</div></div>
+        <div class="stat"><div class="stat-val blue" id="s-parts">—</div><div class="stat-lbl">Participants</div></div>
+        <div class="stat"><div class="stat-val amber" id="s-pin">—</div><div class="stat-lbl">PIN required</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="confQ" placeholder="Search conferences…" oninput="renderConf()"/></div>
+        <div class="pills"><button class="pill on" onclick="setConfF('all',this)">All</button><button class="pill" onclick="setConfF('live',this)">Active</button><button class="pill" onclick="setConfF('pin',this)">PIN required</button></div>
+        <button class="btn btn-primary" onclick="showPanel('launch')">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Launch conference
+        </button>
+      </div>
+      <div class="strip"><div class="dot load" id="confDot"></div><span id="confMsg">Loading…</span><span class="sp"></span><span id="confCd" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)"></span></div>
+      <div class="card"><div class="card-head"><span class="card-head-title">Virtual Meeting Rooms</span><span class="card-count" id="confCount">—</span></div><div id="confBody"><div class="empty-state"><div class="empty-icon">▣</div>Loading…</div></div></div>
+    </div>
+
+    <!-- ══ Launch wizard ══ -->
+    <div id="panel-launch" class="panel">
+      <div class="wizard">
+
+        <!-- Step indicator -->
+        <div class="wizard-steps" id="wizardSteps">
+          <div class="wstep active" id="ws1"><div class="wstep-num">1</div>Select VMR</div>
+          <div class="wstep-line" id="wl1"></div>
+          <div class="wstep" id="ws2"><div class="wstep-num">2</div>Choose template</div>
+          <div class="wstep-line" id="wl2"></div>
+          <div class="wstep" id="ws3"><div class="wstep-num">3</div>Control room</div>
+        </div>
+
+        <!-- Step 1: Select VMR -->
+        <div id="wiz-step1">
+          <div class="step-card">
+            <div class="step-card-head">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--teal)"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+              <h3>Select a Virtual Meeting Room</h3>
+            </div>
+            <div class="step-card-body">
+              <div class="vmr-grid" id="vmrPickerGrid"></div>
+              <div style="margin-top:14px;display:flex;justify-content:flex-end">
+                <button class="btn btn-primary" id="wizNext1" onclick="wizGoStep2()" disabled>Next: Choose template →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Choose template -->
+        <div id="wiz-step2" style="display:none">
+          <div class="step-card">
+            <div class="step-card-head">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="var(--violet)"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+              <h3>Choose a participant template</h3>
+              <button class="btn btn-sm" onclick="wizGoStep1()">← Change VMR</button>
+            </div>
+            <div class="step-card-body">
+              <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Templates define which sites and endpoints are pre-loaded into the conference control room.</p>
+              <div class="tpl-grid" id="tplPickerGrid"></div>
+              <div style="margin-top:14px;display:flex;justify-content:flex-end">
+                <button class="btn btn-primary" id="wizNext2" onclick="wizGoStep3()" disabled>Next: Open control room →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Conference Control Room (inside wizard container) -->
+        <div id="wiz-step3" style="display:none"></div>
+
+      </div>
+    </div>
+
+    <!-- ══ Call History ══ -->
+    <div id="panel-history" class="panel">
+      <div class="toolbar"><div class="search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input id="histQ" placeholder="Search history…" oninput="renderHist()"/></div></div>
+      <div class="strip"><div class="dot idle" id="histDot"></div><span id="histMsg">Loading…</span><span class="sp"></span><span id="histCount" style="font-size:11px;color:var(--text3)"></span></div>
+      <div class="card"><div class="card-head"><span class="card-head-title">Call History</span><span class="card-count" id="histTableCount">—</span></div><div id="histBody"><div class="empty-state"><div class="empty-icon">📋</div>Loading…</div></div></div>
+    </div>
+
+    <!-- ══ Settings ══ -->
+    <div id="panel-settings" class="panel">
+      <div class="settings-wrap">
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Active Connection</h3></div>
+          <div class="settings-body">
+            <div class="field-row"><div class="field"><label>Conferencing node</label><input id="cfgConfHost" placeholder="sandboxconf.example.com"/></div><div class="field"><label>Management node</label><input id="cfgMgmtHost" placeholder="sandbox.example.com"/></div></div>
+            <div class="field-row"><div class="field"><label>Admin username</label><input id="cfgUser" placeholder="admin"/></div><div class="field"><label>Admin password</label><input id="cfgPass" type="password" placeholder="••••••••"/></div></div>
+            <div class="field-row"><div class="field"><label>Proxy address</label><input id="cfgProxy" placeholder="localhost:3000"/></div><div class="field"><label>Protocol</label><select id="cfgProxyProto"><option value="http">HTTP</option><option value="https">HTTPS</option></select></div></div>
+            <div class="field-row"><div class="field"><label>System location</label><input id="cfgSysLoc" placeholder="DEV"/></div><div class="field"><label>Auto-refresh (s)</label><input id="cfgInterval" type="number" value="30" min="5" max="300"/></div></div>
+            <div class="field"><label>Environment label</label><input id="cfgLabel" placeholder="e.g. Queens Sandbox"/></div>
+            <div class="conn-test-row">
+              <button class="btn btn-primary" onclick="saveSettings()">Save & connect</button>
+              <button class="btn" onclick="testConn()">Test connection</button>
+              <span class="conn-test-msg" id="connTestMsg"></span>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Saved Environments</h3><button class="btn btn-sm" onclick="saveAsProfile()">+ Save current</button></div>
+          <div class="settings-body"><div id="profileList" class="profile-list"></div></div>
+        </div>
+        <div class="settings-section" style="border-color:var(--violet-border)">
+          <div class="settings-section-head" style="background:var(--violet-bg)"><h3 style="color:var(--violet)">🎭 Demo Simulations</h3></div>
+          <div class="settings-body">
+            <p class="hint" style="margin-bottom:14px">Load a simulated environment — no proxy needed.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:var(--violet-bg);border:1px solid var(--violet-border);border-radius:var(--r);padding:14px">
+                <div style="font-size:14px;font-weight:600;color:var(--violet);margin-bottom:4px">🏢 Calgary HQ</div>
+                <div style="font-size:11.5px;color:var(--text3);margin-bottom:10px">8 VMRs · 3 active · Cisco + Poly endpoints</div>
+                <button class="btn btn-sim btn-sm" style="width:100%;justify-content:center" onclick="loadSim('Calgary HQ')">Load →</button>
+              </div>
+              <div style="background:var(--violet-bg);border:1px solid var(--violet-border);border-radius:var(--r);padding:14px">
+                <div style="font-size:14px;font-weight:600;color:var(--violet);margin-bottom:4px">🌐 Toronto Cloud</div>
+                <div style="font-size:11.5px;color:var(--text3);margin-bottom:10px">12 VMRs · 5 active · Poly + H.323</div>
+                <button class="btn btn-sim btn-sm" style="width:100%;justify-content:center" onclick="loadSim('Toronto Cloud')">Load →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-head"><h3>Proxy setup</h3></div>
+          <div class="settings-body"><p class="hint" style="margin-bottom:12px">Run <code>node proxy.cjs</code> in a terminal. Keep it open while using the dashboard.</p><div style="background:var(--slate);color:#e2e8f0;padding:12px 14px;border-radius:var(--r-sm);font-family:'IBM Plex Mono',monospace;font-size:12px">node proxy.cjs</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// SIMULATION DATA
+// ══════════════════════════════════════════════════════════════
+const SIM_PROFILES = {
+  'Calgary HQ': {
+    confHost:'pex-yyc.smithvcs.ca', mgmtHost:'mgmt-yyc.smithvcs.ca',
+    user:'admin', pass:'Calgary2024!', proxy:'localhost:3000', proxyProto:'http',
+    sysLoc:'YYC-MAIN', interval:30, label:'Calgary HQ', sim:true,
+    vmrs:[
+      {name:'Executive Boardroom',alias:'exec.board',type:'conference',pin:'9911',guestPin:'',allowGuests:false,callType:'video',description:'C-suite meetings',live:true,participants:5},
+      {name:'All Hands',alias:'allhands',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Company-wide meetings',live:true,participants:47},
+      {name:'IT Support Room',alias:'it.support',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'IT helpdesk VMR',live:true,participants:2},
+      {name:'Training Room A',alias:'training.a',type:'lecture',pin:'1234',guestPin:'5678',allowGuests:true,callType:'video',description:'Webinar & training',live:false,participants:0},
+      {name:'Sales Team',alias:'sales.team',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',description:'Sales department VMR',live:false,participants:0},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Pexip Test Call Service',live:false,participants:0},
+      {name:'HR Confidential',alias:'hr.conf',type:'conference',pin:'7777',guestPin:'8888',allowGuests:true,callType:'video',description:'HR private meetings',live:false,participants:0},
+      {name:'Reception',alias:'reception',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Virtual reception desk',live:false,participants:0},
+    ],
+    liveParticipants:{
+      'exec.board':[{name:'Dr. Sarah Chen',role:'host',protocol:'SIP',uri:'schen@cisco.yyc.ca',duration:1842,audioMuted:false,videoMuted:false},{name:'Marcus Webb',role:'guest',protocol:'H.323',uri:'mwebb@poly.yyc.ca',duration:1720,audioMuted:false,videoMuted:false},{name:'Priya Nair',role:'guest',protocol:'WebRTC',uri:'pnair@smithvcs.ca',duration:1680,audioMuted:true,videoMuted:false},{name:'Tom Okafor',role:'guest',protocol:'SIP',uri:'tokafor@cisco.yyc.ca',duration:900,audioMuted:false,videoMuted:false},{name:'Lisa Park',role:'guest',protocol:'SIP',uri:'lpark@cisco.yyc.ca',duration:600,audioMuted:false,videoMuted:true}],
+      'allhands':[{name:'James Liu',role:'host',protocol:'SIP',uri:'jliu@cisco.yyc.ca',duration:3600,audioMuted:false,videoMuted:false},{name:'Alice Tremblay',role:'guest',protocol:'WebRTC',uri:'atremblay@smithvcs.ca',duration:3580,audioMuted:true,videoMuted:false},{name:'Bob Singh',role:'guest',protocol:'H.323',uri:'bsingh@poly.yyc.ca',duration:3400,audioMuted:true,videoMuted:false}],
+      'it.support':[{name:'Mike Torres',role:'host',protocol:'SIP',uri:'mtorres@smithvcs.ca',duration:420,audioMuted:false,videoMuted:false},{name:'Jane Doe',role:'guest',protocol:'WebRTC',uri:'jdoe@smithvcs.ca',duration:380,audioMuted:false,videoMuted:false}],
+    },
+    history:[
+      {name:'Executive Boardroom',type:'conference',start:'2026-05-07T14:00:00',end:'2026-05-07T15:30:00',duration:5400,participants:6},
+      {name:'All Hands',type:'conference',start:'2026-05-07T10:00:00',end:'2026-05-07T11:00:00',duration:3600,participants:89},
+      {name:'Training Room A',type:'lecture',start:'2026-05-06T13:00:00',end:'2026-05-06T14:30:00',duration:5400,participants:32},
+      {name:'Sales Team',type:'conference',start:'2026-05-05T15:00:00',end:'2026-05-05T16:00:00',duration:3600,participants:8},
+      {name:'IT Support Room',type:'conference',start:'2026-05-05T11:30:00',end:'2026-05-05T12:00:00',duration:1800,participants:2},
+    ],
+  },
+  'Toronto Cloud': {
+    confHost:'pex-yyz.smithvcs.ca', mgmtHost:'mgmt-yyz.smithvcs.ca',
+    user:'admin', pass:'Toronto2024!', proxy:'localhost:3000', proxyProto:'http',
+    sysLoc:'YYZ-CLOUD', interval:30, label:'Toronto Cloud', sim:true,
+    vmrs:[
+      {name:'Main Conference',alias:'main.conf',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Primary conference room',live:true,participants:8},
+      {name:'Product Demo',alias:'product.demo',type:'conference',pin:'2468',guestPin:'1357',allowGuests:true,callType:'video',description:'Customer product demos',live:true,participants:6},
+      {name:'Engineering',alias:'engineering',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',description:'Engineering team VMR',live:true,participants:11},
+      {name:'Customer Success',alias:'cs.room',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Customer onboarding',live:true,participants:4},
+      {name:'Webinar Stage',alias:'webinar',type:'lecture',pin:'3030',guestPin:'',allowGuests:true,callType:'video',description:'Public webinar VMR',live:true,participants:142},
+      {name:'Finance Team',alias:'finance',type:'conference',pin:'6543',guestPin:'',allowGuests:false,callType:'video',description:'Finance department',live:false,participants:0},
+      {name:'Partner Portal',alias:'partner',type:'conference',pin:'',guestPin:'9999',allowGuests:true,callType:'video',description:'Partner meetings',live:false,participants:0},
+      {name:'Board Room',alias:'board',type:'conference',pin:'1111',guestPin:'',allowGuests:false,callType:'video',description:'Executive board room',live:false,participants:0},
+      {name:'Marketing Hub',alias:'marketing',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'video',description:'Marketing team VMR',live:false,participants:0},
+      {name:'Dev Standup',alias:'dev.standup',type:'conference',pin:'',guestPin:'',allowGuests:false,callType:'audio',description:'Daily dev standups',live:false,participants:0},
+      {name:'Test Call Service',alias:'test.call',type:'test_call',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Pexip Test Call Service',live:false,participants:0},
+      {name:'Lobby',alias:'lobby',type:'conference',pin:'',guestPin:'',allowGuests:true,callType:'video',description:'Virtual lobby',live:false,participants:0},
+    ],
+    liveParticipants:{
+      'main.conf':[{name:'Aisha Okonkwo',role:'host',protocol:'SIP',uri:'aokonkwo@poly.yyz.ca',duration:2100,audioMuted:false,videoMuted:false},{name:'Carlos Mendez',role:'guest',protocol:'H.323',uri:'cmendez@cisco.yyz.ca',duration:1980,audioMuted:false,videoMuted:false},{name:'Jenny Wu',role:'guest',protocol:'WebRTC',uri:'jwu@smithvcs.ca',duration:1800,audioMuted:true,videoMuted:false},{name:'David Park',role:'guest',protocol:'SIP',uri:'dpark@poly.yyz.ca',duration:1650,audioMuted:false,videoMuted:true}],
+      'engineering':[{name:'Raj Patel',role:'host',protocol:'WebRTC',uri:'rpatel@smithvcs.ca',duration:5400,audioMuted:false,videoMuted:false},{name:'Ana Lima',role:'guest',protocol:'WebRTC',uri:'alima@smithvcs.ca',duration:5200,audioMuted:false,videoMuted:false},{name:'Chris Kim',role:'guest',protocol:'WebRTC',uri:'ckim@smithvcs.ca',duration:5100,audioMuted:false,videoMuted:false}],
+    },
+    history:[
+      {name:'Main Conference',type:'conference',start:'2026-05-07T09:00:00',end:'2026-05-07T10:30:00',duration:5400,participants:12},
+      {name:'Webinar Stage',type:'lecture',start:'2026-05-07T14:00:00',end:'2026-05-07T15:00:00',duration:3600,participants:187},
+      {name:'Engineering',type:'conference',start:'2026-05-06T10:00:00',end:'2026-05-06T11:00:00',duration:3600,participants:9},
+      {name:'Product Demo',type:'conference',start:'2026-05-06T14:00:00',end:'2026-05-06T15:00:00',duration:3600,participants:5},
+    ],
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// CONFERENCE TEMPLATES
+// Each template = a list of sites with endpoint URIs
+// ══════════════════════════════════════════════════════════════
+const TEMPLATES = {
+  'Executive': {
+    desc:'C-suite and board meeting participants',
+    sites:[
+      {name:'Calgary HQ Boardroom',location:'Calgary',uri:'boardroom.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Toronto Executive Suite',location:'Toronto',uri:'exec.yyz@poly.smithvcs.ca',protocol:'h323',type:'room'},
+      {name:'Vancouver Office',location:'Vancouver',uri:'board.yvr@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'CEO – Mobile',location:'Remote',uri:'ceo@webrtc.smithvcs.ca',protocol:'sip',type:'personal'},
+      {name:'CFO – Office',location:'Calgary',uri:'cfo.yyc@cisco.smithvcs.ca',protocol:'sip',type:'personal'},
+    ]
+  },
+  'All Hands': {
+    desc:'Company-wide all-staff meeting — all offices',
+    sites:[
+      {name:'Calgary Main Hall',location:'Calgary',uri:'mainhall.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Calgary Overflow A',location:'Calgary',uri:'overflow-a.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Calgary Overflow B',location:'Calgary',uri:'overflow-b.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Toronto Conference Centre',location:'Toronto',uri:'confcentre.yyz@poly.smithvcs.ca',protocol:'h323',type:'room'},
+      {name:'Toronto Atrium',location:'Toronto',uri:'atrium.yyz@poly.smithvcs.ca',protocol:'h323',type:'room'},
+      {name:'Vancouver All-Staff',location:'Vancouver',uri:'allstaff.yvr@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Montreal Office',location:'Montreal',uri:'allhands.yul@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Ottawa Government Centre',location:'Ottawa',uri:'gov.yow@poly.smithvcs.ca',protocol:'h323',type:'room'},
+    ]
+  },
+  'Training': {
+    desc:'Instructor + student sites for webinars and training sessions',
+    sites:[
+      {name:'Instructor Station',location:'Calgary',uri:'instructor.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Calgary Training Lab',location:'Calgary',uri:'training-lab.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'Toronto Training Room',location:'Toronto',uri:'training.yyz@poly.smithvcs.ca',protocol:'h323',type:'room'},
+      {name:'Vancouver Training',location:'Vancouver',uri:'training.yvr@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+    ]
+  },
+  'IT Incident': {
+    desc:'Rapid response — IT and operations teams',
+    sites:[
+      {name:'IT NOC – Calgary',location:'Calgary',uri:'noc.yyc@cisco.smithvcs.ca',protocol:'sip',type:'room'},
+      {name:'IT Operations – Toronto',location:'Toronto',uri:'ops.yyz@poly.smithvcs.ca',protocol:'h323',type:'room'},
+      {name:'CTO – Direct',location:'Remote',uri:'cto@smithvcs.ca',protocol:'sip',type:'personal'},
+      {name:'On-Call Engineer',location:'Remote',uri:'oncall@smithvcs.ca',protocol:'sip',type:'personal'},
+    ]
+  },
+  'Sales Call': {
+    desc:'Sales team + client endpoint',
+    sites:[
+      {name:'Sales Lead – Calgary',location:'Calgary',uri:'sales.lead.yyc@cisco.smithvcs.ca',protocol:'sip',type:'personal'},
+      {name:'Account Manager',location:'Toronto',uri:'am.yyz@poly.smithvcs.ca',protocol:'sip',type:'personal'},
+      {name:'Client Endpoint',location:'External',uri:'client@external.com',protocol:'sip',type:'external'},
+    ]
+  },
+  'Empty': {
+    desc:'Start with no pre-loaded sites — add endpoints manually',
+    sites:[]
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════
+const STORE='pexip_cfg_v3', PROF_STORE='pexip_prof_v3';
+let CFG={confHost:'',mgmtHost:'',user:'',pass:'',proxy:'localhost:3000',proxyProto:'http',sysLoc:'DEV',interval:30,label:'',sim:false};
+let SIM_DATA=null;
+
+function loadCfg(){try{const s=localStorage.getItem(STORE);if(s)CFG=JSON.parse(s);}catch{}applyFields();updateSidebar();}
+function saveCfg(){localStorage.setItem(STORE,JSON.stringify(CFG));}
+function applyFields(){document.getElementById('cfgConfHost').value=CFG.confHost||'';document.getElementById('cfgMgmtHost').value=CFG.mgmtHost||'';document.getElementById('cfgUser').value=CFG.user||'';document.getElementById('cfgProxy').value=CFG.proxy||'localhost:3000';document.getElementById('cfgProxyProto').value=CFG.proxyProto||'http';document.getElementById('cfgSysLoc').value=CFG.sysLoc||'DEV';document.getElementById('cfgInterval').value=CFG.interval||30;document.getElementById('cfgLabel').value=CFG.label||'';}
+function updateSidebar(){document.getElementById('sbConfHost').textContent=CFG.confHost||'Not configured';document.getElementById('sbMgmtHost').textContent=CFG.mgmtHost||'Not configured';document.getElementById('sbVersion').textContent=CFG.label||'Dashboard';document.getElementById('simBanner').style.display=CFG.sim&&SIM_DATA?'flex':'none';const d=document.getElementById('dotConf'),m=document.getElementById('dotMgmt');if(CFG.sim&&SIM_DATA){d.className='ndot sim';m.className='ndot sim';}}
+function saveSettings(){CFG.confHost=document.getElementById('cfgConfHost').value.trim();CFG.mgmtHost=document.getElementById('cfgMgmtHost').value.trim();CFG.user=document.getElementById('cfgUser').value.trim();CFG.pass=document.getElementById('cfgPass').value;CFG.proxy=document.getElementById('cfgProxy').value.trim()||'localhost:3000';CFG.proxyProto=document.getElementById('cfgProxyProto').value;CFG.sysLoc=document.getElementById('cfgSysLoc').value.trim()||'DEV';CFG.interval=parseInt(document.getElementById('cfgInterval').value)||30;CFG.label=document.getElementById('cfgLabel').value.trim();CFG.sim=false;SIM_DATA=null;saveCfg();updateSidebar();histLoaded=false;toast('Saved — reconnecting…');setTimeout(()=>{showPanel('conferences');fetchConf();if(autoOn)startAuto();},300);}
+async function testConn(){if(CFG.sim){showCTM('⚡ Simulation mode','var(--violet)');return;}showCTM('Testing…','var(--text3)');const h={'Authorization':'Basic '+btoa(`${CFG.user}:${CFG.pass}`),'Content-Type':'application/json'};try{const r=await fetch(`${proxyBase()}/mgmt/api/admin/configuration/v1/conference/?limit=1`,{headers:h});showCTM(r.ok?'✓ Connected':'✗ HTTP '+r.status,r.ok?'var(--teal)':'var(--amber)');}catch(e){showCTM('✗ '+e.message,'var(--red)');}}
+function showCTM(msg,color){const el=document.getElementById('connTestMsg');el.textContent=msg;el.style.color=color;setTimeout(()=>el.textContent='',5000);}
+
+function loadProfiles(){try{return JSON.parse(localStorage.getItem(PROF_STORE)||'[]');}catch{return[];}}
+function saveProfiles(p){localStorage.setItem(PROF_STORE,JSON.stringify(p));}
+function saveAsProfile(){const label=CFG.label||CFG.confHost||'Profile '+(loadProfiles().length+1);const p=loadProfiles().filter(x=>x.label!==label);p.push({...CFG,label});saveProfiles(p);renderProfiles();toast('Saved: '+label);}
+function loadProfile(label){const p=loadProfiles().find(x=>x.label===label);if(!p)return;CFG={...p};SIM_DATA=null;saveCfg();applyFields();updateSidebar();histLoaded=false;toast('Switched to: '+label);setTimeout(()=>{showPanel('conferences');fetchConf();if(autoOn)startAuto();},300);}
+function deleteProfile(label){saveProfiles(loadProfiles().filter(x=>x.label!==label));renderProfiles();toast('Deleted: '+label);}
+function renderProfiles(){const profiles=loadProfiles();const el=document.getElementById('profileList');if(!profiles.length){el.innerHTML='<p style="font-size:13px;color:var(--text3)">No saved profiles yet.</p>';return;}el.innerHTML=profiles.map(p=>`<div class="profile-item ${p.label===CFG.label?'active-profile':''}" onclick="loadProfile('${esc(p.label)}')"><div class="profile-dot ${p.label===CFG.label?'active':''}"></div><div style="flex:1;min-width:0"><div class="profile-name">${p.label}</div><div class="profile-host">${p.confHost||'—'}</div></div><button class="btn btn-xs" onclick="event.stopPropagation();loadProfile('${esc(p.label)}')" style="border-color:var(--teal);color:var(--teal)">Use</button><button class="btn btn-xs" onclick="event.stopPropagation();deleteProfile('${esc(p.label)}')" style="color:var(--red);border-color:var(--red)">✕</button></div>`).join('');}
+
+function loadSim(name){const p=SIM_PROFILES[name];if(!p)return;CFG={...p};SIM_DATA=p;saveCfg();applyFields();updateSidebar();histLoaded=false;toast('Simulation: '+name);setTimeout(()=>{showPanel('conferences');loadSimConfs();if(autoOn)startAuto();},300);}
+
+// ══════════════════════════════════════════════════════════════
+// API
+// ══════════════════════════════════════════════════════════════
+function proxyBase(){return`${CFG.proxyProto}://${CFG.proxy||'localhost:3000'}`;}
+function apiHdrs(){return{'Authorization':'Basic '+btoa(`${CFG.user}:${CFG.pass}`),'Content-Type':'application/json'};}
+async function apiFetch(path,method='GET',body=null){const opts={method,headers:apiHdrs()};if(body)opts.body=JSON.stringify(body);const r=await fetch(proxyBase()+path,opts);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+async function clientPost(path,body){const r=await fetch(proxyBase()+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
+async function fetchAll(path){let all=[],url=path+'?limit=500&offset=0';while(url){const d=await apiFetch(url);all.push(...(d.objects||d.results||[]));url=d.meta?.next?'/mgmt'+d.meta.next:null;}return all;}
+
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+const COLORS=['#00B894','#2D7DD2','#7B5EA7','#E05252','#F5A623','#16A085','#8E44AD','#E67E22','#C0392B','#2980B9'];
+function colorFor(s){let h=0;for(const c of s||'')h=(h*31+c.charCodeAt(0))&0xffff;return COLORS[h%COLORS.length];}
+function inits(n){return(n||'?').split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')||'?';}
+function setDot(id,t){const el=document.getElementById(id);if(el)el.className='dot '+t;}
+function setNDot(id,t){const el=document.getElementById(id);if(el)el.className='ndot '+t;}
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function fmtDur(s){if(!s)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`;}
+function fmtDt(iso){if(!iso)return'—';return new Date(iso).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function typeLabel(t){return t==='test_call'?'Test Call':t==='lecture'?'Lecture':'Conference';}
+function typeCls(t){return t==='test_call'?'test':t==='lecture'?'lecture':'conf';}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+function copyTxt(txt,msg){navigator.clipboard.writeText(txt).then(()=>toast((msg||'Copied')+': '+txt)).catch(()=>toast(txt));}
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+const PANELS=['conferences','launch','history','settings'];
+const PAGES={conferences:['Conferences','Live VMR status'],launch:['Launch Conference','Select VMR → template → control room'],history:['Call History','All call records'],settings:['Settings','Connection and environments']};
+let activePanel='conferences';
+function showPanel(id){
+  activePanel=id;PANELS.forEach(k=>{document.getElementById('panel-'+k).classList.toggle('show',k===id);const nb=document.getElementById('nav-'+k);if(nb)nb.classList.toggle('active',k===id);});
+  document.getElementById('pageTitle').textContent=PAGES[id][0];document.getElementById('pageSub').textContent=PAGES[id][1];document.getElementById('autoBtn').style.display=id==='conferences'?'inline-flex':'none';
+  if(id==='launch'){resetWizard();}if(id==='history'&&!histLoaded)fetchHist();if(id==='settings'){renderProfiles();applyFields();}
+}
+function onRefresh(){if(activePanel==='conferences'){SIM_DATA?loadSimConfs():fetchConf();if(autoOn)startAuto();}if(activePanel==='history')fetchHist();}
+
+// ══════════════════════════════════════════════════════════════
+// CONFERENCES
+// ══════════════════════════════════════════════════════════════
+let confData=[], confF='all', autoOn=true, autoTimer=null, countdown=30;
+function toggleAuto(){autoOn=!autoOn;document.getElementById('autoBtn').classList.toggle('on',autoOn);document.getElementById('autoBtnTxt').textContent=autoOn?'Auto ON':'Auto OFF';if(autoOn){SIM_DATA?loadSimConfs():fetchConf();startAuto();}else{clearInterval(autoTimer);document.getElementById('confCd').textContent='';}}
+function startAuto(){clearInterval(autoTimer);countdown=CFG.interval||30;autoTimer=setInterval(()=>{countdown--;document.getElementById('confCd').textContent=`Refresh in ${countdown}s`;if(countdown<=0){countdown=CFG.interval||30;SIM_DATA?loadSimConfs():fetchConf();}},1000);}
+function setConfF(f,el){confF=f;document.querySelectorAll('#panel-conferences .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderConf();}
+
+function loadSimConfs(){
+  setDot('confDot','sim');setNDot('dotConf','sim');setNDot('dotMgmt','sim');
+  confData=SIM_DATA.vmrs.map(v=>({...v,primaryAlias:v.alias,aliases:[v.alias]}));
+  document.getElementById('confMsg').textContent=`Simulation · ${confData.length} VMRs · ${confData.filter(c=>c.live).length} active`;
+  document.getElementById('s-total').textContent=confData.length;document.getElementById('s-live').textContent=confData.filter(c=>c.live).length;document.getElementById('s-parts').textContent=confData.reduce((s,c)=>s+(c.participants||0),0);document.getElementById('s-pin').textContent=confData.filter(c=>c.pin||c.guestPin).length;
+  renderConf();
+}
+
+async function fetchConf(){
+  if(!CFG.confHost||!CFG.mgmtHost){setDot('confDot','err');document.getElementById('confMsg').textContent='Configure node in Settings';return;}
+  setDot('confDot','load');setNDot('dotMgmt','load');setNDot('dotConf','load');document.getElementById('confMsg').textContent='Fetching…';
+  let vmrs=[],live=[];
+  try{const d=await apiFetch('/mgmt/api/admin/configuration/v1/conference/?limit=500');vmrs=d.objects||[];setNDot('dotMgmt','ok');}catch(e){setNDot('dotMgmt','err');setDot('confDot','err');document.getElementById('confMsg').textContent='Error: '+e.message;return;}
+  try{const d=await apiFetch('/mgmt/api/admin/status/v1/conference/?limit=500');live=d.objects||[];setNDot('dotConf','ok');}catch{setNDot('dotConf','ok');}
+  confData=vmrs.map(v=>{const lv=live.find(l=>l.name===v.name);return{id:v.id,name:v.name,description:v.description||'',aliases:(v.aliases||[]).map(a=>a.alias),primaryAlias:v.aliases?.[0]?.alias||'',type:v.service_type||'conference',pin:v.pin||'',guestPin:v.guest_pin||'',allowGuests:v.allow_guests,callType:v.call_type||'video',live:!!lv,participants:lv?.participant_count??0};});
+  setDot('confDot','live');document.getElementById('confMsg').textContent=`${confData.length} VMRs · ${live.length} active · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('s-total').textContent=confData.length;document.getElementById('s-live').textContent=live.length;document.getElementById('s-parts').textContent=live.reduce((s,c)=>s+(c.participant_count||0),0)||'—';document.getElementById('s-pin').textContent=confData.filter(c=>c.pin||c.guestPin).length;
+  renderConf();
+}
+
+function renderConf(){
+  const q=document.getElementById('confQ').value.toLowerCase();
+  const list=confData.filter(c=>{const ms=!q||c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q));const mf=confF==='all'?true:confF==='live'?c.live:confF==='pin'?(c.pin||c.guestPin):true;return ms&&mf;}).sort((a,b)=>(b.live?1:0)-(a.live?1:0)||a.name.localeCompare(b.name));
+  document.getElementById('confCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('confBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">▣</div>No conferences match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Name</th><th>Type</th><th>Alias</th><th>Status</th><th>Participants</th><th>Access</th><th></th></tr></thead><tbody>
+    ${list.map(c=>{const cls=typeCls(c.type);const liveBadge=c.live?`<span class="badge ok"><span class="live-dot"></span>Active</span>`:'<span style="font-size:12px;color:var(--text3)">Idle</span>';const access=[];if(c.pin)access.push('<span class="badge pin">Host PIN</span>');if(c.guestPin)access.push('<span class="badge pin">Guest PIN</span>');if(!c.pin&&!c.guestPin&&c.allowGuests)access.push('<span class="badge open">Open</span>');
+    return`<tr class="clickable" onclick="wizStartWith('${esc(c.primaryAlias)}')">
+      <td><div class="cell-name"><div class="ava ${cls}" style="background:${colorFor(c.name)};color:#fff">${inits(c.name)}</div><div><div class="row-name">${c.name}</div>${c.description?`<div class="row-sub">${c.description}</div>`:''}</div></div></td>
+      <td><span class="badge ${cls}">${typeLabel(c.type)}</span></td>
+      <td><span class="row-sub">${c.primaryAlias||'—'}</span></td>
+      <td>${liveBadge}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${c.live?c.participants:'—'}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">${access.join('')||'—'}</div></td>
+      <td><span style="font-size:12px;color:var(--teal);font-weight:500">Launch →</span></td>
+    </tr>`;}).join('')}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// WIZARD
+// ══════════════════════════════════════════════════════════════
+let wizVmr=null, wizTemplate=null;
+
+function resetWizard(){wizVmr=null;wizTemplate=null;setWizStep(1);buildVmrPicker();document.getElementById('wizNext1').disabled=true;}
+function setWizStep(n){
+  [1,2,3].forEach(i=>{
+    const s=document.getElementById(`ws${i}`),l=document.getElementById(`wl${i}`);
+    s.className='wstep'+(i<n?' done':i===n?' active':'');
+    if(l)l.className='wstep-line'+(i<n?' done':'');
+  });
+  [1,2,3].forEach(i=>document.getElementById(`wiz-step${i}`).style.display=i===n?'block':'none');
+}
+
+function wizStartWith(alias){
+  showPanel('launch');
+  const conf=confData.find(c=>c.primaryAlias===alias);
+  if(conf){wizVmr=conf;buildVmrPicker();document.getElementById('wizNext1').disabled=false;wizGoStep2();}
+}
+
+function buildVmrPicker(){
+  const grid=document.getElementById('vmrPickerGrid');
+  if(!confData.length){grid.innerHTML='<p style="font-size:13px;color:var(--text3)">No VMRs loaded — go to Conferences first.</p>';return;}
+  grid.innerHTML=confData.map(c=>{
+    const cls=typeCls(c.type);const sel=wizVmr&&wizVmr.primaryAlias===c.primaryAlias?'selected':'';
+    const statusHtml=c.live?`<span style="color:var(--teal);font-size:11px"><span class="live-dot"></span>Active · ${c.participants} participants</span>`:`<span style="color:var(--text3);font-size:11px">Idle</span>`;
+    return`<div class="vmr-card ${sel}" onclick="pickVmr('${esc(c.primaryAlias)}')">
+      <div class="vmr-card-icon" style="background:${colorFor(c.name)}">${inits(c.name)}</div>
+      <div class="vmr-card-name">${c.name}</div>
+      <div class="vmr-card-alias">${c.primaryAlias}</div>
+      <div style="margin-bottom:6px"><span class="badge ${cls}" style="font-size:10px">${typeLabel(c.type)}</span></div>
+      <div class="vmr-card-status">${statusHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function pickVmr(alias){
+  wizVmr=confData.find(c=>c.primaryAlias===alias);
+  document.querySelectorAll('.vmr-card').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('wizNext1').disabled=false;
+}
+
+function wizGoStep2(){
+  if(!wizVmr)return;
+  setWizStep(2);
+  const grid=document.getElementById('tplPickerGrid');
+  grid.innerHTML=Object.entries(TEMPLATES).map(([name,tpl])=>{
+    const sel=wizTemplate&&wizTemplate.name===name?'selected':'';
+    return`<div class="tpl-card ${sel}" onclick="pickTemplate('${esc(name)}')">
+      <div class="tpl-card-name">${name}</div>
+      <div class="tpl-card-desc">${tpl.desc}</div>
+      <div class="tpl-card-sites">${tpl.sites.length} site${tpl.sites.length!==1?'s':''} pre-loaded</div>
+    </div>`;
+  }).join('');
+  document.getElementById('wizNext2').disabled=!wizTemplate;
+}
+
+function pickTemplate(name){
+  wizTemplate={name,data:TEMPLATES[name]};
+  document.querySelectorAll('.tpl-card').forEach(el=>el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('wizNext2').disabled=false;
+}
+
+function wizGoStep1(){setWizStep(1);}
+
+function wizGoStep3(){
+  if(!wizVmr||!wizTemplate)return;
+  setWizStep(3);
+  buildControlRoom();
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFERENCE CONTROL ROOM
+// ══════════════════════════════════════════════════════════════
+
+// Site state: each site has {name, location, uri, protocol, type, status, audioMuted, videoMuted, participantId}
+let ctrlSites=[], ctrlLaunched=false;
+
+function buildControlRoom(){
+  ctrlLaunched=false;
+  // Build site list from template + merge live participants if VMR is already active
+  const tplSites=wizTemplate.data.sites.map(s=>({...s,status:'idle',audioMuted:false,videoMuted:false,participantId:null}));
+  // If sim and VMR is live, also show current live participants
+  const liveParts = SIM_DATA && wizVmr.live ? (SIM_DATA.liveParticipants[wizVmr.primaryAlias]||[]).map(p=>({name:p.name,location:p.uri?.split('@')[1]||'Unknown',uri:p.uri,protocol:p.protocol.toLowerCase(),type:'live',status:'connected',audioMuted:p.audioMuted,videoMuted:p.videoMuted,participantId:'live-'+Math.random().toString(36).slice(2,8)})) : [];
+  ctrlSites=[...liveParts,...tplSites];
+
+  const vmr=wizVmr;
+  const col=colorFor(vmr.name);
+  const liveBadge=vmr.live?`<span class="badge ok"><span class="live-dot"></span>Active</span>`:'<span style="font-size:12px;color:var(--text3)">Idle</span>';
+
+  document.getElementById('wiz-step3').innerHTML=`
+    <div class="ctrl-header">
+      <div class="ctrl-title-row">
+        <div class="ctrl-vmr-ava" style="background:${col}">${inits(vmr.name)}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="ctrl-vmr-name">${vmr.name}</div>
+            ${liveBadge}
+          </div>
+          <div class="ctrl-vmr-sub">${vmr.primaryAlias} · Template: ${wizTemplate.name}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-sm" onclick="addSiteRow()">+ Add site</button>
+          <button class="btn btn-sm" onclick="setWizStep(2)">← Change template</button>
+        </div>
+      </div>
+      <div class="ctrl-stats">
+        <div class="ctrl-stat"><div class="ctrl-stat-val" id="ctrlStatTotal">0</div><div class="ctrl-stat-lbl">Total sites</div></div>
+        <div class="ctrl-stat"><div class="ctrl-stat-val green" id="ctrlStatConn">0</div><div class="ctrl-stat-lbl">Connected</div></div>
+        <div class="ctrl-stat"><div class="ctrl-stat-val amber" id="ctrlStatMuted">0</div><div class="ctrl-stat-lbl">Muted</div></div>
+        <div class="ctrl-actions">
+          <button class="btn btn-sm" onclick="muteAllAudio()">🔇 Mute all audio</button>
+          <button class="btn btn-sm" onclick="unmuteAllAudio()">🔊 Unmute all</button>
+          <button class="btn btn-sm" onclick="refreshCtrl()">↺ Refresh</button>
+          <button class="btn btn-launch" id="launchBtn" onclick="launchConference()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Launch conference
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-table-wrap">
+      <div class="ctrl-table-head">
+        <h3>Participant sites</h3>
+        <span style="font-size:12px;color:var(--text3)">Click Launch to dial all idle sites into the conference</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:28px"><input type="checkbox" id="selectAllChk" onchange="toggleSelectAll(this)" title="Select all"/></th>
+            <th>Site / Endpoint</th>
+            <th>Location</th>
+            <th>URI</th>
+            <th>Protocol</th>
+            <th>Status</th>
+            <th class="center">🔇 Audio</th>
+            <th class="center">📷 Video</th>
+            <th class="center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ctrlTableBody"></tbody>
+      </table>
+    </div>`;
+
+  renderCtrlTable();
+  updateCtrlStats();
+}
+
+function renderCtrlTable(){
+  const body=document.getElementById('ctrlTableBody');
+  if(!body)return;
+  body.innerHTML=ctrlSites.map((s,i)=>{
+    const statusHtml=statusPill(s.status);
+    const audioClass=s.audioMuted?'muted-audio':'';
+    const videoClass=s.videoMuted?'muted-video':'';
+    const isConnected=s.status==='connected';
+    const isLive=s.type==='live';
+    return`<tr class="site-row" id="srow-${i}">
+      <td><input type="checkbox" class="site-chk" data-idx="${i}" ${isLive?'checked disabled':''}></td>
+      <td><div class="cell-name">
+        <div class="ava" style="background:${s.type==='external'?'#E67E22':s.type==='personal'?'var(--blue)':isLive?'var(--teal)':colorFor(s.name)};color:#fff;width:30px;height:30px;font-size:11px">${inits(s.name)}</div>
+        <div>
+          <div class="row-name" style="font-size:13px">${s.name}</div>
+          <div style="font-size:10.5px;color:var(--text3)">${isLive?'Live participant':s.type==='external'?'External':'Room endpoint'}</div>
+        </div>
+      </div></td>
+      <td style="font-size:12px;color:var(--text2)">${s.location||'—'}</td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text2)">${s.uri||'—'}</span></td>
+      <td><span style="font-size:11px;text-transform:uppercase;font-weight:500;color:var(--text3)">${(s.protocol||'SIP').toUpperCase()}</span></td>
+      <td>${statusHtml}</td>
+      <td class="center">
+        <button class="ctrl-toggle ${audioClass}" title="${s.audioMuted?'Unmute audio':'Mute audio'}" onclick="toggleAudio(${i})" ${!isConnected&&!isLive?'disabled':''}>
+          ${s.audioMuted?'🔇':'🔊'}
+        </button>
+      </td>
+      <td class="center">
+        <button class="ctrl-toggle ${videoClass}" title="${s.videoMuted?'Enable video':'Mute video'}" onclick="toggleVideo(${i})" ${!isConnected&&!isLive?'disabled':''}>
+          ${s.videoMuted?'📵':'📷'}
+        </button>
+      </td>
+      <td class="center">
+        <div style="display:flex;gap:4px;justify-content:center">
+          ${isConnected||isLive
+            ?`<button class="btn btn-xs btn-danger" onclick="hangupSite(${i})">Hang up</button>`
+            :`<button class="btn btn-xs btn-primary" onclick="dialSite(${i})">Dial</button>`
+          }
+          ${!isLive?`<button class="btn btn-xs" onclick="removeSite(${i})" title="Remove">✕</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  updateCtrlStats();
+}
+
+function statusPill(status){
+  const map={connected:'<div class="status-pill connected"><div class="status-dot"></div>Connected</div>',connecting:'<div class="status-pill connecting"><div class="status-dot"></div>Connecting…</div>',idle:'<div class="status-pill idle"><div class="status-dot"></div>Idle</div>',failed:'<div class="status-pill failed"><div class="status-dot"></div>Failed</div>'};
+  return map[status]||map.idle;
+}
+
+function updateCtrlStats(){
+  const total=ctrlSites.length;
+  const conn=ctrlSites.filter(s=>s.status==='connected').length;
+  const muted=ctrlSites.filter(s=>s.audioMuted||s.videoMuted).length;
+  const el1=document.getElementById('ctrlStatTotal');const el2=document.getElementById('ctrlStatConn');const el3=document.getElementById('ctrlStatMuted');
+  if(el1)el1.textContent=total;if(el2)el2.textContent=conn;if(el3)el3.textContent=muted;
+}
+
+function toggleAudio(i){
+  ctrlSites[i].audioMuted=!ctrlSites[i].audioMuted;
+  const was=ctrlSites[i].audioMuted;
+  if(SIM_DATA){toast(`[SIM] ${was?'Muted':'Unmuted'} audio: ${ctrlSites[i].name}`);}
+  else{simMuteApi(i,'audio',was);}
+  renderCtrlTable();
+}
+function toggleVideo(i){
+  ctrlSites[i].videoMuted=!ctrlSites[i].videoMuted;
+  const was=ctrlSites[i].videoMuted;
+  if(SIM_DATA){toast(`[SIM] ${was?'Muted video':'Enabled video'}: ${ctrlSites[i].name}`);}
+  else{simMuteApi(i,'video',was);}
+  renderCtrlTable();
+}
+async function simMuteApi(i,type,muted){
+  const s=ctrlSites[i];if(!s.participantId)return;
+  try{await apiFetch(`/mgmt/api/admin/command/v1/participant/${s.participantId}/${type==='audio'?'mute_audio':'mute_video'}/`,'POST',{});toast(`${muted?'Muted':'Unmuted'} ${type}: ${s.name}`);}
+  catch(e){toast('API error: '+e.message);}
+}
+
+function muteAllAudio(){ctrlSites.forEach((s,i)=>{if(s.status==='connected')s.audioMuted=true;});renderCtrlTable();toast(SIM_DATA?'[SIM] All audio muted':'Muting all audio…');}
+function unmuteAllAudio(){ctrlSites.forEach(s=>s.audioMuted=false);renderCtrlTable();toast(SIM_DATA?'[SIM] All audio unmuted':'Unmuting all audio…');}
+
+function toggleSelectAll(chk){document.querySelectorAll('.site-chk:not([disabled])').forEach(c=>c.checked=chk.checked);}
+
+async function dialSite(i){
+  const s=ctrlSites[i];s.status='connecting';renderCtrlTable();
+  if(SIM_DATA){
+    await new Promise(r=>setTimeout(r,Math.random()*800+400));
+    s.status='connected';s.participantId='sim-'+Math.random().toString(36).slice(2,8);
+    toast(`[SIM] Connected: ${s.name}`);renderCtrlTable();return;
+  }
+  try{
+    const body={conference_alias:wizVmr.primaryAlias,destination:s.uri,protocol:s.protocol,system_location:CFG.sysLoc,call_type:wizVmr.callType||'video',display_name:s.name};
+    const d=await apiFetch('/mgmt/api/admin/command/v1/participant/dial/','POST',body);
+    if(d.status==='success'){s.status='connected';s.participantId=d.data?.participant_id||null;toast('Connected: '+s.name);}
+    else{s.status='failed';toast('Failed: '+JSON.stringify(d.dial||d));}
+  }catch(e){s.status='failed';toast('Error: '+e.message);}
+  renderCtrlTable();
+}
+
+async function hangupSite(i){
+  const s=ctrlSites[i];
+  if(SIM_DATA){s.status='idle';s.participantId=null;toast(`[SIM] Hung up: ${s.name}`);renderCtrlTable();return;}
+  if(s.participantId){
+    try{await apiFetch(`/mgmt/api/admin/command/v1/participant/${s.participantId}/disconnect/`,'POST',{});s.status='idle';s.participantId=null;toast('Disconnected: '+s.name);}
+    catch(e){toast('Error: '+e.message);}
+  }else{s.status='idle';renderCtrlTable();}
+}
+
+function removeSite(i){ctrlSites.splice(i,1);renderCtrlTable();}
+
+function addSiteRow(){
+  ctrlSites.push({name:'New site',location:'',uri:'',protocol:'sip',type:'room',status:'idle',audioMuted:false,videoMuted:false,participantId:null});
+  renderCtrlTable();
+  // Focus the last row's name cell for editing — simplified: show toast
+  toast('Site added — edit URI before dialling');
+}
+
+async function launchConference(){
+  const btn=document.getElementById('launchBtn');
+  const toCall=ctrlSites.filter(s=>s.status==='idle'&&s.uri);
+  if(!toCall.length){toast('No idle sites to dial — all are already connected or have no URI');return;}
+  ctrlLaunched=true;btn.textContent='Launching…';btn.disabled=true;
+  // Dial all idle sites with staggered delay
+  for(let i=0;i<ctrlSites.length;i++){
+    if(ctrlSites[i].status==='idle'&&ctrlSites[i].uri){
+      await dialSite(i);await new Promise(r=>setTimeout(r,300));
+    }
+  }
+  btn.innerHTML='<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Launched';
+  btn.disabled=false;toast(SIM_DATA?'[SIM] Conference launched — all sites dialled':'Conference launched!');
+}
+
+function refreshCtrl(){
+  if(SIM_DATA){toast('[SIM] Participant list refreshed');return;}
+  toast('Refreshing participant status…');
+}
+
+// ══════════════════════════════════════════════════════════════
+// CALL HISTORY
+// ══════════════════════════════════════════════════════════════
+let histData=[], histLoaded=false;
+async function fetchHist(){
+  histLoaded=true;setDot('histDot','load');document.getElementById('histMsg').textContent='Fetching…';
+  if(SIM_DATA){histData=SIM_DATA.history.map(h=>({...h,service_type:h.type,start_time:h.start,end_time:h.end,participant_count:h.participants}));histData.sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));setDot('histDot','sim');document.getElementById('histMsg').textContent=`${histData.length} records · simulated`;document.getElementById('histCount').textContent=histData.length+' total';renderHist();return;}
+  try{histData=await fetchAll('/mgmt/api/admin/history/v1/conference/');histData.sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));setDot('histDot','live');document.getElementById('histMsg').textContent=`${histData.length} records`;document.getElementById('histCount').textContent=histData.length+' total';}
+  catch(e){setDot('histDot','err');document.getElementById('histMsg').textContent='Error: '+e.message;}
+  renderHist();
+}
+function renderHist(){
+  const q=document.getElementById('histQ').value.toLowerCase();
+  const list=histData.filter(h=>!q||(h.name||'').toLowerCase().includes(q));
+  document.getElementById('histTableCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('histBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div>No records match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Conference</th><th>Started</th><th>Duration</th><th>Participants</th><th>Type</th></tr></thead><tbody>
+    ${list.map(h=>{const t=h.service_type||'conference',cls=typeCls(t);const dur=h.duration?fmtDur(h.duration):(h.end_time&&h.start_time?fmtDur(Math.round((new Date(h.end_time)-new Date(h.start_time))/1000)):'Active');
+    return`<tr><td><div class="cell-name"><div class="ava ${cls}" style="background:${colorFor(h.name||'')};color:#fff;width:30px;height:30px;font-size:11px">${inits(h.name||'?')}</div><div class="row-name">${h.name||'Unknown'}</div></div></td><td style="font-size:12px;color:var(--text2)">${fmtDt(h.start_time)}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${dur}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${h.participant_count??'—'}</td><td><span class="badge ${cls}">${typeLabel(t)}</span></td></tr>`;}).join('')}
+  </tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+loadCfg();renderProfiles();
+if(CFG.sim&&CFG.label&&SIM_PROFILES[CFG.label]){SIM_DATA=SIM_PROFILES[CFG.label];}
+updateSidebar();showPanel('conferences');
+if(SIM_DATA){loadSimConfs();if(autoOn)startAuto();}
+else if(CFG.confHost&&CFG.mgmtHost){fetchConf();if(autoOn)startAuto();}
+else{showPanel('settings');}
+</script>
+</body>
+</html>
