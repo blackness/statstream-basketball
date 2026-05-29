@@ -1,0 +1,1268 @@
+
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>East Regionals Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-2: #0f172a;
+      --panel-3: #1e293b;
+      --border: #334155;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --link: #93c5fd;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.16);
+      --gold: rgba(245, 158, 11, 0.18);
+      --silver: rgba(148, 163, 184, 0.18);
+      --bronze: rgba(180, 83, 9, 0.18);
+      --ok: #16a34a;
+      --warn: #ca8a04;
+      --dim: #64748b;
+      --changed: #2563eb;
+      --danger: #ef4444;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, Arial, sans-serif;
+      min-height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: var(--link);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(180deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+
+    .topbar-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 18px 20px 16px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(22,163,74,0.12);
+      color: #bbf7d0;
+      border: 1px solid rgba(22,163,74,0.35);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      margin-top: 6px;
+      line-height: 1;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .search {
+      width: 100%;
+      background: var(--panel);
+      color: white;
+      border: 1px solid #475569;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+    }
+
+    .toggle-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .app-shell {
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+      min-height: calc(100vh - 180px);
+    }
+
+    .sidebar,
+    .detail-pane,
+    .summary-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(17,24,39,1), rgba(17,24,39,0.92));
+    }
+
+    .sidebar-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .nav-scroll {
+      overflow: auto;
+      padding: 10px;
+      min-height: 0;
+    }
+
+    .event-group {
+      border: 1px solid rgba(51, 65, 85, 0.65);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: rgba(15,23,42,0.55);
+    }
+
+    .event-group.hidden {
+      display: none;
+    }
+
+    .event-header {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: none;
+      border-bottom: 1px solid transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .event-header:hover {
+      background: rgba(30,41,59,0.55);
+    }
+
+    .event-header-left {
+      min-width: 0;
+    }
+
+    .event-family-name {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .event-family-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .event-chevron {
+      color: var(--muted);
+      font-size: 14px;
+      transition: transform 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .event-group.expanded .event-chevron {
+      transform: rotate(90deg);
+    }
+
+    .race-list {
+      display: none;
+      padding: 8px;
+      border-top: 1px solid rgba(51,65,85,0.65);
+      background: rgba(2,6,23,0.2);
+    }
+
+    .event-group.expanded .race-list {
+      display: block;
+    }
+
+    .race-item {
+      width: 100%;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .race-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .race-item:hover {
+      background: rgba(30,41,59,0.68);
+      border-color: rgba(59,130,246,0.24);
+    }
+
+    .race-item.active {
+      background: var(--accent-soft);
+      border-color: rgba(59,130,246,0.5);
+      box-shadow: inset 0 0 0 1px rgba(59,130,246,0.35);
+    }
+
+    .race-item-left {
+      min-width: 0;
+    }
+
+    .race-label {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .race-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .status-badge,
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      line-height: 1;
+      border: 1px solid var(--border);
+      background: var(--panel-3);
+      color: #dbeafe;
+      white-space: nowrap;
+    }
+
+    .status-posted {
+      border-color: rgba(22,163,74,0.35);
+      color: #bbf7d0;
+    }
+
+    .status-partial {
+      border-color: rgba(202,138,4,0.4);
+      color: #fde68a;
+    }
+
+    .status-not_posted {
+      border-color: rgba(100,116,139,0.35);
+      color: #cbd5e1;
+    }
+
+    .status-changed {
+      border-color: rgba(37,99,235,0.45);
+      color: #bfdbfe;
+    }
+
+    .content-shell {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 20px;
+      min-width: 0;
+    }
+
+    .detail-pane {
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .detail-empty {
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(51,65,85,0.8);
+      border-radius: 14px;
+      background: rgba(15,23,42,0.35);
+      padding: 24px;
+    }
+
+    .race-detail-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .race-detail-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .race-detail-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--panel-3);
+      color: var(--link);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .btn-link:hover {
+      background: rgba(30,41,59,0.85);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .detail-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(2,6,23,0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+      background: #0b1220;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(51,65,85,0.8);
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-weight: 700;
+    }
+
+    tr:hover td {
+      background: rgba(30,41,59,0.5);
+    }
+
+    tr.gold td { background: var(--gold); }
+    tr.silver td { background: var(--silver); }
+    tr.bronze td { background: var(--bronze); }
+
+    .summary-panel {
+      padding: 18px;
+    }
+
+    .summary-title {
+      margin: 0 0 12px 0;
+      font-size: 18px;
+    }
+
+    .summary-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .summary-table-wrap {
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .error-box,
+    .loading-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .error-box {
+      border-color: rgba(239,68,68,0.35);
+      color: #fecaca;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .app-shell {
+        grid-template-columns: 320px 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+      .sidebar {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-inner,
+      .app-shell {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .page-title {
+        font-size: 24px;
+      }
+
+      .race-detail-title {
+        font-size: 22px;
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="title-row">
+        <div>
+          <h1 class="page-title" id="meetTitle">East Regionals Live</h1>
+          <div class="page-subtitle" id="subtitle">Loading...</div>
+        </div>
+        <div class="live-pill">
+          <span class="live-dot"></span>
+          <span>Live Monitor</span>
+        </div>
+      </div>
+
+      <div class="stats-row" id="stats"></div>
+
+      <div class="controls-row">
+        <div class="search-wrap">
+          <input id="search" class="search" placeholder="Search events, divisions, athletes, schools..." />
+        </div>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" id="postedOnly" />
+            <span>Posted only</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="partialVisible" checked />
+            <span>Include partial</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Meet Browser</h2>
+        <div class="sidebar-subtitle" id="sidebarMeta">Loading event navigation...</div>
+      </div>
+      <div class="nav-scroll" id="sidebar"></div>
+    </aside>
+
+    <section class="content-shell">
+      <div class="detail-pane" id="detailPane">
+        <div class="detail-empty">
+          <div>
+            <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No race selected</div>
+            <div>Select an event and race from the left to view results.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-panel">
+        <h3 class="summary-title">School Summary</h3>
+        <div class="summary-note">
+          Based on fully posted races only. Sorted by wins, then top 3 finishes, then entries.
+        </div>
+        <div id="schoolSummary" class="summary-table-wrap">
+          <div class="loading-box">Loading school summary...</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://sclhzmgdafotyiynrjwr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_N1UhoXnqybNEFCGBMdWXWg_BujE6Eh-";
+    const MEET_KEY = "ofsaa-east-regionals-2026";
+    const REFRESH_MS = 60000;
+
+    const meetTitleEl = document.getElementById("meetTitle");
+    const subtitleEl = document.getElementById("subtitle");
+    const statsEl = document.getElementById("stats");
+    const sidebarEl = document.getElementById("sidebar");
+    const sidebarMetaEl = document.getElementById("sidebarMeta");
+    const detailPaneEl = document.getElementById("detailPane");
+    const schoolSummaryEl = document.getElementById("schoolSummary");
+    const searchEl = document.getElementById("search");
+    const postedOnlyEl = document.getElementById("postedOnly");
+    const partialVisibleEl = document.getElementById("partialVisible");
+
+    let currentData = null;
+    let currentGrouped = [];
+    let selectedRaceUrl = null;
+    let expandedFamilies = new Set();
+
+    function esc(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    function getEventFamilySortKey(eventFamily) {
+      const ef = String(eventFamily || "").trim().toLowerCase();
+
+      const trackOrder = [
+        "100 meter",
+        "80 meter hurdles",
+        "100 meter hurdles",
+        "200 meter",
+        "400 meter",
+        "300 meter hurdles",
+        "400 meter hurdles",
+        "800 meter",
+        "1500 meter",
+        "3000 meter",
+        "2000 meter steeplechase",
+        "4x100 meter relay",
+        "4x400 meter relay",
+        "mixed 4x400 meter relay",
+      ];
+
+      const fieldOrder = [
+        "high jump",
+        "pole vault",
+        "long jump",
+        "triple jump",
+        "shot put",
+        "discus throw",
+        "javelin throw",
+      ];
+
+      const paraOrder = [
+        "100 meter ambulatory",
+        "100 meter wheelchair",
+        "200 meter wheelchair",
+        "400 meter ambulatory",
+        "shot put ambulatory",
+        "shot put wheelchair",
+        "long jump ambulatory",
+      ];
+
+      const ordered = [...trackOrder, ...fieldOrder, ...paraOrder];
+      const idx = ordered.indexOf(ef);
+      if (idx !== -1) return [idx, ef];
+
+      const m = ef.match(/(\d+)\s*meter/);
+      if (m) {
+        const dist = parseInt(m[1], 10);
+        const hurdles = ef.includes("hurdles");
+        const relay = ef.includes("relay");
+        const steeple = ef.includes("steeple");
+
+        if (relay) return [5000, ef];
+        if (hurdles) return [2000 + dist, ef];
+        if (steeple) return [3000 + dist, ef];
+        return [1000 + dist, ef];
+      }
+
+      if (ef.includes("jump") || ef.includes("vault")) return [6000, ef];
+      if (ef.includes("shot put") || ef.includes("discus") || ef.includes("javelin") || ef.includes("throw")) return [7000, ef];
+
+      return [9999, ef];
+    }
+
+    function raceLabel(race) {
+      const parts = [];
+      if (race.gender) parts.push(race.gender);
+      if (race.category) parts.push(race.category);
+      let label = parts.join(" ");
+      if (!label) label = race.race_name || "Race";
+      if (race.phase) label += ` - ${race.phase}`;
+      return label;
+    }
+
+    function groupRacesByEventFamily(races) {
+      const grouped = new Map();
+
+      for (const race of races || []) {
+        const family = race.event_family || race.race_name || "Other";
+        if (!grouped.has(family)) grouped.set(family, []);
+        grouped.get(family).push(race);
+      }
+
+      const categoryOrder = {
+        "Novice": 1,
+        "Junior": 2,
+        "Senior": 3,
+        "Wheelchair": 4,
+        "Ambulatory": 5,
+        "Intellectually Impaired": 6,
+        "Open": 7,
+        "Other": 99,
+      };
+
+      const genderOrder = {
+        "Women": 1,
+        "Men": 2,
+        "Mixed": 3,
+        "Other": 99,
+      };
+
+      const phaseOrder = {
+        "": 0,
+        "Preliminaries": 1,
+        "Semi-Finals": 2,
+        "Semifinals": 2,
+        "Finals": 3,
+        "Final": 3,
+      };
+
+      return [...grouped.entries()]
+        .map(([family, races]) => {
+          const sorted = [...races].sort((a, b) => {
+            const catA = categoryOrder[a.category || "Other"] ?? 99;
+            const catB = categoryOrder[b.category || "Other"] ?? 99;
+            if (catA !== catB) return catA - catB;
+
+            const genA = genderOrder[a.gender || "Other"] ?? 99;
+            const genB = genderOrder[b.gender || "Other"] ?? 99;
+            if (genA !== genB) return genA - genB;
+
+            const phA = phaseOrder[a.phase || ""] ?? 50;
+            const phB = phaseOrder[b.phase || ""] ?? 50;
+            if (phA !== phB) return phA - phB;
+
+            return (a.race_name || "").localeCompare(b.race_name || "");
+          });
+          return [family, sorted];
+        })
+        .sort((a, b) => {
+          const ka = getEventFamilySortKey(a[0]);
+          const kb = getEventFamilySortKey(b[0]);
+          if (ka[0] !== kb[0]) return ka[0] - kb[0];
+          return ka[1].localeCompare(kb[1]);
+        });
+    }
+
+    function buildSchoolSummary(flatRows) {
+      const map = new Map();
+
+      for (const row of flatRows || []) {
+        const school = (row.School || "").trim();
+        const place = String(row.Place || "").trim();
+        const event = (row.race_name || "").trim();
+
+        if (!school) continue;
+
+        if (!map.has(school)) {
+          map.set(school, {
+            school,
+            entries: 0,
+            top3: 0,
+            wins: 0,
+            events: new Set(),
+          });
+        }
+
+        const item = map.get(school);
+        item.entries += 1;
+        if (event) item.events.add(event);
+
+        if (/^\d+$/.test(place)) {
+          const p = parseInt(place, 10);
+          if (p === 1) item.wins += 1;
+          if (p <= 3) item.top3 += 1;
+        }
+      }
+
+      return [...map.values()]
+        .map((x) => ({
+          school: x.school,
+          entries: x.entries,
+          top3: x.top3,
+          wins: x.wins,
+          events: x.events.size,
+        }))
+        .sort((a, b) =>
+          b.wins - a.wins ||
+          b.top3 - a.top3 ||
+          b.entries - a.entries ||
+          a.school.localeCompare(b.school)
+        );
+    }
+
+    function renderStats(summary) {
+      const items = [
+        ["Total events", summary?.total ?? 0],
+        ["Posted", summary?.posted ?? 0],
+        ["Partial", summary?.partial ?? 0],
+        ["Not posted", summary?.not_posted ?? 0],
+        ["Changed", summary?.changed ?? 0],
+      ];
+
+      statsEl.innerHTML = items.map(([label, value]) => `
+        <div class="stat-card">
+          <div class="stat-label">${esc(label)}</div>
+          <div class="stat-value">${esc(value)}</div>
+        </div>
+      `).join("");
+    }
+
+    function statusClass(status) {
+      if (status === "posted") return "status-posted";
+      if (status === "partial") return "status-partial";
+      if (status === "not_posted") return "status-not_posted";
+      return "";
+    }
+
+    function raceMatchesFilters(race, q, postedOnly, includePartial) {
+      const hay = [
+        race.event_family,
+        race.race_name,
+        race.gender,
+        race.category,
+        race.kind,
+        race.phase,
+        race.status,
+        ...(race.results || []).flatMap(row => Object.values(row || {}))
+      ].join(" ").toLowerCase();
+
+      if (q && !hay.includes(q)) return false;
+
+      if (postedOnly && race.status !== "posted") return false;
+
+      if (!includePartial && race.status === "partial") return false;
+
+      return true;
+    }
+
+    function getFilteredGrouped() {
+      const q = (searchEl.value || "").trim().toLowerCase();
+      const postedOnly = postedOnlyEl.checked;
+      const includePartial = partialVisibleEl.checked;
+
+      return currentGrouped
+        .map(([family, races]) => {
+          const visible = races.filter(race => raceMatchesFilters(race, q, postedOnly, includePartial));
+          return [family, visible];
+        })
+        .filter(([, races]) => races.length > 0);
+    }
+
+    function renderSidebar() {
+      const grouped = getFilteredGrouped();
+      sidebarMetaEl.textContent = `${grouped.length} event groups`;
+
+      if (!grouped.length) {
+        sidebarEl.innerHTML = `<div class="loading-box">No events match your current filters.</div>`;
+        return;
+      }
+
+      sidebarEl.innerHTML = grouped.map(([family, races], idx) => {
+        const familyKey = family;
+        const expanded = expandedFamilies.has(familyKey);
+        const postedCount = races.filter(r => r.status === "posted").length;
+        const partialCount = races.filter(r => r.status === "partial").length;
+
+        return `
+          <section class="event-group ${expanded ? "expanded" : ""}" data-family="${esc(familyKey)}">
+            <button class="event-header" data-action="toggle-family" data-family="${esc(familyKey)}">
+              <div class="event-header-left">
+                <div class="event-family-name">${esc(family)}</div>
+                <div class="event-family-meta">
+                  ${races.length} race${races.length === 1 ? "" : "s"} • ${postedCount} posted${partialCount ? ` • ${partialCount} partial` : ""}
+                </div>
+              </div>
+              <div class="event-chevron">▶</div>
+            </button>
+
+            <div class="race-list">
+              ${races.map(race => `
+                <button
+                  class="race-item ${race.url === selectedRaceUrl ? "active" : ""}"
+                  data-action="select-race"
+                  data-race-url="${esc(race.url)}"
+                >
+                  <div class="race-item-left">
+                    <div class="race-label">${esc(raceLabel(race))}</div>
+                    <div class="race-meta">
+                      ${esc(race.status)}${race.row_count ? ` • ${esc(race.row_count)} rows` : ""}
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+                    <span class="status-badge ${statusClass(race.status)}">${esc(race.status)}</span>
+                    ${race.just_changed ? `<span class="status-badge status-changed">changed</span>` : ``}
+                  </div>
+                </button>
+              `).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+    }
+
+    function findRaceByUrl(url) {
+      if (!currentData?.races) return null;
+      return currentData.races.find(r => r.url === url) || null;
+    }
+
+    function renderRaceTable(race) {
+      if (race.status === "not_posted" || !race.headers?.length || !race.results?.length) {
+        return `<div class="detail-empty" style="min-height:240px;"><div><div style="font-size:18px;font-weight:700;margin-bottom:8px;">No results table yet</div><div>This race has not published a full table yet.</div></div></div>`;
+      }
+
+      const head = `
+        <thead>
+          <tr>
+            ${race.headers.map(h => `<th>${esc(h)}</th>`).join("")}
+          </tr>
+        </thead>
+      `;
+
+      const body = `
+        <tbody>
+          ${race.results.map(row => {
+            const place = String(row["Place"] || "").trim();
+            let cls = "";
+            if (place === "1") cls = "gold";
+            else if (place === "2") cls = "silver";
+            else if (place === "3") cls = "bronze";
+
+            return `
+              <tr class="${cls}">
+                ${race.headers.map(h => `<td>${esc(row[h] ?? "")}</td>`).join("")}
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      `;
+
+      return `
+        <div class="table-wrap">
+          <table>
+            ${head}
+            ${body}
+          </table>
+        </div>
+      `;
+    }
+
+    function renderDetailPane() {
+      const race = findRaceByUrl(selectedRaceUrl);
+
+      if (!race) {
+        detailPaneEl.innerHTML = `
+          <div class="detail-empty">
+            <div>
+              <div style="font-size:18px;font-weight:700;margin-bottom:8px;">No race selected</div>
+              <div>Select an event and race from the left to view results.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const chips = [
+        `<span class="chip">${esc(race.gender || "Other")}</span>`,
+        `<span class="chip">${esc(race.category || "Other")}</span>`,
+        `<span class="chip">${esc(race.kind || "Other")}</span>`,
+        race.phase ? `<span class="chip">${esc(race.phase)}</span>` : "",
+        `<span class="chip ${statusClass(race.status)}">${esc(race.status)}</span>`,
+        race.just_changed ? `<span class="chip status-changed">changed this poll</span>` : "",
+      ].filter(Boolean).join("");
+
+      detailPaneEl.innerHTML = `
+        <div class="race-detail-header">
+          <div>
+            <h2 class="race-detail-title">${esc(race.race_name)}</h2>
+            <div class="race-detail-sub">${esc(race.event_family || "")}</div>
+          </div>
+
+          <div class="detail-actions">
+            <a class="btn-link" href="${esc(race.url)}" target="_blank" rel="noreferrer">Open on CSTiming</a>
+          </div>
+        </div>
+
+        <div class="chip-row">${chips}</div>
+
+        <div class="detail-note">
+          Last seen: ${esc(race.last_seen || "")}
+          ${race.first_posted_at ? ` • First fully posted: ${esc(race.first_posted_at)}` : ""}
+        </div>
+
+        ${renderRaceTable(race)}
+      `;
+    }
+
+    function renderSchoolSummary(flatRows) {
+      const summary = buildSchoolSummary(flatRows);
+
+      if (!summary.length) {
+        schoolSummaryEl.innerHTML = `<div class="loading-box">No posted race results yet.</div>`;
+        return;
+      }
+
+      schoolSummaryEl.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>School</th>
+              <th>Wins</th>
+              <th>Top 3</th>
+              <th>Entries</th>
+              <th>Events</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${summary.map(row => `
+              <tr>
+                <td>${esc(row.school)}</td>
+                <td>${esc(row.wins)}</td>
+                <td>${esc(row.top3)}</td>
+                <td>${esc(row.entries)}</td>
+                <td>${esc(row.events)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function chooseDefaultSelection() {
+      const grouped = getFilteredGrouped();
+      if (!grouped.length) {
+        selectedRaceUrl = null;
+        return;
+      }
+
+      const allVisible = grouped.flatMap(([, races]) => races);
+
+      if (selectedRaceUrl && allVisible.some(r => r.url === selectedRaceUrl)) {
+        return;
+      }
+
+      const firstPosted = allVisible.find(r => r.status === "posted");
+      const firstPartial = allVisible.find(r => r.status === "partial");
+      const firstAny = allVisible[0];
+
+      const chosen = firstPosted || firstPartial || firstAny || null;
+      selectedRaceUrl = chosen?.url || null;
+
+      if (chosen?.event_family) {
+        expandedFamilies.add(chosen.event_family);
+      }
+    }
+
+    function syncExpandedFamilies() {
+      const grouped = getFilteredGrouped();
+      const visibleFamilies = new Set(grouped.map(([family]) => family));
+
+      for (const family of [...expandedFamilies]) {
+        if (!visibleFamilies.has(family)) expandedFamilies.delete(family);
+      }
+
+      if (!expandedFamilies.size && grouped.length) {
+        expandedFamilies.add(grouped[0][0]);
+      }
+
+      const selectedRace = findRaceByUrl(selectedRaceUrl);
+      if (selectedRace?.event_family) {
+        expandedFamilies.add(selectedRace.event_family);
+      }
+    }
+
+    async function fetchLiveMeet() {
+      const url = `${SUPABASE_URL}/rest/v1/live_meet_snapshots?meet_key=eq.${encodeURIComponent(MEET_KEY)}&select=payload`;
+
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch live meet: HTTP ${res.status}`);
+      }
+
+      const rows = await res.json();
+      return rows[0]?.payload ?? null;
+    }
+
+    function rerenderAll() {
+      if (!currentData) return;
+      currentGrouped = groupRacesByEventFamily(currentData.races || []);
+      syncExpandedFamilies();
+      chooseDefaultSelection();
+      renderSidebar();
+      renderDetailPane();
+      renderSchoolSummary(currentData.flat_rows || []);
+    }
+
+    async function loadData() {
+      try {
+        const data = await fetchLiveMeet();
+
+        if (!data) {
+          meetTitleEl.textContent = "East Regionals Live";
+          subtitleEl.textContent = "No live snapshot found yet.";
+          statsEl.innerHTML = "";
+          sidebarMetaEl.textContent = "No data";
+          sidebarEl.innerHTML = `<div class="loading-box">No live data found.</div>`;
+          detailPaneEl.innerHTML = `<div class="error-box">No snapshot was returned from Supabase.</div>`;
+          schoolSummaryEl.innerHTML = `<div class="loading-box">No school summary available yet.</div>`;
+          return;
+        }
+
+        currentData = data;
+
+        meetTitleEl.textContent = `${data.meet_name} - Live`;
+        subtitleEl.textContent = `Updated: ${data.updated_at} • Auto-refresh every ${Math.round(REFRESH_MS / 1000)}s`;
+
+        renderStats(data.summary || {});
+        rerenderAll();
+      } catch (err) {
+        detailPaneEl.innerHTML = `<div class="error-box">${esc(err.message || String(err))}</div>`;
+      }
+    }
+
+    sidebarEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-action]");
+      if (!btn) return;
+
+      const action = btn.getAttribute("data-action");
+
+      if (action === "toggle-family") {
+        const family = btn.getAttribute("data-family");
+        if (!family) return;
+
+        if (expandedFamilies.has(family)) expandedFamilies.delete(family);
+        else expandedFamilies.add(family);
+
+        renderSidebar();
+        return;
+      }
+
+      if (action === "select-race") {
+        const url = btn.getAttribute("data-race-url");
+        if (!url) return;
+
+        selectedRaceUrl = url;
+        const race = findRaceByUrl(url);
+        if (race?.event_family) expandedFamilies.add(race.event_family);
+
+        renderSidebar();
+        renderDetailPane();
+      }
+    });
+
+    searchEl.addEventListener("input", () => {
+      rerenderAll();
+    });
+
+    postedOnlyEl.addEventListener("change", () => {
+      rerenderAll();
+    });
+
+    partialVisibleEl.addEventListener("change", () => {
+      rerenderAll();
+    });
+
+    loadData();
+    setInterval(loadData, REFRESH_MS);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pexip Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#00B894;--teal-dark:#007A63;--teal-bg:#E6F7F4;
+  --amber:#F0A500;--amber-bg:#FEF6E4;
+  --red:#D63031;--red-bg:#FDEAEA;
+  --blue:#3730A3;--blue-bg:#EEF2FF;
+  --purple:#7B5EA7;--purple-bg:#F3EEFF;
+  --slate:#0F1F2E;
+  --bg:#F0F2F5;--surface:#fff;--surface2:#F7F8FA;
+  --border:#E2E6EA;--border2:#C8CDD4;
+  --text:#0F1F2E;--text2:#4A5568;--text3:#9AA5B4;
+  --r:10px;--r-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar */
+.sidebar{width:216px;background:var(--slate);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-icon{width:32px;height:32px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:17px;height:17px;fill:#fff}
+.sb-name{font-size:15px;font-weight:600;color:#fff}
+.sb-tag{font-size:10px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.07em}
+.nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nav-sec{font-size:10px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:.09em;padding:8px 8px 3px;font-weight:500}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:var(--r-sm);border:none;background:none;color:rgba(255,255,255,.48);font-size:13px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;text-align:left;transition:all .13s;margin-bottom:1px}
+.nav-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;opacity:.7}
+.nav-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.82)}
+.nav-btn.active{background:rgba(0,184,148,.18);color:var(--teal);font-weight:500}
+.nav-btn.active svg{opacity:1}
+.sb-foot{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.node-pill{display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:var(--r-sm);background:rgba(255,255,255,.04);margin-bottom:4px}
+.ndot{width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .3s}
+.ndot.ok{background:var(--teal)}.ndot.err{background:var(--red)}.ndot.load{background:var(--amber);animation:blink .8s infinite}
+.node-label{font-size:11px;color:rgba(255,255,255,.28);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);height:56px;padding:0 24px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tb-title{flex:1}
+.tb-title h1{font-size:16px;font-weight:600}
+.tb-title p{font-size:11.5px;color:var(--text3);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn svg{width:13px;height:13px;fill:currentColor}
+.btn.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal)}
+.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-primary:hover{background:var(--teal-dark)}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-val{font-size:28px;font-weight:600;line-height:1;font-family:'IBM Plex Mono',monospace}
+.stat-val.green{color:var(--teal)}.stat-val.amber{color:var(--amber)}.stat-val.blue{color:var(--blue)}.stat-val.red{color:var(--red)}
+.stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:5px}
+
+/* Toolbar */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:160px}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;fill:var(--text3);pointer-events:none}
+.search input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.search input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .12s}
+.pill.on{background:var(--teal-bg);color:var(--teal-dark);border-color:var(--teal);font-weight:500}
+
+/* Strip */
+.strip{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:14px;font-size:12px;color:var(--text2)}
+.strip .sp{flex:1}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.idle{background:var(--border2)}.dot.live{background:var(--teal);animation:blink 2s infinite}.dot.load{background:var(--amber);animation:blink .7s infinite}.dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-head-title{font-size:13px;font-weight:600;flex:1}
+.card-count{font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;border:1px solid var(--border)}
+
+/* Table */
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:8px 16px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface2);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody tr.clickable{cursor:pointer}
+td{padding:10px 16px;vertical-align:middle}
+.cell-name{display:flex;align-items:center;gap:10px}
+.ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.row-name{font-size:13.5px;font-weight:500}
+.row-sub{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.conf{background:var(--teal-bg);color:var(--teal-dark)}
+.badge.test{background:var(--blue-bg);color:var(--blue)}
+.badge.lecture{background:var(--amber-bg);color:#7A5006}
+.badge.pin{background:var(--red-bg);color:var(--red)}
+.badge.open{background:var(--teal-bg);color:var(--teal-dark)}
+.badge.ok{background:var(--teal-bg);color:var(--teal-dark)}
+.badge.warn{background:var(--amber-bg);color:#7A5006}
+.badge.alarm{background:var(--red-bg);color:var(--red)}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--teal);animation:blink 2s infinite;margin-right:4px;vertical-align:middle}
+
+/* Detail view */
+.conf-detail-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow)}
+.conf-detail-top{display:flex;align-items:flex-start;gap:16px}
+.conf-detail-ava{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#fff;flex-shrink:0}
+.conf-detail-name{font-size:20px;font-weight:600;line-height:1.2}
+.conf-detail-desc{font-size:13px;color:var(--text3);margin-top:3px}
+.alias-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.alias-chip{font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:3px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.alias-chip button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:0}
+.alias-chip button:hover{color:var(--teal)}
+.conf-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.detail-cols{grid-template-columns:1fr}}
+
+/* Participants */
+.participant-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.participant-row:last-child{border-bottom:none}
+.participant-row:hover{background:var(--surface2)}
+.p-ava{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.p-name{font-size:13.5px;font-weight:500}
+.p-detail{font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.p-role-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
+.p-role-badge.host{background:var(--teal-bg);color:var(--teal-dark)}
+.p-role-badge.guest{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}
+.p-actions{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+
+/* Dial modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-lg);width:420px;max-width:95vw;transform:scale(.96);transition:transform .2s;overflow:hidden}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-head h2{font-size:15px;font-weight:600;flex:1}
+.modal-body{padding:20px}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.field label{font-size:12px;font-weight:500;color:var(--text2)}
+.field input,.field select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;background:var(--surface);color:var(--text)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 2px rgba(0,184,148,.12)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* System panel */
+.sys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.sys-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.sys-card-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.sys-card-val{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+.sys-card-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+.panel{display:none}
+.panel.show{display:block;animation:fadeUp .2s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--slate);color:#fff;padding:10px 18px;border-radius:var(--r-sm);font-size:13px;box-shadow:var(--shadow-md);opacity:0;transition:all .2s;pointer-events:none;z-index:200;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:28px;margin-bottom:8px;opacity:.4}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+    <div><div class="sb-name">Pexip</div><div class="sb-tag">Dashboard · v39.1</div></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Monitor</div>
+    <button class="nav-btn active" id="nav-conf" onclick="showPanel('conf')">
+      <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+      Conferences
+    </button>
+    <button class="nav-btn" id="nav-hist" onclick="showPanel('hist')">
+      <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+      Call History
+    </button>
+    <button class="nav-btn" id="nav-sys" onclick="showPanel('sys')">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      System
+    </button>
+    <div class="nav-sec" style="margin-top:10px">Directory</div>
+    <button class="nav-btn" id="nav-ab" onclick="showPanel('ab')">
+      <svg viewBox="0 0 24 24"><path d="M20 0H4v2h16V0zM4 24h16v-2H4v2zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 2.75c1.24 0 2.25 1.01 2.25 2.25S13.24 11.25 12 11.25 9.75 10.24 9.75 9s1.01-2.25 2.25-2.25zM17 17H7v-.75c0-1.67 3.33-2.5 5-2.5s5 .83 5 2.5V17z"/></svg>
+      Address Book
+    </button>
+    <button class="nav-btn" id="nav-users" onclick="showPanel('users')">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      Users
+    </button>
+  </nav>
+  <div class="sb-foot">
+    <div class="node-pill"><div class="ndot load" id="dotConf"></div><div class="node-label">sandboxconf (calls)</div></div>
+    <div class="node-pill"><div class="ndot load" id="dotMgmt"></div><div class="node-label">sandbox (mgmt)</div></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-title"><h1 id="pageTitle">Conferences</h1><p id="pageSub">Click a conference to view details and participants</p></div>
+    <button class="btn on" id="autoBtn" onclick="toggleAuto()" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+      <span id="autoBtnTxt">Auto ON</span>
+    </button>
+    <button class="btn" onclick="onRefresh()">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- Conferences list -->
+    <div id="panel-conf" class="panel show">
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total VMRs</div></div>
+        <div class="stat"><div class="stat-val green" id="s-live">—</div><div class="stat-lbl">Active now</div></div>
+        <div class="stat"><div class="stat-val blue" id="s-parts">—</div><div class="stat-lbl">Participants</div></div>
+        <div class="stat"><div class="stat-val amber" id="s-pin">—</div><div class="stat-lbl">PIN required</div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="confQ" placeholder="Search conferences…" oninput="renderConf()"/>
+        </div>
+        <div class="pills">
+          <button class="pill on" onclick="setConfF('all',this)">All</button>
+          <button class="pill" onclick="setConfF('live',this)">Active</button>
+          <button class="pill" onclick="setConfF('pin',this)">PIN required</button>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="dot load" id="confDot"></div>
+        <span id="confMsg">Loading…</span>
+        <span class="sp"></span>
+        <span id="confCd" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-head-title">Virtual Meeting Rooms</span><span class="card-count" id="confCount">—</span></div>
+        <div id="confBody"><div class="empty-state"><div class="empty-icon">▣</div>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Conference detail -->
+    <div id="panel-detail" class="panel">
+      <div style="margin-bottom:16px">
+        <button class="btn" onclick="backToList()">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          Back to conferences
+        </button>
+      </div>
+      <div class="conf-detail-header">
+        <div class="conf-detail-top">
+          <div class="conf-detail-ava" id="detailAva"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div class="conf-detail-name" id="detailName">—</div>
+              <span id="detailTypeBadge"></span>
+              <span id="detailLiveBadge"></span>
+            </div>
+            <div class="conf-detail-desc" id="detailDesc"></div>
+            <div class="alias-list" id="detailAliases"></div>
+          </div>
+        </div>
+        <div class="conf-actions" id="detailActions"></div>
+      </div>
+      <div class="detail-cols">
+        <div>
+          <div class="card">
+            <div class="card-head"><span class="card-head-title">Configuration</span></div>
+            <div id="detailConfig" style="padding:0"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-head">
+              <span class="card-head-title">Live Participants</span>
+              <span class="card-count" id="partCount">—</span>
+              <button class="btn btn-sm" onclick="refreshParticipants()" style="margin-left:4px">
+                <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+              </button>
+            </div>
+            <div class="strip" id="partStrip" style="margin:10px 12px 6px;border-radius:var(--r-sm)">
+              <div class="dot idle" id="partDot"></div><span id="partMsg">Loading…</span>
+            </div>
+            <div id="partBody"><div class="empty-state"><div class="empty-icon">👥</div>Loading…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call History -->
+    <div id="panel-hist" class="panel">
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="histQ" placeholder="Search history…" oninput="renderHist()"/>
+        </div>
+        <div class="pills">
+          <button class="pill on" onclick="setHistF('all',this)">All</button>
+          <button class="pill" onclick="setHistF('conference',this)">Conferences</button>
+          <button class="pill" onclick="setHistF('test_call',this)">Test Calls</button>
+          <button class="pill" onclick="setHistF('lecture',this)">Lectures</button>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="dot idle" id="histDot"></div>
+        <span id="histMsg">Loading…</span>
+        <span class="sp"></span>
+        <span id="histCount" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-head-title">Call History</span><span class="card-count" id="histTableCount">—</span></div>
+        <div id="histBody"><div class="empty-state"><div class="empty-icon">📋</div>Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- System -->
+    <div id="panel-sys" class="panel">
+      <div class="strip">
+        <div class="dot idle" id="sysDot"></div>
+        <span id="sysMsg">Loading system status…</span>
+      </div>
+      <div class="sys-grid" id="sysCards"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-head"><span class="card-head-title">Active Alarms</span><span class="card-count" id="alarmCount">—</span></div>
+          <div id="alarmBody"><div class="empty-state"><div class="empty-icon">🔔</div>Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-head-title">Worker Nodes</span><span class="card-count" id="workerCount">—</span></div>
+          <div id="workerBody"><div class="empty-state"><div class="empty-icon">🖥</div>Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address Book -->
+    <div id="panel-ab" class="panel">
+      <div class="toolbar">
+        <div class="search" style="max-width:300px">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="abQ" placeholder="Search VMRs & aliases…" oninput="renderAB()"/>
+        </div>
+        <div class="pills">
+          <button class="pill on" onclick="setAbF('all',this)">All</button>
+          <button class="pill" onclick="setAbF('conference',this)">Conferences</button>
+          <button class="pill" onclick="setAbF('lecture',this)">Lectures</button>
+          <button class="pill" onclick="setAbF('test_call',this)">Test Calls</button>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="dot idle" id="abDot"></div>
+        <span id="abMsg">Loading…</span>
+        <span class="sp"></span>
+        <span id="abCount" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div id="abBody"><div class="empty-state"><div class="empty-icon">👤</div>Loading…</div></div>
+    </div>
+
+    <!-- Users -->
+    <div id="panel-users" class="panel">
+      <div class="toolbar">
+        <div class="search" style="max-width:300px">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="userQ" placeholder="Search users…" oninput="renderUsers()"/>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="dot idle" id="usersDot"></div>
+        <span id="usersMsg">Loading…</span>
+        <span class="sp"></span>
+        <span id="usersCount" style="font-size:11px;color:var(--text3)"></span>
+      </div>
+      <div id="usersBody"><div class="empty-state"><div class="empty-icon">👥</div>Loading…</div></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- Dial modal -->
+<div class="modal-overlay" id="dialOverlay" onclick="if(event.target===this)closeDial()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="dialTitle">Dial</h2>
+      <button style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3)" onclick="closeDial()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>URI / Alias</label>
+        <input id="dialUri" placeholder="e.g. sandbox or user@domain.com"/>
+      </div>
+      <div class="field">
+        <label>Display name</label>
+        <input id="dialDisplayName" placeholder="Your name"/>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Conference</label>
+          <input id="dialConf" readonly style="background:var(--surface2);color:var(--text2)"/>
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="dialRole"><option value="host">Host</option><option value="guest">Guest</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>PIN (if required)</label>
+        <input id="dialPin" type="password" placeholder="Leave blank if none"/>
+      </div>
+      <div id="dialStatus" style="font-size:12px;min-height:18px;margin-top:4px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeDial()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDial()">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        Dial
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────
+const PROXY      = 'http://localhost:3000';
+const MGMT       = '/mgmt';
+const CONF_HOST  = 'sandboxconf.smithvcs.queensu.ca';
+const CREDS      = 'Basic ' + btoa('admin:Sandbox2024');
+
+// Verified API paths
+const API = {
+  confConfig:   MGMT + '/api/admin/configuration/v1/conference/',
+  confStatus:   MGMT + '/api/admin/status/v1/conference/',
+  participant:  MGMT + '/api/admin/status/v1/participant/',
+  history:      MGMT + '/api/admin/history/v1/conference/',
+  endUser:      MGMT + '/api/admin/configuration/v1/end_user/',
+  alarm:        MGMT + '/api/admin/status/v1/alarm/',
+  workerVm:     MGMT + '/api/admin/status/v1/worker_vm/',
+  licensing:    MGMT + '/api/admin/status/v1/licensing/',
+  mgmtVm:       MGMT + '/api/admin/status/v1/management_vm/',
+  device:       MGMT + '/api/admin/configuration/v1/device/',
+};
+
+async function apiFetch(path, method='GET', body=null) {
+  const opts = { method, headers: { Authorization: CREDS, 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(PROXY + path, opts);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+async function clientPost(path, body) {
+  const r = await fetch(PROXY + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  return r.json();
+}
+async function fetchAll(basePath) {
+  let all=[], url=basePath+'?limit=500&offset=0';
+  while (url) {
+    const d = await apiFetch(url);
+    all.push(...(d.objects||d.results||[]));
+    url = d.meta?.next ? MGMT + d.meta.next : null;
+  }
+  return all;
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+const COLORS=['#00B894','#2D7DD2','#7B5EA7','#E05252','#F5A623','#16A085','#8E44AD','#E67E22','#C0392B','#2980B9'];
+function colorFor(s){let h=0;for(const c of s||'')h=(h*31+c.charCodeAt(0))&0xffff;return COLORS[h%COLORS.length];}
+function inits(n){return(n||'?').split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')||'?';}
+function setDot(id,t){const el=document.getElementById(id);if(el)el.className='dot '+t;}
+function setNDot(id,t){const el=document.getElementById(id);if(el)el.className='ndot '+t;}
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function fmtDur(s){if(!s)return'—';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return h?`${h}h ${m}m`:m?`${m}m ${sec}s`:`${sec}s`;}
+function fmtDt(iso){if(!iso)return'—';return new Date(iso).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
+function typeLabel(t){return t==='test_call'?'Test Call':t==='lecture'?'Lecture':'Conference';}
+function typeCls(t){return t==='test_call'?'test':t==='lecture'?'lecture':'conf';}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+function copyTxt(txt,msg){navigator.clipboard.writeText(txt).then(()=>toast((msg||'Copied')+': '+txt)).catch(()=>toast(txt));}
+
+// ── Navigation ────────────────────────────────────────────────
+const PANELS=['conf','detail','hist','sys','ab','users'];
+const PAGES={
+  conf:  ['Conferences','Click a conference to view details and participants'],
+  detail:['Conference Detail','Full config and live participants'],
+  hist:  ['Call History','All call records · '+0+' total'],
+  sys:   ['System','Licensing, alarms and worker nodes'],
+  ab:    ['Address Book','VMRs and aliases'],
+  users: ['Users','End user accounts'],
+};
+let activePanel='conf';
+
+function showPanel(id) {
+  activePanel=id;
+  PANELS.forEach(k=>{
+    document.getElementById('panel-'+k).classList.toggle('show',k===id);
+    const nb=document.getElementById('nav-'+k);
+    if(nb) nb.classList.toggle('active',k===id||(k==='conf'&&id==='detail'));
+  });
+  document.getElementById('pageTitle').textContent=PAGES[id][0];
+  document.getElementById('pageSub').textContent=PAGES[id][1];
+  document.getElementById('autoBtn').style.display=id==='conf'?'inline-flex':'none';
+  if(id==='hist'  &&!histLoaded)  fetchHist();
+  if(id==='sys'   &&!sysLoaded)   fetchSys();
+  if(id==='ab'    &&!abLoaded)    fetchAB();
+  if(id==='users' &&!usersLoaded) fetchUsers();
+}
+function onRefresh(){
+  if(activePanel==='conf'||activePanel==='detail'){fetchConf();if(autoOn)startAuto();}
+  if(activePanel==='hist')  fetchHist();
+  if(activePanel==='sys')   fetchSys();
+  if(activePanel==='ab')    fetchAB();
+  if(activePanel==='users') fetchUsers();
+}
+function backToList(){showPanel('conf');}
+
+// ── Conferences ───────────────────────────────────────────────
+let confData=[], confF='all', autoOn=true, autoTimer=null, countdown=30;
+
+function toggleAuto(){
+  autoOn=!autoOn;
+  document.getElementById('autoBtn').classList.toggle('on',autoOn);
+  document.getElementById('autoBtnTxt').textContent=autoOn?'Auto ON':'Auto OFF';
+  if(autoOn){fetchConf();startAuto();}
+  else{clearInterval(autoTimer);document.getElementById('confCd').textContent='';}
+}
+function startAuto(){
+  clearInterval(autoTimer);countdown=30;
+  autoTimer=setInterval(()=>{
+    countdown--;
+    document.getElementById('confCd').textContent=`Refresh in ${countdown}s`;
+    if(countdown<=0){countdown=30;fetchConf();}
+  },1000);
+}
+function setConfF(f,el){confF=f;document.querySelectorAll('#panel-conf .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderConf();}
+
+async function fetchConf(){
+  setDot('confDot','load');setNDot('dotMgmt','load');setNDot('dotConf','load');
+  document.getElementById('confMsg').textContent='Fetching VMR config…';
+
+  let vmrs=[], liveConfs=[];
+  try {
+    // Config (all VMR settings)
+    const d=await apiFetch(API.confConfig+'?limit=500');
+    vmrs=d.objects||[];
+    setNDot('dotMgmt','ok');
+  } catch(e){setNDot('dotMgmt','err');setDot('confDot','err');document.getElementById('confMsg').textContent='Mgmt error: '+e.message;return;}
+
+  try {
+    // Live status from status API — this gives us real active conferences + participant counts
+    const d=await apiFetch(API.confStatus+'?limit=500');
+    liveConfs=d.objects||[];
+    setNDot('dotConf','ok');
+  } catch {
+    // Fallback to client API status checks
+    setNDot('dotConf','ok');
+  }
+
+  confData=vmrs.map(v=>{
+    const alias=v.aliases?.[0]?.alias||v.name;
+    const live=liveConfs.find(l=>l.name===v.name||l.tag===alias);
+    return {
+      id:v.id, name:v.name, description:v.description||'',
+      aliases:(v.aliases||[]).map(a=>a.alias),
+      primaryAlias:v.aliases?.[0]?.alias||'',
+      type:v.service_type||'conference',
+      pin:v.pin||'', guestPin:v.guest_pin||'',
+      allowGuests:v.allow_guests,
+      callType:v.call_type||'video',
+      hostView:v.host_view||'',
+      guestView:v.guest_view||'',
+      participantLimit:v.participant_limit,
+      enableChat:v.enable_chat,
+      liveCaption:v.live_captions_enabled,
+      muteGuests:v.mute_all_guests,
+      guestsCanPresent:v.guests_can_present,
+      breakoutRooms:v.breakout_rooms,
+      live:!!live,
+      participants:live?.participant_count??0,
+      liveId:live?.id||null,
+    };
+  });
+
+  setDot('confDot','live');
+  document.getElementById('confMsg').textContent=`${confData.length} VMRs · ${liveConfs.length} active · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('s-total').textContent=confData.length;
+  document.getElementById('s-live').textContent=liveConfs.length;
+  document.getElementById('s-parts').textContent=liveConfs.reduce((s,c)=>s+(c.participant_count||0),0)||'—';
+  document.getElementById('s-pin').textContent=confData.filter(c=>c.pin||c.guestPin).length;
+  renderConf();
+  if(activePanel==='detail'&&currentConf){
+    const updated=confData.find(c=>c.primaryAlias===currentConf.primaryAlias);
+    if(updated){currentConf=updated;renderDetail(updated);}
+  }
+}
+
+function renderConf(){
+  const q=document.getElementById('confQ').value.toLowerCase();
+  const list=confData.filter(c=>{
+    const ms=!q||c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q));
+    const mf=confF==='all'?true:confF==='live'?c.live:confF==='pin'?(c.pin||c.guestPin):true;
+    return ms&&mf;
+  }).sort((a,b)=>(b.live?1:0)-(a.live?1:0)||a.name.localeCompare(b.name));
+
+  document.getElementById('confCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('confBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">▣</div>No conferences match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Name</th><th>Type</th><th>Alias</th><th>Status</th><th>Participants</th><th>Access</th><th></th></tr></thead><tbody>
+    ${list.map(c=>{
+      const cls=typeCls(c.type);
+      const liveBadge=c.live
+        ?`<span class="badge ok"><span class="live-dot"></span>Active</span>`
+        :'<span style="font-size:12px;color:var(--text3)">Idle</span>';
+      const access=[];
+      if(c.pin) access.push('<span class="badge pin">Host PIN</span>');
+      if(c.guestPin) access.push('<span class="badge pin">Guest PIN</span>');
+      if(!c.pin&&!c.guestPin&&c.allowGuests) access.push('<span class="badge open">Open</span>');
+      return `<tr class="clickable" onclick="openDetail('${esc(c.primaryAlias)}')">
+        <td><div class="cell-name">
+          <div class="ava ${cls}" style="background:${colorFor(c.name)};color:#fff">${inits(c.name)}</div>
+          <div><div class="row-name">${c.name}</div>${c.description?`<div class="row-sub">${c.description}</div>`:''}</div>
+        </div></td>
+        <td><span class="badge ${cls}">${typeLabel(c.type)}</span></td>
+        <td><span class="row-sub">${c.primaryAlias||'—'}</span></td>
+        <td>${liveBadge}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${c.live?c.participants:'—'}</td>
+        <td><div style="display:flex;gap:4px;flex-wrap:wrap">${access.join('')||'—'}</div></td>
+        <td><span style="font-size:12px;color:var(--teal);font-weight:500">View →</span></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── Conference Detail ─────────────────────────────────────────
+let currentConf=null;
+
+function openDetail(alias){
+  const conf=confData.find(c=>c.primaryAlias===alias);
+  if(!conf)return;
+  currentConf=conf;
+  renderDetail(conf);
+  showPanel('detail');
+  fetchParticipants(conf);
+}
+
+function renderDetail(c){
+  const cls=typeCls(c.type);
+  document.getElementById('detailAva').style.cssText=`background:${colorFor(c.name)};color:#fff`;
+  document.getElementById('detailAva').textContent=inits(c.name);
+  document.getElementById('detailName').textContent=c.name;
+  document.getElementById('detailDesc').textContent=c.description||'';
+  document.getElementById('detailTypeBadge').innerHTML=`<span class="badge ${cls}">${typeLabel(c.type)}</span>`;
+  document.getElementById('detailLiveBadge').innerHTML=c.live
+    ?`<span class="badge ok"><span class="live-dot"></span>Active · ${c.participants} participant${c.participants!==1?'s':''}</span>`
+    :'<span style="font-size:12px;color:var(--text3)">Idle</span>';
+  document.getElementById('detailAliases').innerHTML=c.aliases.map(a=>
+    `<div class="alias-chip">${a}<button onclick="copyTxt('${esc(a)}','Alias copied')" title="Copy">⎘</button></div>`
+  ).join('');
+
+  const meta=[
+    ['Call type',c.callType],['Service type',typeLabel(c.type)],
+    ['Host PIN',c.pin||'None'],['Guest PIN',c.guestPin||'None'],
+    ['Allow guests',c.allowGuests?'Yes':'No'],['Guests can present',c.guestsCanPresent?'Yes':'No'],
+    ['Mute all guests',c.muteGuests?'Yes':'No'],['Breakout rooms',c.breakoutRooms?'Enabled':'Disabled'],
+    ['Chat',c.enableChat||'Default'],['Live captions',c.liveCaption||'Default'],
+    ['Participant limit',c.participantLimit||'Unlimited'],['Host view',c.hostView||'Default'],
+    ['Guest view',c.guestView||'Default'],
+  ];
+
+  document.getElementById('detailConfig').innerHTML=`<div style="font-size:13px">
+    ${meta.map(([l,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:1px solid var(--border)">
+      <span style="color:var(--text3)">${l}</span>
+      <span style="font-weight:500;text-align:right;margin-left:12px">${v}</span>
+    </div>`).join('')}
+  </div>`;
+
+  document.getElementById('detailActions').innerHTML=`
+    <button class="btn btn-primary" onclick="openDialModal('','',currentConf.primaryAlias)">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      Dial in
+    </button>
+    <button class="btn" onclick="openWebApp('${esc(c.primaryAlias)}')">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.59L7.76 14.83l1.41 1.41L19 5.41V9h2V3h-7z"/></svg>
+      Open Web App
+    </button>
+    <button class="btn" onclick="copyTxt('${esc(c.primaryAlias)}','Alias copied')">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+      Copy alias
+    </button>`;
+}
+
+// ── Participants ──────────────────────────────────────────────
+let currentParticipants=[];
+
+function refreshParticipants(){if(currentConf)fetchParticipants(currentConf);}
+
+async function fetchParticipants(conf){
+  setDot('partDot','load');
+  document.getElementById('partMsg').textContent='Fetching participants…';
+  document.getElementById('partCount').textContent='—';
+  currentParticipants=[];
+
+  try {
+    // Use the verified status v1 participant endpoint, filter by conference name
+    const d=await apiFetch(`${API.participant}?conference__name=${encodeURIComponent(conf.name)}&limit=500`);
+    currentParticipants=d.objects||d.results||[];
+    setDot('partDot','live');
+    document.getElementById('partMsg').textContent=
+      currentParticipants.length
+        ?`${currentParticipants.length} participant${currentParticipants.length!==1?'s':''} · live`
+        :'No active participants';
+    document.getElementById('partCount').textContent=currentParticipants.length;
+    renderParticipants(conf);
+  } catch(e){
+    // If filter param fails, try fetching all and filtering client-side
+    try {
+      const d=await apiFetch(`${API.participant}?limit=500`);
+      const all=d.objects||d.results||[];
+      currentParticipants=all.filter(p=>
+        (p.conference_name||p.conference||'').toLowerCase()===conf.name.toLowerCase()
+      );
+      setDot('partDot','live');
+      document.getElementById('partMsg').textContent=
+        currentParticipants.length?`${currentParticipants.length} participants · live`:'No active participants';
+      document.getElementById('partCount').textContent=currentParticipants.length;
+      renderParticipants(conf);
+    } catch(e2){
+      setDot('partDot','err');
+      document.getElementById('partMsg').textContent='Participant status unavailable: '+e2.message;
+      renderParticipants(conf);
+    }
+  }
+}
+
+function renderParticipants(conf){
+  const body=document.getElementById('partBody');
+  if(!currentParticipants.length){
+    body.innerHTML=`<div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <div style="margin-bottom:12px">${conf.live?'Conference active — no participant details returned':'No active session in this VMR'}</div>
+      <button class="btn btn-primary btn-sm" onclick="openDialModal('','',currentConf.primaryAlias)">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+        Start the conference
+      </button>
+    </div>`;
+    return;
+  }
+  body.innerHTML=currentParticipants.map(p=>{
+    const name=p.display_name||p.name||'Unknown';
+    const role=p.role||'guest';
+    const protocol=p.protocol||p.call_type||'';
+    const duration=p.duration?fmtDur(p.duration):'';
+    const uri=p.remote_alias||p.source_alias||p.uri||'';
+    const node=p.signalling_node||'';
+    return `<div class="participant-row">
+      <div class="p-ava" style="background:${colorFor(name)}">${inits(name)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="p-name">${name}</div>
+        <div class="p-detail">${[uri,protocol,duration,node].filter(Boolean).join(' · ')}</div>
+      </div>
+      <span class="p-role-badge ${role}">${role}</span>
+      <div class="p-actions">
+        <button class="btn btn-sm btn-primary" onclick="openDialModal('${esc(uri||name)}','${esc(name)}','${esc(conf.primaryAlias)}')">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          Dial
+        </button>
+        ${uri?`<button class="btn btn-sm" onclick="copyTxt('${esc(uri)}','Copied')">⎘</button>`:''}
+      </div>
+    </div>`;
+  }).join('')
+  +`<div style="padding:12px 16px;border-top:1px solid var(--border);text-align:center">
+    <button class="btn btn-primary btn-sm" onclick="openDialModal('','',currentConf.primaryAlias)">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      Dial new participant into conference
+    </button>
+  </div>`;
+}
+
+// ── Dial ──────────────────────────────────────────────────────
+function openDialModal(uri,name,confAlias){
+  document.getElementById('dialUri').value=uri||'';
+  document.getElementById('dialDisplayName').value=name||'';
+  document.getElementById('dialConf').value=confAlias||'';
+  document.getElementById('dialStatus').textContent='';
+  document.getElementById('dialTitle').textContent=name?`Dial ${name}`:'Dial into conference';
+  document.getElementById('dialOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById(uri?'dialDisplayName':'dialUri').focus(),100);
+}
+function closeDial(){document.getElementById('dialOverlay').classList.remove('open');}
+
+async function submitDial(){
+  const uri=document.getElementById('dialUri').value.trim();
+  const name=document.getElementById('dialDisplayName').value.trim()||uri;
+  const conf=document.getElementById('dialConf').value.trim();
+  const pin=document.getElementById('dialPin').value;
+  const role=document.getElementById('dialRole').value;
+  const status=document.getElementById('dialStatus');
+  if(!uri&&!conf){status.textContent='Enter a URI or alias';return;}
+  status.style.color='var(--text3)';
+  status.textContent='Requesting token…';
+  try {
+    const target=conf||uri;
+    const body={display_name:name};
+    if(pin) body[role==='host'?'pin':'guest_pin']=pin;
+    const d=await clientPost(`/api/client/v2/conferences/${encodeURIComponent(target)}/request_token`,body);
+    if(d.status==='success'){
+      status.style.color='var(--teal)';
+      status.textContent='✓ Token received — conference is reachable';
+      toast(`Connected to "${target}" — wire PexRTC.js for live video`);
+      setTimeout(()=>{closeDial();refreshParticipants();},1600);
+    } else if(d.result?.pin==='required'){
+      status.style.color='var(--amber)';
+      status.textContent='PIN required — enter host or guest PIN above';
+    } else {
+      status.style.color='var(--red)';
+      status.textContent='Response: '+(d.result||JSON.stringify(d));
+    }
+  } catch(e){status.style.color='var(--red)';status.textContent='Error: '+e.message;}
+}
+
+function openWebApp(alias){
+  window.open(`https://${CONF_HOST}/webapp3/?conference=${encodeURIComponent(alias)}&name=Dashboard+User`,'_blank');
+}
+
+// ── Call History ──────────────────────────────────────────────
+let histData=[], histF='all', histLoaded=false;
+function setHistF(f,el){histF=f;document.querySelectorAll('#panel-hist .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderHist();}
+
+async function fetchHist(){
+  histLoaded=true;setDot('histDot','load');
+  document.getElementById('histMsg').textContent='Fetching all call records…';
+  try {
+    histData=await fetchAll(API.history.replace('?limit=500&offset=0',''));
+    // Sort newest first
+    histData.sort((a,b)=>new Date(b.start_time)-new Date(a.start_time));
+    setDot('histDot','live');
+    document.getElementById('histMsg').textContent=`${histData.length} records · ${new Date().toLocaleTimeString()}`;
+    document.getElementById('histCount').textContent=`${histData.length} total`;
+    PAGES.hist[1]='All call records · '+histData.length+' total';
+  } catch(e){
+    setDot('histDot','err');
+    document.getElementById('histMsg').textContent='History error: '+e.message;
+  }
+  renderHist();
+}
+
+function renderHist(){
+  const q=document.getElementById('histQ').value.toLowerCase();
+  const list=histData.filter(h=>{
+    const ms=!q||(h.name||'').toLowerCase().includes(q);
+    return ms&&(histF==='all'?true:(h.service_type||'conference')===histF);
+  });
+  document.getElementById('histTableCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('histBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div>No records match</div>';return;}
+  body.innerHTML=`<table><thead><tr><th>Conference</th><th>Started</th><th>Ended</th><th>Duration</th><th>Participants</th><th>Type</th></tr></thead><tbody>
+    ${list.map(h=>{
+      const t=h.service_type||'conference',cls=typeCls(t);
+      const dur=h.duration?fmtDur(h.duration):'Active';
+      return `<tr>
+        <td><div class="cell-name"><div class="ava ${cls}" style="background:${colorFor(h.name||'')};color:#fff">${inits(h.name||'?')}</div>
+          <div><div class="row-name">${h.name||'Unknown'}</div></div></div></td>
+        <td style="font-size:12px;color:var(--text2)">${fmtDt(h.start_time)}</td>
+        <td style="font-size:12px;color:var(--text2)">${fmtDt(h.end_time)}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:12px">${dur}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-size:13px">${h.participant_count??'—'}</td>
+        <td><span class="badge ${cls}">${typeLabel(t)}</span></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── System ────────────────────────────────────────────────────
+let sysLoaded=false;
+async function fetchSys(){
+  sysLoaded=true;setDot('sysDot','load');
+  document.getElementById('sysMsg').textContent='Loading system status…';
+  try {
+    const [alarms,workers,licensing]=await Promise.all([
+      apiFetch(API.alarm+'?limit=500').catch(()=>({objects:[]})),
+      apiFetch(API.workerVm+'?limit=500').catch(()=>({objects:[]})),
+      apiFetch(API.licensing).catch(()=>({objects:[]})),
+    ]);
+    const alarmList=alarms.objects||[];
+    const workerList=workers.objects||[];
+    const licList=licensing.objects||[];
+    const activeAlarms=alarmList.filter(a=>!a.cleared);
+
+    setDot('sysDot',activeAlarms.length?'err':'live');
+    document.getElementById('sysMsg').textContent=
+      activeAlarms.length?`${activeAlarms.length} active alarm${activeAlarms.length!==1?'s':''}`:'System healthy · '+new Date().toLocaleTimeString();
+
+    // Summary cards
+    document.getElementById('sysCards').innerHTML=`
+      <div class="sys-card"><div class="sys-card-title">Worker Nodes</div><div class="sys-card-val">${workerList.length}</div><div class="sys-card-sub">${workerList.filter(w=>w.status==='active'||w.active).length} active</div></div>
+      <div class="sys-card"><div class="sys-card-title">Active Alarms</div><div class="sys-card-val" style="color:${activeAlarms.length?'var(--red)':'var(--teal)'}">${activeAlarms.length}</div><div class="sys-card-sub">${alarmList.length} total</div></div>
+      <div class="sys-card"><div class="sys-card-title">Licences</div><div class="sys-card-val">${licList.length||'—'}</div><div class="sys-card-sub">configured</div></div>
+      <div class="sys-card"><div class="sys-card-title">Version</div><div class="sys-card-val" style="font-size:18px">v39.1</div><div class="sys-card-sub">Pexip Infinity</div></div>
+    `;
+
+    // Alarms
+    document.getElementById('alarmCount').textContent=activeAlarms.length;
+    document.getElementById('alarmBody').innerHTML=activeAlarms.length
+      ?activeAlarms.map(a=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">
+          <span class="badge ${a.severity==='ERROR'||a.severity==='CRITICAL'?'alarm':'warn'}" style="margin-top:2px;flex-shrink:0">${a.severity||'WARN'}</span>
+          <div><div style="font-size:13px;font-weight:500">${a.name||a.alarm_type||'Alarm'}</div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:2px">${a.details||a.node||''}</div></div>
+        </div>`).join('')
+      :'<div class="empty-state"><div class="empty-icon">✅</div>No active alarms</div>';
+
+    // Workers
+    document.getElementById('workerCount').textContent=workerList.length;
+    document.getElementById('workerBody').innerHTML=workerList.length
+      ?workerList.map(w=>`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${w.status==='active'||w.active?'var(--teal)':'var(--amber)'};flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500">${w.name||w.hostname||'Node'}</div>
+            <div style="font-size:11.5px;color:var(--text3);font-family:'IBM Plex Mono',monospace">${w.address||w.ip_address||''}</div>
+          </div>
+          <span style="font-size:11px;color:var(--text3)">${w.status||''}</span>
+        </div>`).join('')
+      :'<div class="empty-state"><div class="empty-icon">🖥</div>No worker nodes found</div>';
+  } catch(e){
+    setDot('sysDot','err');
+    document.getElementById('sysMsg').textContent='System API error: '+e.message;
+  }
+}
+
+// ── Address Book ──────────────────────────────────────────────
+let abData=[], abF='all', abLoaded=false;
+function setAbF(f,el){abF=f;document.querySelectorAll('#panel-ab .pill').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderAB();}
+
+async function fetchAB(){
+  abLoaded=true;setDot('abDot','load');
+  document.getElementById('abMsg').textContent='Fetching…';
+  try {
+    const d=await apiFetch(API.confConfig+'?limit=500');
+    abData=(d.objects||[]).map(v=>({
+      name:v.name,description:v.description||'',type:v.service_type||'conference',
+      aliases:(v.aliases||[]).map(a=>a.alias),primaryAlias:v.aliases?.[0]?.alias||'',
+      pin:!!(v.pin),guestPin:!!(v.guest_pin),allowGuests:v.allow_guests,callType:v.call_type||'video',
+    }));
+    setDot('abDot','live');
+    document.getElementById('abMsg').textContent=`${abData.length} VMRs · ${new Date().toLocaleTimeString()}`;
+    document.getElementById('abCount').textContent=`${abData.length}`;
+  } catch(e){setDot('abDot','err');document.getElementById('abMsg').textContent='Error: '+e.message;}
+  renderAB();
+}
+
+function renderAB(){
+  const q=document.getElementById('abQ').value.toLowerCase();
+  const list=abData.filter(c=>{
+    const ms=!q||c.name.toLowerCase().includes(q)||c.aliases.some(a=>a.toLowerCase().includes(q));
+    return ms&&(abF==='all'?true:abF===c.type);
+  });
+  document.getElementById('abCount').textContent=`${list.length} result${list.length!==1?'s':''}`;
+  const body=document.getElementById('abBody');
+  if(!list.length){body.innerHTML='<div class="empty-state"><div class="empty-icon">👤</div>No results</div>';return;}
+  body.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+    ${list.map(c=>{
+      const col=colorFor(c.name),cls=typeCls(c.type);
+      const tags=[`<span class="badge ${cls}">${typeLabel(c.type)}</span>`];
+      if(c.pin) tags.push('<span class="badge pin">Host PIN</span>');
+      if(c.guestPin) tags.push('<span class="badge pin">Guest PIN</span>');
+      if(!c.pin&&!c.guestPin&&c.allowGuests) tags.push('<span class="badge open">Open</span>');
+      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;border-radius:10px;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0">${inits(c.name)}</div>
+          <div><div style="font-size:13.5px;font-weight:500">${c.name}</div><div style="font-size:11.5px;color:var(--text3)">${c.description||typeLabel(c.type)}</div></div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">${tags.join('')}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text2)">${c.primaryAlias||'—'}</div>
+        ${c.aliases.length>1?`<div style="display:flex;gap:4px;flex-wrap:wrap">${c.aliases.slice(1).map(a=>`<span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--surface);padding:2px 6px;border-radius:4px;border:1px solid var(--border);color:var(--text3)">${a}</span>`).join('')}</div>`:''}
+        <div style="display:flex;gap:6px">
+          <button style="flex:1;padding:6px;font-size:12px;font-weight:500;border-radius:var(--r-sm);border:none;background:var(--teal);color:#fff;cursor:pointer;font-family:'IBM Plex Sans',sans-serif" onclick="openDetail('${esc(c.primaryAlias)}')">Open</button>
+          <button style="flex:1;padding:6px;font-size:12px;font-weight:500;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans',sans-serif" onclick="copyTxt('${esc(c.primaryAlias)}','Alias copied')">Copy</button>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+}
+
+// ── Users ─────────────────────────────────────────────────────
+let usersData=[], usersLoaded=false;
+
+async function fetchUsers(){
+  usersLoaded=true;setDot('usersDot','load');
+  document.getElementById('usersMsg').textContent='Fetching users…';
+  try {
+    usersData=await fetchAll(API.endUser.replace('?limit=500&offset=0',''));
+    setDot('usersDot','live');
+    document.getElementById('usersMsg').textContent=`${usersData.length} users · ${new Date().toLocaleTimeString()}`;
+    document.getElementById('usersCount').textContent=`${usersData.length} total`;
+  } catch(e){setDot('usersDot','err');document.getElementById('usersMsg').textContent='Users API: '+e.message;usersData=[];}
+  renderUsers();
+}
+
+function renderUsers(){
+  const q=document.getElementById('userQ').value.toLowerCase();
+  const list=usersData.filter(u=>{
+    const name=(u.display_name||u.username||u.name||'').toLowerCase();
+    const email=(u.primary_email_address||u.email||'').toLowerCase();
+    return !q||name.includes(q)||email.includes(q);
+  });
+  document.getElementById('usersCount').textContent=`${list.length} shown`;
+  const body=document.getElementById('usersBody');
+  if(!list.length){
+    body.innerHTML=`<div class="empty-state"><div class="empty-icon">👥</div>
+      ${usersData.length===0?'No end users configured on this node yet.<br><br><span style="font-size:12px">End users are created via the Pexip admin UI or LDAP sync.</span>':'No users match your search'}
+    </div>`;
+    return;
+  }
+  body.innerHTML=list.map(u=>{
+    const displayName=u.display_name||u.username||u.name||'Unknown';
+    const email=u.primary_email_address||u.email||'';
+    const idp=u.identity_provider||'';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:${colorFor(displayName)};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">${inits(displayName)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13.5px;font-weight:500">${displayName}</div>
+        <div style="font-size:12px;color:var(--text3)">${[email,idp].filter(Boolean).join(' · ')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Init ──────────────────────────────────────────────────────
+showPanel('conf');
+fetchConf();
+if(autoOn)startAuto();
+</script>
+</body>
+</html>

@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSS Basketball — Live Scoreboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --kss-blue:    #003594;
+    --kss-white:   #ffffff;
+    --fron-purple: #6B2D8B;
+    --fron-gray:   #8C8C8C;
+    --bg:          #080C14;
+    --surface:     #0D1420;
+    --surface2:    #131B2A;
+    --border:      rgba(255,255,255,0.07);
+    --text-dim:    rgba(255,255,255,0.4);
+    --text-dimmer: rgba(255,255,255,0.18);
+    --green:       #00E676;
+    --gold:        #FFD600;
+    --red:         #FF3D3D;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Barlow Condensed', sans-serif;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  /* ── SCOREBOARD WRAPPER ─────────────────────────────── */
+  #scoreboard {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+
+  /* ── TOP BAR ─────────────────────────────────────────── */
+  #topbar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 2.5vw;
+    height: 10vh;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+  }
+
+  .team-name-top {
+    font-size: 2.2vh;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .team-name-top.away { text-align: right; color: var(--fron-gray); }
+  .team-name-top.home { color: rgba(255,255,255,0.6); }
+
+  #game-info-top {
+    text-align: center;
+    font-size: 1.4vh;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN SCORE ZONE ─────────────────────────────────── */
+  #main-score {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 3vw;
+    gap: 2vw;
+    position: relative;
+  }
+
+  .team-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1vh;
+  }
+
+  .team-initial {
+    font-size: 7vh;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .team-initial.home { color: var(--kss-white); }
+  .team-initial.away { color: #fff; opacity: 0.5; }
+
+  .score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22vh;
+    font-weight: 700;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    transition: transform 0.15s ease;
+  }
+  .score-number.home { color: var(--kss-white); }
+  .score-number.away { color: rgba(255,255,255,0.55); }
+
+  .score-number.scored {
+    animation: scoreFlash 0.5s ease;
+  }
+  @keyframes scoreFlash {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  /* Team meta — fouls, timeouts */
+  .team-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2vh;
+    width: 100%;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1vh;
+    font-size: 1.8vh;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .foul-dots {
+    display: flex;
+    gap: 0.6vh;
+  }
+  .foul-dot {
+    width: 1.4vh;
+    height: 1.4vh;
+    border-radius: 50%;
+    border: 1.5px solid var(--text-dimmer);
+    transition: all 0.3s ease;
+  }
+  .foul-dot.active { background: var(--red); border-color: var(--red); }
+  .foul-dot.warning { background: var(--gold); border-color: var(--gold); }
+
+  .timeout-dots {
+    display: flex;
+    gap: 0.5vh;
+  }
+  .timeout-dot {
+    width: 1.2vh;
+    height: 1.2vh;
+    border-radius: 50%;
+    background: var(--text-dimmer);
+    transition: all 0.3s ease;
+  }
+  .timeout-dot.used { background: transparent; border: 1.5px solid var(--text-dimmer); }
+
+  /* ── CENTER CLOCK ZONE ───────────────────────────────── */
+  #clock-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5vh;
+    min-width: 18vw;
+  }
+
+  #clock-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9vh;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-align: center;
+  }
+  #clock-display.critical { color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  #quarter-display {
+    font-size: 2vh;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* Shot clock — intermediate+ */
+  #shot-clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 4vh;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0;
+    display: none;
+  }
+  #shot-clock.show { display: block; }
+  #shot-clock.critical { color: var(--red); }
+
+  /* Team color bars under scores */
+  .color-bar {
+    width: 60%;
+    height: 0.6vh;
+    border-radius: 999px;
+    margin-top: 0.5vh;
+  }
+  .color-bar.home { background: var(--kss-blue); }
+  .color-bar.away { background: var(--fron-purple); }
+
+  /* ── BOTTOM BAR ──────────────────────────────────────── */
+  #bottombar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    height: 8vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3vw;
+    gap: 4vw;
+    position: relative;
+  }
+
+  .bottom-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3vh;
+  }
+  .bottom-stat-label {
+    font-size: 1.1vh;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .bottom-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2vh;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .bottom-divider {
+    width: 1px;
+    height: 4vh;
+    background: var(--border);
+  }
+
+  /* Live indicator */
+  #live-badge {
+    position: absolute;
+    right: 2vw;
+    display: flex;
+    align-items: center;
+    gap: 0.6vh;
+    font-size: 1.3vh;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: var(--green);
+  }
+  .live-dot {
+    width: 1vh;
+    height: 1vh;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+
+  /* ── PLAY BY PLAY TICKER ─────────────────────────────── */
+  #ticker-wrap {
+    position: absolute;
+    bottom: 8vh;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.85);
+    border-top: 1px solid var(--border);
+    height: 5vh;
+    display: none;
+    align-items: center;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+  }
+  #ticker-wrap.show { display: flex; }
+
+  #ticker-label {
+    background: var(--kss-blue);
+    color: #fff;
+    font-size: 1.4vh;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    padding: 0 1.5vw;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  #ticker-text {
+    font-size: 1.8vh;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    white-space: nowrap;
+    padding-left: 2vw;
+    animation: scroll 20s linear infinite;
+  }
+  @keyframes scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── STATS PANELS — Intermediate+ ───────────────────── */
+  #stats-wrap {
+    display: none;
+    position: absolute;
+    top: 10vh;
+    left: 0;
+    right: 0;
+    bottom: 13vh;
+    pointer-events: none;
+    padding: 2vh 2vw;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  #stats-wrap.show { display: flex; }
+
+  .stats-panel {
+    background: rgba(8,12,20,0.88);
+    border: 1px solid var(--border);
+    border-radius: 1vh;
+    padding: 1.5vh 1.5vw;
+    width: 18vw;
+    backdrop-filter: blur(12px);
+  }
+
+  .stats-panel-title {
+    font-size: 1.2vh;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.2vh;
+    padding-bottom: 0.8vh;
+    border-bottom: 1px solid var(--border);
+  }
+  .stats-panel-title.home { color: #6B9FFF; }
+  .stats-panel-title.away { color: #B47FD4; }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5vh 0;
+    font-size: 1.6vh;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .stat-name { color: var(--text-dim); font-weight: 600; }
+  .stat-val  { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; font-size: 1.5vh; }
+
+  /* ── FOUL TROUBLE INDICATOR ──────────────────────────── */
+  .foul-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.8vh;
+    margin-top: 0.8vh;
+    padding: 0.6vh 0.8vh;
+    background: rgba(255,61,61,0.12);
+    border: 1px solid rgba(255,61,61,0.25);
+    border-radius: 0.6vh;
+    font-size: 1.4vh;
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  /* ── SPONSOR ZONES — Advanced ────────────────────────── */
+  #sponsor-left, #sponsor-right {
+    display: none;
+    position: absolute;
+    top: 10vh;
+    width: 14vw;
+    bottom: 13vh;
+    flex-direction: column;
+    gap: 1.5vh;
+    padding: 1.5vh 1vw;
+    pointer-events: none;
+  }
+  #sponsor-left  { left: 0; }
+  #sponsor-right { right: 0; }
+  #sponsor-left.show, #sponsor-right.show { display: flex; }
+
+  .sponsor-slot {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 1vh;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8vh;
+    padding: 1vh;
+  }
+  .sponsor-label {
+    font-size: 1vh;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--text-dimmer);
+    text-transform: uppercase;
+  }
+  .sponsor-name {
+    font-size: 1.8vh;
+    font-weight: 800;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .sponsor-tagline {
+    font-size: 1.1vh;
+    color: var(--text-dimmer);
+    text-align: center;
+  }
+
+  /* ── STAT LEADERS — Advanced ─────────────────────────── */
+  #stat-leaders {
+    display: none;
+    position: absolute;
+    bottom: 13vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40vw;
+    background: rgba(8,12,20,0.9);
+    border: 1px solid var(--border);
+    border-radius: 1vh;
+    padding: 1.2vh 2vw;
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+  }
+  #stat-leaders.show { display: block; }
+
+  .leaders-title {
+    font-size: 1.1vh;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 0.8vh;
+    text-transform: uppercase;
+  }
+  .leaders-row {
+    display: flex;
+    justify-content: space-around;
+  }
+  .leader-item {
+    text-align: center;
+  }
+  .leader-stat { font-size: 1.1vh; color: var(--text-dim); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .leader-name { font-size: 1.8vh; font-weight: 800; color: #fff; }
+  .leader-val  { font-family: 'JetBrains Mono', monospace; font-size: 2.4vh; font-weight: 700; color: var(--gold); }
+
+  /* ── LOWER THIRD — Advanced ──────────────────────────── */
+  #lower-third {
+    display: none;
+    position: absolute;
+    left: 3vw;
+    right: 3vw;
+    bottom: 14vh;
+    height: 9vh;
+    background: linear-gradient(90deg, var(--kss-blue) 0%, rgba(0,53,148,0.9) 60%, transparent 100%);
+    border-radius: 0.5vh;
+    align-items: center;
+    padding: 0 2vw;
+    gap: 2vw;
+    animation: slideUp 0.4s ease;
+    pointer-events: none;
+  }
+  #lower-third.show { display: flex; }
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+
+  #lt-name {
+    font-size: 3.5vh;
+    font-weight: 900;
+    color: #fff;
+    white-space: nowrap;
+  }
+  #lt-stat {
+    font-size: 2vh;
+    font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+  }
+  .lt-divider {
+    width: 2px;
+    height: 6vh;
+    background: rgba(255,255,255,0.3);
+    flex-shrink: 0;
+  }
+
+  /* ── HALFTIME OVERLAY ────────────────────────────────── */
+  #halftime {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3vh;
+  }
+  #halftime.show { display: flex; }
+
+  .halftime-title {
+    font-size: 6vh;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .halftime-scores {
+    display: flex;
+    align-items: center;
+    gap: 6vw;
+  }
+  .ht-team {
+    text-align: center;
+  }
+  .ht-team-name { font-size: 2.5vh; font-weight: 800; letter-spacing: 0.15em; color: var(--text-dim); }
+  .ht-score     { font-family: 'JetBrains Mono', monospace; font-size: 14vh; font-weight: 700; line-height: 1; }
+  .ht-score.home { color: var(--kss-white); }
+  .ht-score.away { color: rgba(255,255,255,0.4); }
+  .ht-divider   { font-size: 6vh; color: var(--text-dimmer); }
+
+  .halftime-stats {
+    display: flex;
+    gap: 4vw;
+    margin-top: 2vh;
+  }
+  .ht-stat-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    align-items: center;
+  }
+  .ht-stat-label { font-size: 1.2vh; color: var(--text-dimmer); font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+  .ht-stat-row {
+    display: flex;
+    gap: 3vw;
+    font-size: 1.8vh;
+    font-weight: 700;
+  }
+  .ht-val { font-family: 'JetBrains Mono', monospace; }
+  .ht-val.home { color: #6B9FFF; }
+  .ht-val.away { color: #B47FD4; }
+
+  /* ── TIER CONTROL BAR ────────────────────────────────── */
+  #control-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.95);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 1.5vh 3vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2vw;
+    z-index: 200;
+    backdrop-filter: blur(20px);
+  }
+
+  .tier-btn {
+    padding: 1vh 3vw;
+    border-radius: 0.8vh;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: rgba(255,255,255,0.4);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.6vh;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tier-btn:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7); }
+  .tier-btn.active {
+    background: var(--kss-blue);
+    border-color: var(--kss-blue);
+    color: #fff;
+  }
+
+  .tier-label {
+    font-size: 1.2vh;
+    color: rgba(255,255,255,0.2);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-right: 1vw;
+  }
+
+  .ctrl-divider { width:1px; height:3vh; background:rgba(255,255,255,0.1); }
+
+  .ctrl-btn {
+    padding: 0.8vh 1.5vw;
+    border-radius: 0.6vh;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: rgba(255,255,255,0.35);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.3vh;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); }
+  .ctrl-btn.active { background: rgba(0,230,118,0.15); border-color: var(--green); color: var(--green); }
+
+  /* hide control bar in fullscreen */
+  #scoreboard.fullscreen #control-bar { display: none; }
+  #scoreboard.fullscreen { padding-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div id="scoreboard">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="team-name-top home">Kingston Secondary School</div>
+    <div id="game-info-top">Q1 · Boys Varsity Basketball · Nov 14 2025</div>
+    <div class="team-name-top away">Frontenac Secondary</div>
+  </div>
+
+  <!-- MAIN SCORE -->
+  <div id="main-score">
+
+    <!-- HOME (KSS) -->
+    <div class="team-block">
+      <div class="team-initial home">KSS</div>
+      <div class="score-number home" id="home-score">0</div>
+      <div class="color-bar home"></div>
+      <div class="team-meta" id="home-meta">
+        <div class="meta-row">
+          <span>FOULS</span>
+          <div class="foul-dots" id="home-fouls"></div>
+        </div>
+        <div class="meta-row">
+          <span>TIMEOUTS</span>
+          <div class="timeout-dots" id="home-timeouts"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER CLOCK -->
+    <div id="clock-zone">
+      <div id="shot-clock">24</div>
+      <div id="clock-display">8:00</div>
+      <div id="quarter-display">1ST QUARTER</div>
+    </div>
+
+    <!-- AWAY (Frontenac) -->
+    <div class="team-block">
+      <div class="team-initial away">FRO</div>
+      <div class="score-number away" id="away-score">0</div>
+      <div class="color-bar away"></div>
+      <div class="team-meta" id="away-meta">
+        <div class="meta-row">
+          <span>FOULS</span>
+          <div class="foul-dots" id="away-fouls"></div>
+        </div>
+        <div class="meta-row">
+          <span>TIMEOUTS</span>
+          <div class="timeout-dots" id="away-timeouts"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PANELS (intermediate+) -->
+  <div id="stats-wrap">
+    <div class="stats-panel">
+      <div class="stats-panel-title home">KSS</div>
+      <div class="stat-row"><span class="stat-name">FG%</span><span class="stat-val" id="h-fg">0%</span></div>
+      <div class="stat-row"><span class="stat-name">3PT%</span><span class="stat-val" id="h-3pt">0%</span></div>
+      <div class="stat-row"><span class="stat-name">FT%</span><span class="stat-val" id="h-ft">—</span></div>
+      <div class="stat-row"><span class="stat-name">REB</span><span class="stat-val" id="h-reb">0</span></div>
+      <div class="stat-row"><span class="stat-name">AST</span><span class="stat-val" id="h-ast">0</span></div>
+      <div class="stat-row"><span class="stat-name">TOV</span><span class="stat-val" id="h-tov">0</span></div>
+      <div id="h-foul-warning" class="foul-warning" style="display:none">⚠ Player in foul trouble</div>
+    </div>
+    <div class="stats-panel">
+      <div class="stats-panel-title away">Frontenac</div>
+      <div class="stat-row"><span class="stat-name">FG%</span><span class="stat-val" id="a-fg">0%</span></div>
+      <div class="stat-row"><span class="stat-name">3PT%</span><span class="stat-val" id="a-3pt">0%</span></div>
+      <div class="stat-row"><span class="stat-name">FT%</span><span class="stat-val" id="a-ft">—</span></div>
+      <div class="stat-row"><span class="stat-name">REB</span><span class="stat-val" id="a-reb">0</span></div>
+      <div class="stat-row"><span class="stat-name">AST</span><span class="stat-val" id="a-ast">0</span></div>
+      <div class="stat-row"><span class="stat-name">TOV</span><span class="stat-val" id="a-tov">0</span></div>
+    </div>
+  </div>
+
+  <!-- SPONSOR ZONES (advanced) -->
+  <div id="sponsor-left">
+    <div class="sponsor-slot">
+      <div class="sponsor-label">Presenting Sponsor</div>
+      <div class="sponsor-name">Kingston<br>Toyota</div>
+      <div class="sponsor-tagline">Your Drive Starts Here</div>
+    </div>
+    <div class="sponsor-slot">
+      <div class="sponsor-label">Community Partner</div>
+      <div class="sponsor-name">Pizza<br>Pizza</div>
+      <div class="sponsor-tagline">Official Pizza of KSS</div>
+    </div>
+  </div>
+  <div id="sponsor-right">
+    <div class="sponsor-slot">
+      <div class="sponsor-label">Gold Sponsor</div>
+      <div class="sponsor-name">Dr. Sarah<br>Chen DDS</div>
+      <div class="sponsor-tagline">Smiles for the Community</div>
+    </div>
+    <div class="sponsor-slot">
+      <div class="sponsor-label">Silver Sponsor</div>
+      <div class="sponsor-name">Kingston<br>Physio</div>
+      <div class="sponsor-tagline">Keep Athletes Moving</div>
+    </div>
+  </div>
+
+  <!-- STAT LEADERS (advanced) -->
+  <div id="stat-leaders">
+    <div class="leaders-title">GAME LEADERS</div>
+    <div class="leaders-row">
+      <div class="leader-item">
+        <div class="leader-stat">Points</div>
+        <div class="leader-name" id="pts-leader">—</div>
+        <div class="leader-val" id="pts-val">0</div>
+      </div>
+      <div class="leader-item">
+        <div class="leader-stat">Rebounds</div>
+        <div class="leader-name" id="reb-leader">—</div>
+        <div class="leader-val" id="reb-val">0</div>
+      </div>
+      <div class="leader-item">
+        <div class="leader-stat">Assists</div>
+        <div class="leader-name" id="ast-leader">—</div>
+        <div class="leader-val" id="ast-val">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOWER THIRD (advanced) -->
+  <div id="lower-third">
+    <div>
+      <div id="lt-name">Player Name</div>
+      <div id="lt-stat">Stat line here</div>
+    </div>
+    <div class="lt-divider"></div>
+    <div id="lt-extra" style="color:rgba(255,255,255,0.5);font-size:1.8vh;">&nbsp;</div>
+  </div>
+
+  <!-- PLAY BY PLAY TICKER (intermediate+) -->
+  <div id="ticker-wrap">
+    <div id="ticker-label">LIVE</div>
+    <div id="ticker-text"></div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottombar">
+    <div class="bottom-stat">
+      <div class="bottom-stat-label">Period</div>
+      <div class="bottom-stat-value" id="period-display">Q1</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-label">Home Fouls</div>
+      <div class="bottom-stat-value" id="home-foul-count">0</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-label">Away Fouls</div>
+      <div class="bottom-stat-value" id="away-foul-count">0</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-label">Home T/O</div>
+      <div class="bottom-stat-value" id="home-to-count">3</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-label">Away T/O</div>
+      <div class="bottom-stat-value" id="away-to-count">3</div>
+    </div>
+    <div id="live-badge"><div class="live-dot"></div>LIVE</div>
+  </div>
+
+  <!-- HALFTIME OVERLAY -->
+  <div id="halftime">
+    <div class="halftime-title">Halftime</div>
+    <div class="halftime-scores">
+      <div class="ht-team">
+        <div class="ht-team-name">KSS</div>
+        <div class="ht-score home" id="ht-home-score">0</div>
+      </div>
+      <div class="ht-divider">—</div>
+      <div class="ht-team">
+        <div class="ht-team-name">Frontenac</div>
+        <div class="ht-score away" id="ht-away-score">0</div>
+      </div>
+    </div>
+    <div class="halftime-stats">
+      <div style="text-align:center">
+        <div style="font-size:1.2vh;color:var(--text-dimmer);font-weight:700;letter-spacing:0.15em;margin-bottom:1vh">FIRST HALF STATS</div>
+        <div style="display:flex;gap:4vw">
+          <div style="text-align:center">
+            <div style="font-size:1.1vh;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.1em">FG%</div>
+            <div style="display:flex;gap:2vw;margin-top:0.5vh">
+              <div class="ht-val home" id="ht-h-fg">—</div>
+              <div class="ht-val away" id="ht-a-fg">—</div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.1vh;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.1em">REB</div>
+            <div style="display:flex;gap:2vw;margin-top:0.5vh">
+              <div class="ht-val home" id="ht-h-reb">0</div>
+              <div class="ht-val away" id="ht-a-reb">0</div>
+            </div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:1.1vh;color:var(--text-dimmer);text-transform:uppercase;letter-spacing:0.1em">TOV</div>
+            <div style="display:flex;gap:2vw;margin-top:0.5vh">
+              <div class="ht-val home" id="ht-h-tov">0</div>
+              <div class="ht-val away" id="ht-a-tov">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('halftime').classList.remove('show')" style="margin-top:2vh;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;font-size:1.8vh;font-weight:700;padding:1vh 3vw;border-radius:0.8vh;cursor:pointer;letter-spacing:0.1em">
+      RESUME GAME
+    </button>
+  </div>
+
+  <!-- CONTROL BAR -->
+  <div id="control-bar">
+    <span class="tier-label">DISPLAY</span>
+    <button class="tier-btn active" onclick="setTier('basic')">Basic</button>
+    <button class="tier-btn" onclick="setTier('intermediate')">Intermediate</button>
+    <button class="tier-btn" onclick="setTier('advanced')">Advanced</button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" id="sim-btn" onclick="toggleSim()">▶ Simulate Game</button>
+    <button class="ctrl-btn" onclick="showHalftime()">Halftime</button>
+    <button class="ctrl-btn" onclick="showLowerThird()">Lower Third</button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+  </div>
+
+</div><!-- /scoreboard -->
+
+<script>
+// ── GAME STATE ────────────────────────────────────────────────
+const state = {
+  homeScore: 0, awayScore: 0,
+  quarter: 1, clockSecs: 480, // 8 min quarters
+  shotClock: 24,
+  homeFouls: 0, awayFouls: 0,
+  homeTimeouts: 3, awayTimeouts: 3,
+  hFGM:0, hFGA:0, h3PM:0, h3PA:0, hFTM:0, hFTA:0, hREB:0, hAST:0, hTOV:0,
+  aFGM:0, aFGA:0, a3PM:0, a3PA:0, aFTM:0, aFTA:0, aREB:0, aAST:0, aTOV:0,
+  plays: [],
+  leaders: { pts:{name:'—',val:0}, reb:{name:'—',val:0}, ast:{name:'—',val:0} },
+  simRunning: false, simInterval: null, clockInterval: null
+}
+
+const quarterNames = ['1ST QUARTER','2ND QUARTER','3RD QUARTER','4TH QUARTER','OVERTIME']
+const periodLabels = ['Q1','Q2','Q3','Q4','OT']
+
+const homePlayers = ['J. Williams','M. Chen','D. Thompson','K. Park','R. Patel','A. Singh','T. Brown']
+const awayPlayers = ['C. Martin','B. Johnson','L. Davis','N. Wilson','S. Taylor','J. Moore','E. Garcia']
+
+function fmtClock(s) {
+  const m = Math.floor(s/60), sec = s%60
+  return `${m}:${String(sec).padStart(2,'0')}`
+}
+
+function pct(m,a) { return a>0 ? Math.round((m/a)*100)+'%' : '—' }
+
+// ── RENDER ────────────────────────────────────────────────────
+function render() {
+  // Scores
+  document.getElementById('home-score').textContent = state.homeScore
+  document.getElementById('away-score').textContent = state.awayScore
+
+  // Clock
+  const cl = document.getElementById('clock-display')
+  cl.textContent = fmtClock(state.clockSecs)
+  cl.className = state.clockSecs <= 60 ? 'critical' : ''
+
+  // Shot clock
+  const sc = document.getElementById('shot-clock')
+  sc.textContent = state.shotClock
+  sc.className = 'show' + (state.shotClock <= 5 ? ' critical' : '')
+
+  // Quarter
+  document.getElementById('quarter-display').textContent = quarterNames[state.quarter-1] || '4TH QUARTER'
+  document.getElementById('period-display').textContent  = periodLabels[state.quarter-1] || 'Q4'
+  document.getElementById('game-info-top').textContent   = `${periodLabels[state.quarter-1] || 'Q4'} · Boys Varsity Basketball · Nov 14 2025`
+
+  // Fouls
+  renderDots('home-fouls', state.homeFouls, 5, true)
+  renderDots('away-fouls', state.awayFouls, 5, true)
+  document.getElementById('home-foul-count').textContent = state.homeFouls
+  document.getElementById('away-foul-count').textContent = state.awayFouls
+
+  // Timeouts
+  renderDots('home-timeouts', state.homeTimeouts, 3, false)
+  renderDots('away-timeouts', state.awayTimeouts, 3, false)
+  document.getElementById('home-to-count').textContent = state.homeTimeouts
+  document.getElementById('away-to-count').textContent = state.awayTimeouts
+
+  // Stats
+  document.getElementById('h-fg').textContent  = pct(state.hFGM, state.hFGA)
+  document.getElementById('h-3pt').textContent = pct(state.h3PM, state.h3PA)
+  document.getElementById('h-ft').textContent  = pct(state.hFTM, state.hFTA)
+  document.getElementById('h-reb').textContent = state.hREB
+  document.getElementById('h-ast').textContent = state.hAST
+  document.getElementById('h-tov').textContent = state.hTOV
+  document.getElementById('a-fg').textContent  = pct(state.aFGM, state.aFGA)
+  document.getElementById('a-3pt').textContent = pct(state.a3PM, state.a3PA)
+  document.getElementById('a-ft').textContent  = pct(state.aFTM, state.aFTA)
+  document.getElementById('a-reb').textContent = state.aREB
+  document.getElementById('a-ast').textContent = state.aAST
+  document.getElementById('a-tov').textContent = state.aTOV
+
+  // Foul trouble
+  document.getElementById('h-foul-warning').style.display = state.homeFouls >= 4 ? 'flex' : 'none'
+
+  // Leaders
+  document.getElementById('pts-leader').textContent = state.leaders.pts.name
+  document.getElementById('pts-val').textContent    = state.leaders.pts.val
+  document.getElementById('reb-leader').textContent = state.leaders.reb.name
+  document.getElementById('reb-val').textContent    = state.leaders.reb.val
+  document.getElementById('ast-leader').textContent = state.leaders.ast.name
+  document.getElementById('ast-val').textContent    = state.leaders.ast.val
+
+  // Ticker
+  updateTicker()
+}
+
+function renderDots(id, count, max, isFoul) {
+  const el = document.getElementById(id)
+  el.innerHTML = ''
+  for (let i=0; i<max; i++) {
+    const d = document.createElement('div')
+    if (isFoul) {
+      d.className = 'foul-dot' + (i<count ? (count>=4?' warning':' active') : '')
+    } else {
+      d.className = 'timeout-dot' + (i >= count ? ' used' : '')
+    }
+    el.appendChild(d)
+  }
+}
+
+function updateTicker() {
+  if (!state.plays.length) return
+  const doubled = [...state.plays, ...state.plays].join('   ·   ')
+  document.getElementById('ticker-text').textContent = doubled
+}
+
+// ── SIMULATION ────────────────────────────────────────────────
+const playTypes = [
+  { w:8,  run: () => { // 2pt basket KSS
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.homeScore += 2; state.hFGM++; state.hFGA++
+    const pts = updateLeader('pts', p, 2)
+    addPlay(`${p} (KSS) — 2PT BASKET  ${state.homeScore}–${state.awayScore}`)
+    flash('home-score')
+  }},
+  { w:5,  run: () => { // 3pt basket KSS
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.homeScore += 3; state.h3PM++; state.h3PA++; state.hFGM++; state.hFGA++
+    updateLeader('pts', p, 3)
+    addPlay(`${p} (KSS) — THREE POINTER! 🔥  ${state.homeScore}–${state.awayScore}`)
+    flash('home-score')
+  }},
+  { w:8,  run: () => { // 2pt basket FRO
+    const p = awayPlayers[Math.floor(Math.random()*7)]
+    state.awayScore += 2; state.aFGM++; state.aFGA++
+    updateLeader('pts', p, 2)
+    addPlay(`${p} (FRO) — 2PT BASKET  ${state.homeScore}–${state.awayScore}`)
+    flash('away-score')
+  }},
+  { w:4,  run: () => { // 3pt basket FRO
+    const p = awayPlayers[Math.floor(Math.random()*7)]
+    state.awayScore += 3; state.a3PM++; state.a3PA++; state.aFGM++; state.aFGA++
+    updateLeader('pts', p, 3)
+    addPlay(`${p} (FRO) — THREE POINTER!  ${state.homeScore}–${state.awayScore}`)
+    flash('away-score')
+  }},
+  { w:3,  run: () => { // rebound KSS
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.hREB++
+    updateLeader('reb', p, 1)
+    addPlay(`${p} (KSS) — REBOUND`)
+  }},
+  { w:3,  run: () => { // rebound FRO
+    const p = awayPlayers[Math.floor(Math.random()*7)]
+    state.aREB++
+    updateLeader('reb', p, 1)
+    addPlay(`${p} (FRO) — REBOUND`)
+  }},
+  { w:2,  run: () => { // assist KSS
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.hAST++
+    updateLeader('ast', p, 1)
+    addPlay(`${p} (KSS) — ASSIST`)
+  }},
+  { w:2,  run: () => { // foul KSS
+    state.homeFouls = Math.min(5, state.homeFouls+1)
+    addPlay(`KSS — PERSONAL FOUL (${state.homeFouls})`)
+  }},
+  { w:2,  run: () => { // foul FRO
+    state.awayFouls = Math.min(5, state.awayFouls+1)
+    addPlay(`FRO — PERSONAL FOUL (${state.awayFouls})`)
+  }},
+  { w:2,  run: () => { // FT KSS
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.homeScore++; state.hFTM++; state.hFTA++
+    updateLeader('pts', p, 1)
+    addPlay(`${p} (KSS) — FREE THROW  ${state.homeScore}–${state.awayScore}`)
+    flash('home-score')
+  }},
+  { w:1,  run: () => { // turnover
+    const p = homePlayers[Math.floor(Math.random()*7)]
+    state.hTOV++
+    addPlay(`${p} (KSS) — TURNOVER`)
+  }},
+]
+
+function weightedRandom() {
+  const total = playTypes.reduce((s,p)=>s+p.w,0)
+  let r = Math.random()*total
+  for (const p of playTypes) { r -= p.w; if (r<=0) return p }
+  return playTypes[0]
+}
+
+function updateLeader(stat, name, delta) {
+  const l = state.leaders[stat]
+  if (name === l.name) { l.val += delta }
+  else if (delta > l.val || l.name==='—') { l.name = name; l.val = delta }
+  return l.val
+}
+
+function addPlay(text) {
+  state.plays.unshift(text + '   ')
+  if (state.plays.length > 12) state.plays.pop()
+}
+
+function flash(id) {
+  const el = document.getElementById(id)
+  el.classList.remove('scored')
+  void el.offsetWidth
+  el.classList.add('scored')
+}
+
+function startClock() {
+  if (state.clockInterval) return
+  state.clockInterval = setInterval(() => {
+    if (state.clockSecs > 0) {
+      state.clockSecs--
+      state.shotClock = Math.max(0, state.shotClock-1)
+      if (state.shotClock === 0) state.shotClock = 24
+    } else {
+      // next quarter
+      if (state.quarter < 4) {
+        state.quarter++
+        state.clockSecs = 480
+        state.shotClock = 24
+        state.homeFouls = 0
+        state.awayFouls = 0
+        state.homeTimeouts = state.quarter <= 2 ? 3 : 2
+        state.awayTimeouts = state.quarter <= 2 ? 3 : 2
+        addPlay(`— END OF ${quarterNames[state.quarter-2]} —`)
+      } else {
+        clearInterval(state.clockInterval)
+        state.clockInterval = null
+        addPlay(`— FINAL: KSS ${state.homeScore}  FRO ${state.awayScore} —`)
+      }
+    }
+    render()
+  }, 200) // fast for demo
+}
+
+function toggleSim() {
+  state.simRunning = !state.simRunning
+  const btn = document.getElementById('sim-btn')
+  if (state.simRunning) {
+    btn.textContent = '⏸ Pause Simulation'
+    btn.classList.add('active')
+    startClock()
+    state.simInterval = setInterval(() => {
+      if (!state.simRunning) return
+      weightedRandom().run()
+      render()
+    }, 1800)
+  } else {
+    btn.textContent = '▶ Simulate Game'
+    btn.classList.remove('active')
+    clearInterval(state.simInterval)
+  }
+}
+
+// ── TIER CONTROL ─────────────────────────────────────────────
+function setTier(tier) {
+  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'))
+  event.target.classList.add('active')
+
+  // Reset all optional elements
+  document.getElementById('stats-wrap').classList.remove('show')
+  document.getElementById('ticker-wrap').classList.remove('show')
+  document.getElementById('shot-clock').classList.remove('show')
+  document.getElementById('stat-leaders').classList.remove('show')
+  document.getElementById('sponsor-left').classList.remove('show')
+  document.getElementById('sponsor-right').classList.remove('show')
+  document.getElementById('lower-third').classList.remove('show')
+
+  if (tier === 'intermediate' || tier === 'advanced') {
+    document.getElementById('stats-wrap').classList.add('show')
+    document.getElementById('ticker-wrap').classList.add('show')
+    document.getElementById('shot-clock').classList.add('show')
+  }
+  if (tier === 'advanced') {
+    document.getElementById('stat-leaders').classList.add('show')
+    document.getElementById('sponsor-left').classList.add('show')
+    document.getElementById('sponsor-right').classList.add('show')
+  }
+}
+
+function showHalftime() {
+  document.getElementById('ht-home-score').textContent = state.homeScore
+  document.getElementById('ht-away-score').textContent = state.awayScore
+  document.getElementById('ht-h-fg').textContent = pct(state.hFGM, state.hFGA)
+  document.getElementById('ht-a-fg').textContent = pct(state.aFGM, state.aFGA)
+  document.getElementById('ht-h-reb').textContent = state.hREB
+  document.getElementById('ht-a-reb').textContent = state.aREB
+  document.getElementById('ht-h-tov').textContent = state.hTOV
+  document.getElementById('ht-a-tov').textContent = state.aTOV
+  document.getElementById('halftime').classList.add('show')
+}
+
+let ltTimeout = null
+function showLowerThird() {
+  const players = [...homePlayers.map(p=>({name:p,team:'KSS'})), ...awayPlayers.map(p=>({name:p,team:'FRO'}))]
+  const p = players[Math.floor(Math.random()*players.length)]
+  const pts = Math.floor(Math.random()*18)+2
+  const reb = Math.floor(Math.random()*8)
+  const ast = Math.floor(Math.random()*5)
+  document.getElementById('lt-name').textContent = p.name + ' · ' + p.team
+  document.getElementById('lt-stat').textContent = `${pts} PTS  ·  ${reb} REB  ·  ${ast} AST`
+  const lt = document.getElementById('lower-third')
+  lt.classList.add('show')
+  clearTimeout(ltTimeout)
+  ltTimeout = setTimeout(()=>lt.classList.remove('show'), 6000)
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+  } else {
+    document.exitFullscreen()
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+render()
+addPlay('Welcome to Kingston Secondary School Basketball')
+addPlay('KSS Vikings vs Frontenac Falcons')
+addPlay('Tip-off in progress...')
+render()
+</script>
+</body>
+</html>

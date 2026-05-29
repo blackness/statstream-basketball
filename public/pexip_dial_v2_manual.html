@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0e1a;--panel:#121929;--panel2:#141d30;--border:rgba(100,140,220,0.12);--border2:rgba(100,140,220,0.22);
+    --accent:#4a9eff;--accent2:#2d7be8;--green:#22d3a0;--red:#ff4d6a;--amber:#ffa928;--purple:#a78bfa;
+    --text:#e2e8f8;--text2:#8899bb;--text3:#5a6a88;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--navy);color:var(--text);font-family:var(--sans);font-size:13px;min-height:700px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between}
+  .hlogo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+  .hlogo::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+  .hright{display:flex;align-items:center;gap:8px}
+  .pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+  .pill.ok{background:rgba(34,211,160,.1);color:var(--green);border:1px solid rgba(34,211,160,.2)}
+  .pill.warn{background:rgba(255,169,40,.1);color:var(--amber);border:1px solid rgba(255,169,40,.2)}
+  .pill.err{background:rgba(255,77,106,.1);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+  .pdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+  .pdot.blink{animation:pulse 1.5s infinite}
+
+  .content{padding:14px;display:flex;flex-direction:column;gap:12px}
+  .three-col{display:grid;grid-template-columns:220px 1fr 280px;gap:12px;align-items:start}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;animation:slideIn .2s ease}
+  .ph{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .pt{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+  .pbadge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px}
+  .pbadge.green{background:rgba(34,211,160,.1);color:var(--green)}
+  .pbadge.blue{background:rgba(74,158,255,.15);color:var(--accent)}
+  .pbadge.purple{background:rgba(167,139,250,.1);color:var(--purple)}
+  .pbadge.amber{background:rgba(255,169,40,.1);color:var(--amber)}
+  .pbadge.red{background:rgba(255,77,106,.1);color:var(--red)}
+
+  .btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.04em;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+  .btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.success{background:rgba(34,211,160,.1);border-color:rgba(34,211,160,.3);color:var(--green)}
+  .btn.success:hover{background:rgba(34,211,160,.2)}
+  .btn.danger{background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25);color:var(--red)}
+  .btn.danger:hover{background:rgba(255,77,106,.18)}
+  .btn.purple{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.25);color:var(--purple)}
+  .btn.purple:hover{background:rgba(167,139,250,.2)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-xs{padding:3px 8px;font-size:9px;border-radius:4px}
+  .btn-full{width:100%;justify-content:center;padding:10px;font-size:11px}
+
+  /* VMR LIST */
+  .vmr-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-left:2px solid transparent;cursor:pointer;transition:all .12s}
+  .vmr-item:hover{background:rgba(74,158,255,.05)}
+  .vmr-item.sel{background:rgba(74,158,255,.09);border-left-color:var(--accent)}
+  .vmr-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:1px}
+  .vmr-alias{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .vmr-pin{font-family:var(--mono);font-size:9px;color:var(--amber);margin-top:1px}
+  .ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);animation:pulse 1.8s infinite;flex-shrink:0}
+  .idot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+
+  /* MANUAL DIAL */
+  .dial-form{padding:14px;display:flex;flex-direction:column;gap:10px}
+  .fl{display:flex;flex-direction:column;gap:5px}
+  .fl label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+  .fi{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s;width:100%}
+  .fi:focus{border-color:var(--accent)}
+  .fi::placeholder{color:var(--text3)}
+  select.fi option{background:#121929}
+  .two-fi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hint{font-family:var(--mono);font-size:9px;color:var(--text3);padding:6px 8px;background:rgba(74,158,255,.05);border-left:2px solid rgba(74,158,255,.2);border-radius:3px;line-height:1.6}
+
+  /* RECENTS */
+  .recent-item{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;transition:background .12s;border-bottom:1px solid rgba(100,140,220,.06)}
+  .recent-item:last-child{border-bottom:none}
+  .recent-item:hover{background:rgba(74,158,255,.05)}
+  .ri-addr{font-family:var(--mono);font-size:11px;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ri-meta{font-family:var(--mono);font-size:9px;color:var(--text3);flex-shrink:0}
+  .ri-proto{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(74,158,255,.1);color:var(--accent);flex-shrink:0}
+  .ri-status{font-size:9px;flex-shrink:0}
+
+  /* TEMPLATE CARDS */
+  .tmpl-card{border:1px solid var(--border2);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+  .tmpl-card:hover{border-color:rgba(100,140,220,.4)}
+  .tmpl-card.active-tmpl{border-color:var(--accent)}
+  .tmpl-head{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;transition:background .12s;user-select:none}
+  .tmpl-head:hover{background:rgba(255,255,255,.02)}
+  .tmpl-card.active-tmpl .tmpl-head{background:rgba(74,158,255,.06)}
+  .tmpl-color{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .tmpl-name{font-size:12px;font-weight:500;color:var(--text);flex:1}
+  .tmpl-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .tmpl-body{border-top:1px solid var(--border);padding:10px 12px;background:rgba(0,0,0,.12);display:none}
+  .tmpl-body.open{display:block}
+
+  /* DIAL STATUS */
+  .dial-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+  .ds{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;display:flex;align-items:center;gap:7px;transition:border-color .3s}
+  .ds.calling{border-color:var(--amber)}.ds.connected{border-color:var(--green)}.ds.failed{border-color:var(--red)}.ds.disconnected{border-color:var(--text3)}
+  .dsdot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+  .dsdot.calling{background:var(--amber);animation:pulse 1s infinite}.dsdot.connected{background:var(--green)}.dsdot.failed{background:var(--red)}.dsdot.disconnected{background:var(--text3)}
+  .ds-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+  .ds-st{font-family:var(--mono);font-size:9px;flex-shrink:0}
+  .ds-st.calling{color:var(--amber)}.ds-st.connected{color:var(--green)}.ds-st.failed{color:var(--red)}
+
+  .dial-log{font-family:var(--mono);font-size:10px;line-height:1.8;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;padding:8px 10px;max-height:110px;overflow-y:auto;white-space:pre-wrap}
+  .dl-ok{color:var(--green)}.dl-err{color:var(--red)}.dl-info{color:var(--accent)}.dl-warn{color:var(--amber)}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#0f1525;border:1px solid var(--border2);border-radius:12px;padding:24px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;animation:slideIn .2s ease}
+  .modal h3{font-size:15px;font-weight:600;margin-bottom:16px;color:var(--text)}
+  .mfl{margin-bottom:12px}
+  .mfl label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .mfi{width:100%;background:rgba(10,14,26,.9);border:1px solid var(--border2);border-radius:6px;padding:8px 11px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+  .mfi:focus{border-color:var(--accent)}
+  .color-picks{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0}
+  .cpick{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s}
+  .cpick.sel{border-color:white;transform:scale(1.2)}
+  .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+  .dev-row-edit{display:grid;grid-template-columns:18px 1fr 1fr 76px 22px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(100,140,220,.06)}
+  .dev-row-edit:last-child{border-bottom:none}
+  .dev-num{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center}
+  .dev-fi{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%}
+  .dev-fi:focus{border-color:var(--accent)}
+  .dev-fi::placeholder{color:var(--text3)}
+  .dev-sel{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:5px 6px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;width:100%;cursor:pointer}
+  .dev-sel option{background:#0f1525}
+  .btn-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px;line-height:1;transition:color .15s}
+  .btn-del:hover{color:var(--red)}
+
+  .notif{position:fixed;top:54px;right:14px;background:var(--panel);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:10px;color:var(--text);z-index:999;transform:translateX(130%);transition:transform .3s;max-width:300px;line-height:1.4}
+  .notif.show{transform:translateX(0)}.notif.warn{border-left-color:var(--amber)}.notif.err{border-left-color:var(--red)}
+  .spin{animation:spin 1s linear infinite;display:inline-block}
+  .empty{padding:20px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:10px;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="hlogo">PEXIP CTRL</div>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Dial Manager</span>
+  </div>
+  <div class="hright">
+    <div class="pill ok"><div class="pdot blink"></div>sandbox.smithvcs.queensu.ca</div>
+    <div class="pill ok" id="store-pill"><div class="pdot"></div>localStorage</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="three-col">
+
+    <!-- VMR SELECTOR -->
+    <div class="panel">
+      <div class="ph"><span class="pt">Target VMR</span><span class="pbadge blue" id="vmr-badge">3 rooms</span></div>
+      <div id="vmr-list"></div>
+    </div>
+
+    <!-- CENTRE: MANUAL DIAL + TEMPLATES -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <!-- MANUAL DIAL -->
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">Manual Dial</span>
+          <span class="pbadge amber">Single Endpoint</span>
+        </div>
+        <div class="dial-form">
+          <div class="hint">
+            SIP: <strong>user@domain.com</strong> &nbsp;·&nbsp; H.323: <strong>192.168.1.100</strong> &nbsp;·&nbsp; Alias: <strong>h323:roomname</strong>
+          </div>
+          <div class="fl">
+            <label>Display Name</label>
+            <input class="fi" id="m-name" placeholder="Boardroom TV, Studio Camera…"/>
+          </div>
+          <div class="fl">
+            <label>Address</label>
+            <input class="fi" id="m-addr" placeholder="endpoint@domain.com or 192.168.x.x" onkeydown="if(event.key==='Enter')manualDial()"/>
+          </div>
+          <div class="two-fi">
+            <div class="fl">
+              <label>Protocol</label>
+              <select class="fi" id="m-proto">
+                <option value="sip">SIP</option>
+                <option value="h323">H.323</option>
+                <option value="mssip">MS-SIP</option>
+                <option value="rtmp">RTMP</option>
+                <option value="auto">Auto</option>
+              </select>
+            </div>
+            <div class="fl">
+              <label>Role</label>
+              <select class="fi" id="m-role">
+                <option value="host">Host</option>
+                <option value="guest">Guest</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn primary btn-full" id="btn-manual-dial" onclick="manualDial()">⏎ Dial Endpoint</button>
+          <div id="manual-result" style="display:none" class="dial-log"></div>
+        </div>
+      </div>
+
+      <!-- TEMPLATES -->
+      <div class="panel">
+        <div class="ph">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="pt">Templates</span>
+            <span class="pbadge purple" id="tmpl-badge">0</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-xs" onclick="exportJSON()">↓ Export</button>
+            <button class="btn btn-xs" onclick="document.getElementById('imp').click()">↑ Import</button>
+            <button class="btn primary btn-xs" onclick="openModal(null)">+ New</button>
+          </div>
+        </div>
+        <div id="tmpl-list" style="padding:8px"></div>
+        <div id="tmpl-launch" style="display:none;padding:0 10px 10px">
+          <div id="dial-grid-tmpl" class="dial-grid"></div>
+          <div id="dial-log-tmpl" class="dial-log" style="display:none;margin-bottom:8px"></div>
+          <button class="btn primary btn-full" id="btn-tmpl-dial" onclick="launchTemplateDial()">⏎ Dial All Devices</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: RECENT DIALS + LAUNCH SUMMARY -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <!-- LAUNCH SUMMARY -->
+      <div class="panel">
+        <div class="ph"><span class="pt">Launch Summary</span><span class="pbadge purple" id="launch-badge">Not ready</span></div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">VMR</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text)" id="ls-vmr">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Alias</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--accent)" id="ls-alias">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Host PIN</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--amber)" id="ls-pin">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Template</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--purple)" id="ls-tmpl">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Devices</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--green)" id="ls-devs">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT DIALS -->
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">Recent Dials</span>
+          <button class="btn btn-xs danger" onclick="clearRecents()">Clear</button>
+        </div>
+        <div id="recent-list"><div class="empty">No recent dials yet.<br>Dial an endpoint to build history.</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">New Template</h3>
+    <div class="mfl"><label>Template Name</label><input class="mfi" id="m-tname" placeholder="e.g. Boardroom Set…"/></div>
+    <div class="mfl"><label>Description</label><input class="mfi" id="m-tdesc" placeholder="Optional…"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="mfl"><label>Default Protocol</label>
+        <select class="mfi" id="m-tproto">
+          <option value="sip">SIP</option><option value="h323">H.323</option>
+          <option value="mssip">MS-SIP</option><option value="auto">Auto</option>
+        </select>
+      </div>
+      <div class="mfl"><label>Colour</label><div class="color-picks" id="cpicks"></div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Devices</span>
+      <button class="btn purple btn-xs" onclick="addDevRow()">+ Add Device</button>
+    </div>
+    <div class="hint" style="margin-bottom:8px">SIP: user@domain.com &nbsp;·&nbsp; H.323: 192.168.x.x &nbsp;·&nbsp; Each device needs a real, reachable address</div>
+    <div id="m-devs"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveTmpl()">Save Template</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(this)"/>
+<div class="notif" id="notif"></div>
+
+<script>
+const PROXY   = 'http://localhost:3000';
+const AUTH    = 'Basic ' + btoa('admin:Sandbox2024');
+const LS_KEY  = 'pexip_device_templates_v1';
+const LS_REC  = 'pexip_recent_dials_v1';
+const COLORS  = ['#4a9eff','#22d3a0','#a78bfa','#ffa928','#ff4d6a','#5ee7df','#f472b6','#34d399'];
+
+// Real VMRs from your bridge
+const VMRS = [
+  { name:'Sandbox', alias:'sandbox', pin:'12345', guest_pin:'', service_type:'conference', _live:0 },
+  { name:'Test Call Service', alias:'test_call', pin:'', guest_pin:'', service_type:'test_call', _live:0 },
+  { name:'Test VA', alias:'testva', pin:'54321', guest_pin:'', service_type:'lecture', _live:0 },
+];
+
+let templates  = [];
+let recents    = [];
+let selVMR     = VMRS[0];
+let selTmplId  = null;
+let editingId  = null;
+let mDevs      = [];
+let mColor     = COLORS[0];
+let dialSt     = {};
+
+// ── STORAGE ───────────────────────────────────────────────────
+function load() {
+  try { templates = JSON.parse(localStorage.getItem(LS_KEY)||'[]'); } catch(e){ templates=[]; }
+  try { recents   = JSON.parse(localStorage.getItem(LS_REC)||'[]'); } catch(e){ recents=[]; }
+  if (!templates.length) { templates = defaultTemplates(); save(); }
+  render();
+}
+
+function save() {
+  localStorage.setItem(LS_KEY, JSON.stringify(templates));
+  localStorage.setItem(LS_REC, JSON.stringify(recents));
+  document.getElementById('store-pill').innerHTML = '<div class="pdot" style="background:var(--green)"></div>SAVED';
+}
+
+function defaultTemplates() {
+  return [
+    { id:uid(), name:'Example Set', desc:'Replace addresses with real endpoints', color:'#4a9eff', protocol:'sip',
+      devices:[] }
+  ];
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function apiPost(path, body) {
+  const r = await fetch(PROXY+'/mgmt'+path, {
+    method:'POST', headers:{Authorization:AUTH,'Content-Type':'application/json'}, body:JSON.stringify(body)
+  });
+  return r.json().catch(()=>({}));
+}
+
+// ── DIAL CORE ─────────────────────────────────────────────────
+async function dialEndpoint(address, protocol, displayName, role) {
+  if (!selVMR) { notify('Select a VMR first','err'); return null; }
+  if (!address.trim()) { notify('Enter an address','err'); return null; }
+
+  const body = {
+    conference_alias: selVMR.alias,
+    destination: address.trim(),
+    protocol: protocol || 'sip',
+    system_location: 'DEV',
+    display_name: displayName || address.trim(),
+    role: role === 'guest' ? 'GUEST' : undefined,
+  };
+  // Remove undefined keys
+  Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+
+  try {
+    const resp = await apiPost('/api/admin/command/v1/participant/dial/', body);
+    const ok = resp.status === 'success';
+    const pid = resp.data?.participant_id?.slice(0,8);
+    addRecent(address, protocol, displayName, selVMR.alias, ok, pid);
+    return resp;
+  } catch(e) {
+    addRecent(address, protocol, displayName, selVMR.alias, false, null);
+    return { status:'failed', error: e.message };
+  }
+}
+
+// ── MANUAL DIAL ───────────────────────────────────────────────
+async function manualDial() {
+  const addr  = document.getElementById('m-addr').value.trim();
+  const name  = document.getElementById('m-name').value.trim() || addr;
+  const proto = document.getElementById('m-proto').value;
+  const role  = document.getElementById('m-role').value;
+
+  if (!addr) { notify('Enter an address to dial','err'); return; }
+  if (!selVMR) { notify('Select a VMR first','err'); return; }
+
+  const btn = document.getElementById('btn-manual-dial');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">◌</span> Dialling…';
+
+  const logEl = document.getElementById('manual-result');
+  logEl.style.display = 'block';
+  logEl.innerHTML = `<span class="dl-info">${ts()} Dialling ${name} (${proto.toUpperCase()}) → ${selVMR.alias}…\n</span>`;
+
+  const resp = await dialEndpoint(addr, proto, name, role);
+
+  if (resp?.status === 'success') {
+    const pid = resp.data?.participant_id?.slice(0,8);
+    logEl.innerHTML += `<span class="dl-ok">${ts()} ✓ Connected — participant ID: ${pid}…\n</span>`;
+    notify(`${name} dialled into ${selVMR.name}`, 'ok');
+    document.getElementById('m-addr').value = '';
+    document.getElementById('m-name').value = '';
+  } else {
+    const reason = JSON.stringify(resp?.dial || resp?.error || resp);
+    logEl.innerHTML += `<span class="dl-err">${ts()} ✗ Failed — ${reason}\n</span>`;
+    notify(`Dial failed: ${reason}`, 'err');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⏎ Dial Endpoint';
+  renderRecents();
+}
+
+// ── TEMPLATE DIAL ─────────────────────────────────────────────
+async function launchTemplateDial() {
+  const t = templates.find(x => x.id === selTmplId);
+  if (!t || !selVMR) return;
+  const devs = (t.devices||[]).filter(d => d.address?.trim());
+  if (!devs.length) { notify('No devices in this template — edit it to add some','err'); return; }
+
+  dialSt = {};
+  devs.forEach((_,i) => dialSt[i] = 'calling');
+
+  const grid = document.getElementById('dial-grid-tmpl');
+  const log  = document.getElementById('dial-log-tmpl');
+  const btn  = document.getElementById('btn-tmpl-dial');
+  log.style.display = 'block';
+  log.innerHTML = '';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">◌</span> Dialling…';
+  renderDialGrid(devs);
+  dlog(log, `Bulk dial → ${selVMR.name} · ${devs.length} device${devs.length!==1?'s':''}`, 'info');
+
+  const results = await Promise.allSettled(devs.map(async (d,i) => {
+    dlog(log, `Calling ${d.name||d.address}…`, 'info');
+    const resp = await dialEndpoint(d.address, d.protocol||t.protocol||'sip', d.name||d.address, 'host');
+    if (resp?.status === 'success') {
+      dialSt[i] = 'connected';
+      const pid = resp.data?.participant_id?.slice(0,8);
+      dlog(log, `✓ ${d.name||d.address} connected (${pid}…)`, 'ok');
+      return true;
+    } else {
+      dialSt[i] = 'failed';
+      const reason = JSON.stringify(resp?.dial || resp?.error || resp);
+      dlog(log, `✗ ${d.name||d.address} — ${reason}`, 'err');
+      return false;
+    }
+  }));
+
+  renderDialGrid(devs);
+  const ok = results.filter(r => r.status==='fulfilled' && r.value).length;
+  dlog(log, `Done — ${ok}/${devs.length} connected`, ok===devs.length?'ok':'warn');
+  btn.disabled = false;
+  btn.innerHTML = '⏎ Dial All Devices';
+  notify(`${ok}/${devs.length} devices connected to ${selVMR.name}`, ok===devs.length?'ok':'warn');
+  renderRecents();
+}
+
+function renderDialGrid(devs) {
+  document.getElementById('dial-grid-tmpl').innerHTML = devs.map((d,i) => {
+    const st = dialSt[i]||'idle';
+    return `<div class="ds ${st}"><div class="dsdot ${st}"></div><div class="ds-name">${esc(d.name||d.address)}</div><span class="ds-st ${st}">${st.toUpperCase()}</span></div>`;
+  }).join('');
+}
+
+function dlog(el, msg, type='info') {
+  const cls={ok:'dl-ok',err:'dl-err',info:'dl-info',warn:'dl-warn'}[type]||'dl-info';
+  el.innerHTML += `<span class="${cls}">${ts()}  ${esc(msg)}\n</span>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── RECENTS ───────────────────────────────────────────────────
+function addRecent(addr, proto, name, vmr, ok, pid) {
+  recents.unshift({ addr, proto, name, vmr, ok, pid, ts: Date.now() });
+  if (recents.length > 30) recents = recents.slice(0,30);
+  save();
+}
+
+function renderRecents() {
+  const el = document.getElementById('recent-list');
+  if (!recents.length) { el.innerHTML='<div class="empty">No recent dials yet.</div>'; return; }
+  el.innerHTML = recents.slice(0,15).map(r => `
+    <div class="recent-item" onclick="redial('${esc(r.addr)}','${esc(r.proto)}','${esc(r.name||'')}')">
+      <span class="ri-status">${r.ok?'✓':'✗'}</span>
+      <span class="ri-proto">${(r.proto||'sip').toUpperCase()}</span>
+      <div style="flex:1;min-width:0">
+        <div class="ri-addr">${esc(r.name||r.addr)}</div>
+        <div class="ri-meta">${esc(r.addr)} · → ${esc(r.vmr)}</div>
+      </div>
+      <span class="ri-meta">${timeAgo(r.ts)}</span>
+    </div>`).join('');
+}
+
+function redial(addr, proto, name) {
+  document.getElementById('m-addr').value = addr;
+  document.getElementById('m-proto').value = proto || 'sip';
+  document.getElementById('m-name').value = name || '';
+  notify('Address loaded — hit Dial Endpoint', 'ok');
+}
+
+function clearRecents() {
+  recents = [];
+  save();
+  renderRecents();
+  notify('Recent dials cleared', 'warn');
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now()-ts)/1000);
+  if (s<60) return s+'s ago';
+  if (s<3600) return Math.floor(s/60)+'m ago';
+  return Math.floor(s/3600)+'h ago';
+}
+
+// ── VMR LIST ──────────────────────────────────────────────────
+function renderVMRs() {
+  document.getElementById('vmr-list').innerHTML = VMRS.map(v => {
+    const s = selVMR?.alias === v.alias;
+    return `<div class="vmr-item ${s?'sel':''}" onclick='selVMRClick(${JSON.stringify(JSON.stringify(v))})'>
+      <div>
+        <div class="vmr-name">${esc(v.name)}</div>
+        <div class="vmr-alias">${esc(v.alias)}</div>
+        ${v.pin?`<div class="vmr-pin">HOST PIN: ${esc(v.pin)}</div>`:''}
+      </div>
+      <div class="${v._live>0?'ldot':'idot'}"></div>
+    </div>`;
+  }).join('');
+  updateLaunchSummary();
+}
+
+function selVMRClick(json) {
+  selVMR = JSON.parse(json);
+  renderVMRs();
+}
+
+// ── TEMPLATES ─────────────────────────────────────────────────
+function renderTemplates() {
+  const el = document.getElementById('tmpl-list');
+  document.getElementById('tmpl-badge').textContent = templates.length;
+  if (!templates.length) { el.innerHTML='<div class="empty">No templates.<br>Click + New to create one.</div>'; return; }
+  el.innerHTML = templates.map(t => {
+    const isSel = selTmplId===t.id;
+    const dc = t.devices?.length||0;
+    return `<div class="tmpl-card ${isSel?'active-tmpl':''}" id="tc-${t.id}">
+      <div class="tmpl-head" onclick="toggleTmpl('${t.id}')">
+        <div class="tmpl-color" style="background:${t.color}"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="tmpl-name">${esc(t.name)}</span>
+            <span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;background:${t.color}18;color:${t.color}">${(t.protocol||'sip').toUpperCase()}</span>
+          </div>
+          <div class="tmpl-meta">${esc(t.desc||'')}${t.desc&&dc?' · ':''}${dc} device${dc!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:4px" onclick="event.stopPropagation()">
+          <button class="btn success btn-xs" onclick="useTmpl('${t.id}')">✓</button>
+          <button class="btn btn-xs" onclick="openModal('${t.id}')">Edit</button>
+          <button class="btn danger btn-xs" onclick="delTmpl('${t.id}')">✕</button>
+        </div>
+        <span style="font-family:var(--mono);font-size:11px;color:${isSel?'var(--accent)':'var(--text3)'};margin-left:4px">${isSel?'▾':'▸'}</span>
+      </div>
+      <div class="tmpl-body ${isSel?'open':''}" id="tb-${t.id}">
+        ${devTable(t)}
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn success btn-xs" onclick="useTmpl('${t.id}')">✓ Use This Template</button>
+          <button class="btn btn-xs" onclick="openModal('${t.id}')">Edit Devices</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Show/hide launch panel
+  const hasSel = !!selTmplId;
+  document.getElementById('tmpl-launch').style.display = hasSel ? 'block' : 'none';
+}
+
+function devTable(t) {
+  if (!t.devices?.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:4px 0">No devices — click Edit to add real endpoint addresses.</div>';
+  return '<div style="display:grid;grid-template-columns:1fr 1fr 60px;gap:4px;margin-bottom:4px"><div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Name</div><div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Address</div><div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Protocol</div></div>'
+    + t.devices.map(d=>`<div style="display:grid;grid-template-columns:1fr 1fr 60px;gap:4px;padding:5px 0;border-top:1px solid rgba(100,140,220,.06)">
+      <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name)}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.address)}</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--accent)">${(d.protocol||t.protocol||'sip').toUpperCase()}</div>
+    </div>`).join('');
+}
+
+function toggleTmpl(id) { selTmplId = selTmplId===id?nu

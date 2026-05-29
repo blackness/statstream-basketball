@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f1117;
+    --ink-muted: #4a4f5c;
+    --ink-light: #8890a0;
+    --surface: #ffffff;
+    --surface-2: #f7f8fa;
+    --surface-3: #eef0f4;
+    --accent: #1a56db;
+    --accent-light: #e8effe;
+    --accent-dim: #3b70f0;
+    --green: #0a7c4e;
+    --green-light: #e6f7ef;
+    --border: #e2e5ec;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: -0.3px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--ink-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    background: var(--accent);
+    color: white !important;
+    padding: 8px 20px;
+    border-radius: var(--radius);
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    transition: background 0.15s, transform 0.1s !important;
+  }
+  .nav-cta:hover { background: var(--accent-dim) !important; transform: translateY(-1px); color: white !important; }
+
+  /* HERO */
+  .hero {
+    padding: 80px 40px 72px;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+    letter-spacing: 0.2px;
+  }
+  .hero-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    color: var(--ink);
+    margin-bottom: 22px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-muted);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.65;
+    font-weight: 300;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 2px 12px rgba(26,86,219,0.25);
+  }
+  .btn-primary:hover {
+    background: var(--accent-dim);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,86,219,0.3);
+  }
+  .btn-secondary {
+    background: white;
+    color: var(--ink);
+    padding: 14px 28px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 400;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+  }
+
+  /* SOCIAL PROOF */
+  .proof-bar {
+    padding: 20px 40px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .proof-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .proof-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .proof-label {
+    font-size: 12px;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  /* FEATURES */
+  .section {
+    padding: 72px 40px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+  }
+  .section-desc {
+    font-size: 16px;
+    color: var(--ink-muted);
+    max-width: 480px;
+    line-height: 1.65;
+    font-weight: 300;
+    margin-bottom: 48px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  }
+  .feature-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+    transform: translateY(-3px);
+    border-color: #d0d5e0;
+  }
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 20px;
+  }
+  .feature-icon.blue { background: var(--accent-light); }
+  .feature-icon.green { background: var(--green-light); }
+  .feature-icon.amber { background: #fff8e8; }
+  .feature-icon.purple { background: #f0eeff; }
+  .feature-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+  .feature-desc {
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* HOW IT WORKS */
+  .how-section {
+    padding: 72px 40px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .how-inner {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    position: relative;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .step-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--border);
+    line-height: 1;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .step-desc {
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+  .step-divider {
+    display: none;
+  }
+
+  /* SPORT CHIPS */
+  .sports-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .sport-chip {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+  .sport-chip.active {
+    background: var(--accent-light);
+    border-color: #b8ccf8;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* TESTIMONIAL */
+  .testimonial-section {
+    padding: 72px 40px;
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .quote-mark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 80px;
+    color: var(--accent-light);
+    line-height: 0.5;
+    margin-bottom: 24px;
+  }
+  .quote-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(20px, 3vw, 26px);
+    line-height: 1.45;
+    color: var(--ink);
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+  .quote-attr {
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+  .quote-attr strong {
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+
+  /* CTA SECTION */
+  .cta-section {
+    padding: 80px 40px;
+    background: var(--ink);
+    text-align: center;
+  }
+  .cta-section .section-label { color: #6b8fff; }
+  .cta-section h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(30px, 4vw, 44px);
+    color: white;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .cta-section p {
+    color: #8890a0;
+    font-size: 16px;
+    margin-bottom: 40px;
+    font-weight: 300;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-section .btn-primary {
+    box-shadow: 0 4px 20px rgba(26,86,219,0.5);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-copy {
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+  .footer-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+  }
+  .footer-links a {
+    font-size: 13px;
+    color: var(--ink-light);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .footer-links a:hover { color: var(--ink-muted); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-badge { animation: fadeUp 0.4s ease both; }
+  h1 { animation: fadeUp 0.5s 0.1s ease both; }
+  .hero-sub { animation: fadeUp 0.5s 0.2s ease both; }
+  .hero-actions { animation: fadeUp 0.5s 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-icon">
+      <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="8" fill="none" stroke="white" stroke-width="2"/>
+        <path d="M10 4 L10 16 M4 10 L16 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    athleteOS
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Features</a></li>
+    <li><a href="#">How it works</a></li>
+    <li><a href="#">Pricing</a></li>
+    <li><a href="#" class="nav-cta">Get started free</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Built for tournament directors</div>
+  <h1>Run your tournament <em>without the chaos</em></h1>
+  <p class="hero-sub">athleteOS handles brackets, schedules, scoring, and real-time updates — so you can focus on running a great event, not a spreadsheet.</p>
+  <div class="hero-actions">
+    <a href="#" class="btn-primary">
+      Start your tournament
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a href="#" class="btn-secondary">See how it works</a>
+  </div>
+</section>
+
+<!-- PROOF BAR -->
+<div class="proof-bar">
+  <div class="proof-item">
+    <span class="proof-number">500+</span>
+    <span class="proof-label">Tournaments run</span>
+  </div>
+  <div class="proof-item">
+    <span class="proof-number">12k+</span>
+    <span class="proof-label">Teams registered</span>
+  </div>
+  <div class="proof-item">
+    <span class="proof-number">48hrs</span>
+    <span class="proof-label">Setup to live</span>
+  </div>
+  <div class="proof-item">
+    <span class="proof-number">Free</span>
+    <span class="proof-label">To get started</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section">
+  <p class="section-label">What you get</p>
+  <h2 class="section-title">Everything a director needs,<br>nothing they don't</h2>
+  <p class="section-desc">From first team registration to final score, athleteOS keeps your event running smoothly.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon blue">🗂️</div>
+      <div class="feature-title">Bracket generation</div>
+      <div class="feature-desc">Auto-generate single elimination, pool play, or placement brackets in seconds. Edit anytime.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">📡</div>
+      <div class="feature-title">Live scoring</div>
+      <div class="feature-desc">Scorekeepers update from their phones. Spectators see results the moment they happen.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon amber">📅</div>
+      <div class="feature-title">Schedule builder</div>
+      <div class="feature-desc">Smart scheduling across fields and time slots, with live/upcoming/finished tabs for everyone to follow.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon purple">📊</div>
+      <div class="feature-title">Standings & stats</div>
+      <div class="feature-desc">Automatic standings updates, point differentials, and player stats — no manual entry required.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon blue">📱</div>
+      <div class="feature-title">Mobile-first design</div>
+      <div class="feature-desc">Built for outdoor use. Works on any phone, even in bright sunlight on a tournament day.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon green">🔒</div>
+      <div class="feature-title">Role-based access</div>
+      <div class="feature-desc">Directors, scorekeepers, and spectators each see exactly what they need — nothing more.</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="how-section">
+  <div class="how-inner">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title" style="margin-bottom: 8px;">Up and running in minutes</h2>
+    <p class="section-desc">No onboarding calls, no PDF manuals. Just a tournament that works.</p>
+
+    <div class="sports-row">
+      <span class="sport-chip active">Ultimate Frisbee</span>
+      <span class="sport-chip">Basketball</span>
+      <span class="sport-chip">Volleyball</span>
+      <span class="sport-chip">Soccer</span>
+      <span class="sport-chip">More coming soon</span>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Create your tournament</div>
+        <div class="step-desc">Name it, set your dates, add your fields, and choose your format. Takes about five minutes.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Add teams & build brackets</div>
+        <div class="step-desc">Import or add teams manually. Generate your bracket and schedule with one click.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Go live on game day</div>
+        <div class="step-desc">Share the link. Scorekeepers log in, enter scores, and everyone watches in real time.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Crown a champion</div>
+        <div class="step-desc">Final standings, stats, and results are saved automatically. Ready to share or run it back next year.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial-section">
+  <div class="quote-mark">"</div>
+  <p class="quote-text">I used to spend the entire week before a tournament inside a spreadsheet. With athleteOS, I set everything up in an afternoon and actually got to enjoy the event.</p>
+  <p class="quote-attr"><strong>Jordan M.</strong> — Tournament Director, Eastern Regional Ultimate</p>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <p class="section-label">Ready to run a better tournament?</p>
+  <h2>Your next event starts here</h2>
+  <p>Free to get started. No credit card required. Works on the first try.</p>
+  <a href="#" class="btn-primary" style="font-size: 16px; padding: 16px 36px;">
+    Create your tournament
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-copy">© 2026 athleteOS. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pexip Conference Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0e1a;--panel:#121929;--panel2:#141d30;--border:rgba(100,140,220,0.12);--border2:rgba(100,140,220,0.22);
+    --accent:#4a9eff;--accent2:#2d7be8;--green:#22d3a0;--red:#ff4d6a;--amber:#ffa928;--purple:#a78bfa;
+    --text:#e2e8f8;--text2:#8899bb;--text3:#5a6a88;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  body{background:var(--navy);color:var(--text);font-family:var(--sans);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* HEADER */
+  .hdr{background:var(--panel);border-bottom:1px solid var(--border);height:48px;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;z-index:50}
+  .hlogo{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--accent);letter-spacing:.08em;display:flex;align-items:center;gap:7px;flex-shrink:0}
+  .hlogo::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+  .conf-tabs{display:flex;gap:4px;flex:1;overflow-x:auto;align-items:center}
+  .conf-tabs::-webkit-scrollbar{height:2px}
+  .conf-tabs::-webkit-scrollbar-thumb{background:var(--border2)}
+  .ctab{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.02);font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+  .ctab:hover{background:rgba(255,255,255,.05);color:var(--text2)}
+  .ctab.active{background:rgba(34,211,160,.1);border-color:var(--green);color:var(--green)}
+  .ctab-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse 1.8s infinite}
+  .ctab-x{opacity:.5;margin-left:2px;font-size:11px;transition:opacity .15s}
+  .ctab-x:hover{opacity:1;color:var(--red)}
+  .btn-new{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;border:1px dashed var(--border2);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;transition:all .15s;flex-shrink:0}
+  .btn-new:hover{border-color:var(--accent);color:var(--accent)}
+  .hright{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .nb{padding:5px 11px;border-radius:5px;border:1px solid var(--border2);background:none;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;transition:all .15s}
+  .nb:hover{color:var(--text);background:rgba(255,255,255,.04)}
+  .nb.on{color:var(--accent);background:rgba(74,158,255,.08);border-color:rgba(74,158,255,.3)}
+
+  /* VIEWS */
+  .view{display:none;flex:1;overflow:hidden;flex-direction:column;animation:fadeIn .15s ease}
+  .view.on{display:flex}
+
+  /* HOME */
+  #v-home{align-items:center;justify-content:center;padding:40px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,.05) 0%,transparent 60%)}
+  .home-wrap{width:100%;max-width:680px}
+  .home-hero{text-align:center;margin-bottom:36px}
+  .home-hero h1{font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px}
+  .home-hero p{color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:.04em}
+  .home-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .home-head h2{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+  .ac-card{background:var(--panel);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+  .ac-card:hover{border-color:rgba(74,158,255,.4);background:rgba(74,158,255,.04)}
+  .ac-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.8s infinite;flex-shrink:0}
+  .ac-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+  .ac-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .no-confs{text-align:center;padding:50px;color:var(--text3);font-family:var(--mono);font-size:11px;line-height:2}
+
+  /* WIZARD */
+  #v-launch{align-items:center;justify-content:center;padding:30px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,.05) 0%,transparent 60%)}
+  .wiz{background:var(--panel);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:540px;overflow:hidden}
+  .wiz-steps{display:flex;border-bottom:1px solid var(--border)}
+  .ws{flex:1;padding:10px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
+  .ws.done{color:var(--green)}.ws.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .wiz-body{padding:22px;min-height:260px}
+  .wiz-body h3{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--text)}
+  .opt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+  .opt{border:1px solid var(--border2);border-radius:8px;padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center}
+  .opt:hover{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.3)}
+  .opt.sel{background:rgba(74,158,255,.1);border-color:var(--accent)}
+  .opt-icon{font-size:22px;margin-bottom:6px}
+  .opt-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+  .opt-desc{font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.4}
+  .tmpl-opt{border:1px solid var(--border2);border-radius:7px;padding:10px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .tmpl-opt:hover{background:rgba(74,158,255,.05);border-color:rgba(74,158,255,.3)}
+  .tmpl-opt.sel{background:rgba(74,158,255,.1);border-color:var(--accent)}
+  .wiz-foot{display:flex;gap:8px;padding:14px 22px;border-top:1px solid var(--border)}
+
+  /* LIVE */
+  #v-live{overflow:hidden}
+  .conf-bar{background:var(--panel2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+  .cb-name{font-size:16px;font-weight:600;color:var(--text)}
+  .cb-badge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(74,158,255,.1);color:var(--accent)}
+  .cb-badge.lec{background:rgba(167,139,250,.1);color:var(--purple)}
+  .cb-timer{font-family:var(--mono);font-size:13px;color:var(--green);letter-spacing:.08em}
+  .cb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .cb-parts{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+
+  /* CONF CONTROLS */
+  .cc-bar{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel);align-items:center;flex-wrap:wrap}
+  .cc{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.02);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .cc:hover{background:rgba(255,255,255,.07);color:var(--text)}
+  .cc.grn{background:rgba(34,211,160,.08);border-color:rgba(34,211,160,.25);color:var(--green)}
+  .cc.grn:hover{background:rgba(34,211,160,.16)}
+  .cc.red{background:rgba(255,77,106,.08);border-color:rgba(255,77,106,.25);color:var(--red)}
+  .cc.red:hover{background:rgba(255,77,106,.18)}
+  .cc.amb{background:rgba(255,169,40,.08);border-color:rgba(255,169,40,.25);color:var(--amber)}
+  .cc.rec{background:rgba(255,77,106,.12);border-color:var(--red);color:var(--red);animation:pulse 1.5s infinite}
+  .cc-sep{width:1px;height:22px;background:var(--border2);flex-shrink:0}
+
+  /* ENDPOINT TABLE */
+  .ep-wrap{flex:1;overflow-y:auto}
+  .ep-tbl{width:100%;border-collapse:collapse}
+  .ep-tbl thead th{padding:8px 16px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel2);z-index:5}
+  .ep-tbl tbody tr{border-bottom:1px solid rgba(100,140,220,.07);transition:background .12s}
+  .ep-tbl tbody tr:hover{background:rgba(74,158,255,.03)}
+  .ep-tbl td{padding:11px 16px;vertical-align:middle}
+  .ep-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:background .3s}
+  .ep-dot.connected{background:var(--green);box-shadow:0 0 5px var(--green)}
+  .ep-dot.calling{background:var(--amber);animation:pulse 1s infinite}
+  .ep-dot.failed{background:var(--red)}
+  .ep-dot.disconnected{background:var(--text3)}
+  .ep-name{font-size:13px;font-weight:500;color:var(--text)}
+  .ep-loc{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px}
+  .ep-st{font-family:var(--mono);font-size:10px;font-weight:500}
+  .ep-st.connected{color:var(--green)}.ep-st.calling{color:var(--amber)}.ep-st.failed{color:var(--red)}.ep-st.disconnected{color:var(--text3)}
+
+  /* ROW CONTROLS */
+  .rcw{display:flex;align-items:center;gap:6px}
+  .rc{width:32px;height:32px;border-radius:7px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text3);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+  .rc:hover{background:rgba(255,255,255,.09);color:var(--text);border-color:rgba(100,140,220,.4)}
+  .rc.muted{background:rgba(255,77,106,.1);color:var(--red);border-color:rgba(255,77,106,.3)}
+  .rc.host{background:rgba(255,169,40,.1);color:var(--amber);border-color:rgba(255,169,40,.3)}
+  .rc.disc{color:var(--red)}.rc.disc:hover{background:rgba(255,77,106,.12);border-color:var(--red)}
+  .rc.conn{color:var(--green)}.rc.conn:hover{background:rgba(34,211,160,.1);border-color:var(--green)}
+  .rc-sep{width:1px;height:22px;background:var(--border2);flex-shrink:0;margin:0 2px}
+
+  /* ADD SITE */
+  .add-bar{border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;align-items:center;background:var(--panel);flex-shrink:0}
+  .adf{background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:11px;outline:none;transition:border-color .2s}
+  .adf:focus{border-color:var(--accent)}
+  .adf::placeholder{color:var(--text3)}
+  .adf.nm{width:150px}.adf.ad{flex:1}
+  select.adf{width:76px;cursor:pointer}
+  select.adf option{background:#121929}
+  .btn-add{padding:7px 14px;border-radius:5px;border:1px solid rgba(34,211,160,.3);background:rgba(34,211,160,.08);color:var(--green);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .btn-add:hover{background:rgba(34,211,160,.16)}
+  .btn-ab{padding:7px 12px;border-radius:5px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text3);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .btn-ab:hover{color:var(--accent);border-color:rgba(74,158,255,.3)}
+
+  /* ADDRESS BOOK */
+  #v-ab{overflow:hidden}
+  .ab-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--panel)}
+  .ab-srch{flex:1;background:rgba(10,14,26,.8);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+  .ab-srch:focus{border-color:var(--accent)}
+  .ab-srch::placeholder{color:var(--text3)}
+  .ab-body{flex:1;overflow-y:auto}
+  .ab-tbl{width:100%;border-collapse:collapse}
+  .ab-tbl thead th{padding:8px 16px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:5;text-align:left}
+  .ab-tbl tbody tr{border-bottom:1px solid rgba(100,140,220,.07);transition:background .12s}
+  .ab-tbl tbody tr:hover{background:rgba(74,158,255,.04)}
+  .ab-tbl td{padding:9px 16px;font-size:12px}
+  .ab-name{font-weight:500;color:var(--text)}
+  .ab-loc{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .ab-sip{font-family:var(--mono);font-size:10px;color:var(--accent)}
+  .ab-h323{font-family:var(--mono);font-size:10px;color:var(--purple)}
+  .dbt{padding:4px 9px;border-radius:4px;font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .15s;border:1px solid}
+  .dbt.dial{border-color:rgba(34,211,160,.25);background:rgba(34,211,160,.06);color:var(--green)}
+  .dbt.dial:hover{background:rgba(34,211,160,.16)}
+  .dbt.dial:disabled{opacity:.3;cursor:not-allowed}
+  .dbt.edit{border-color:rgba(74,158,255,.2);background:rgba(74,158,255,.06);color:var(--accent)}
+  .dbt.edit:hover{background:rgba(74,158,255,.14)}
+  .dbt.del{border-color:rgba(255,77,106,.2);background:rgba(255,77,106,.05);color:var(--red)}
+  .dbt.del:hover{background:rgba(255,77,106,.14)}
+
+  /* MODAL */
+  .mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center}
+  .mbg.open{display:flex}
+  .modal{background:#0f1525;border:1px solid var(--border2);border-radius:12px;padding:22px;width:100%;max-width:420px;animation:slideIn .2s ease}
+  .modal h3{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text)}
+  .mfl{margin-bottom:11px}
+  .mfl label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+  .mfi{width:100%;background:rgba(10,14,26,.9);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+  .mfi:focus{border-color:var(--accent)}
+  .mfi::placeholder{color:var(--text3)}
+  .mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+  .btn{padding:7px 16px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--text2);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{background:rgba(255,255,255,.07);color:var(--text)}
+  .btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.red{background:rgba(255,77,106,.1);border-color:rgba(255,77,106,.3);color:var(--red)}
+  .btn.red:hover{background:rgba(255,77,106,.2)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .pbadge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px}
+  .pbadge.blue{background:rgba(74,158,255,.15);color:var(--accent)}
+  .empty{padding:30px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:11px;line-height:2}
+  .notif{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:10px;color:var(--text);z-index:999;transform:translateX(130%);transition:transform .3s;max-width:300px;line-height:1.4}
+  .notif.show{transform:translateX(0)}.notif.warn{border-left-color:var(--amber)}.notif.err{border-left-color:var(--red)}
+  .spin{animation:spin .8s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hlogo">PEXIP CTRL</div>
+  <div class="conf-tabs" id="conf-tabs">
+    <button class="btn-new" onclick="showView('launch')">+ New Conference</button>
+  </div>
+  <div class="hright">
+    <button class="nb on" id="nb-home" onclick="showView('home')">Home</button>
+    <button class="nb" id="nb-ab" onclick="showView('ab')">📋 Address Book</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="view on" id="v-home">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,.05) 0%,transparent 60%)">
+    <div style="width:100%;max-width:680px">
+      <div class="home-hero">
+        <h1>Conference Manager</h1>
+        <p>sandbox.smithvcs.queensu.ca · Smith VCS · Queen's University</p>
+      </div>
+      <div class="home-head">
+        <h2>Active Conferences</h2>
+        <button class="btn primary" onclick="showView('launch')">+ Launch Conference</button>
+      </div>
+      <div id="home-list"><div class="no-confs">No active conferences.<br>Click Launch Conference to begin.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LAUNCH WIZARD -->
+<div class="view" id="v-launch">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:30px;background:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,.05) 0%,transparent 60%)">
+    <div class="wiz">
+      <div class="wiz-steps">
+        <div class="ws active" id="ws1">1 · VMR</div>
+        <div class="ws" id="ws2">2 · Template</div>
+        <div class="ws" id="ws3">3 · Launch</div>
+      </div>
+      <div class="wiz-body" id="wiz-body"></div>
+      <div class="wiz-foot" id="wiz-foot">
+        <button class="btn" onclick="showView('home')">Cancel</button>
+        <div style="flex:1"></div>
+        <button class="btn" id="wb-back" onclick="wizBack()" style="display:none">← Back</button>
+        <button class="btn primary" id="wb-next" onclick="wizNext()" disabled>Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE MANAGER -->
+<div class="view" id="v-live">
+  <div class="conf-bar">
+    <div>
+      <div class="cb-name" id="cb-name">—</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:3px">
+        <span class="cb-badge" id="cb-badge">VMR</span>
+        <span class="cb-timer" id="cb-timer">00:00:00</span>
+      </div>
+    </div>
+    <div class="cb-right">
+      <div class="cb-parts" id="cb-parts">0 endpoints</div>
+      <div class="sync-dot" id="sync-dot" style="display:none" title="Syncing live status"></div>
+    </div>
+  </div>
+  <div class="cc-bar">
+    <button class="cc grn" onclick="ccMuteAll(true)">🔇 Mute All</button>
+    <button class="cc" onclick="ccMuteAll(false)">🔊 Unmute All</button>
+    <div class="cc-sep"></div>
+    <button class="cc amb" id="cc-rec" onclick="ccRecord()">⏺ Record</button>
+    <button class="cc" id="cc-lock" onclick="ccLock()">🔒 Lock</button>
+    <div class="cc-sep"></div>
+    <button class="cc red" onclick="ccEnd()">✕ End Conference</button>
+  </div>
+  <div class="ep-wrap">
+    <table class="ep-tbl">
+      <thead><tr>
+        <th style="width:20px"></th>
+        <th>Site</th>
+        <th style="width:110px">Status</th>
+        <th style="width:220px;text-align:center">Controls</th>
+      </tr></thead>
+      <tbody id="ep-tbody"></tbody>
+    </table>
+    <div id="ep-empty" class="empty" style="display:none">No endpoints yet.<br>Add a site below or dial from the Address Book.</div>
+  </div>
+  <div class="add-bar">
+    <input class="adf nm" id="add-name" placeholder="Display name"/>
+    <input class="adf ad" id="add-addr" placeholder="user@domain.com or 192.168.x.x" onkeydown="if(event.key==='Enter')addSite()"/>
+    <select class="adf" id="add-proto">
+      <option value="sip">SIP</option>
+      <option value="h323">H.323</option>
+      <option value="auto">Auto</option>
+    </select>
+    <button class="btn-add" onclick="addSite()">+ Add Site</button>
+    <button class="btn-ab" onclick="showView('ab')">📋 Address Book</button>
+  </div>
+</div>
+
+<!-- ADDRESS BOOK -->
+<div class="view" id="v-ab">
+  <div class="ab-hdr">
+    <input class="ab-srch" id="ab-q" placeholder="Search name, location, SIP address…" oninput="renderAB()"/>
+    <button class="btn primary" onclick="openContact(null)">+ Add Contact</button>
+    <span class="pbadge blue" id="ab-badge">0 contacts</span>
+  </div>
+  <div class="ab-body">
+    <table class="ab-tbl">
+      <thead><tr>
+        <th>Name</th><th>Location</th><th>SIP Address</th><th>H.323</th><th style="width:150px">Action</th>
+      </tr></thead>
+      <tbody id="ab-tbody"></tbody>
+    </table>
+    <div id="ab-empty" class="empty" style="display:none">No contacts yet.<br>Click + Add Contact to build your address book.</div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="mbg" id="ab-modal">
+  <div class="modal">
+    <h3 id="ab-m-title">Add Contact</h3>
+    <div class="mfl"><label>Display Name</label><input class="mfi" id="ab-name" placeholder="e.g. Calgary Rm 1"/></div>
+    <div class="mfl"><label>Location</label><input class="mfi" id="ab-loc" placeholder="e.g. Calgary, AB"/></div>
+    <div class="mfl"><label>SIP Address</label><input class="mfi" id="ab-sip" placeholder="user@domain.com"/></div>
+    <div class="mfl"><label>H.323 Address (optional)</label><input class="mfi" id="ab-h323" placeholder="192.168.x.x or h323:alias"/></div>
+    <div class="mfoot">
+      <button class="btn" onclick="closeContact()">Cancel</button>
+      <button class="btn primary" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ── CONFIG — edit these to match your environment ─────────────
+const MGMT  = 'http://localhost:3000/mgmt';   // proxy /mgmt → sandbox.smithvcs.queensu.ca
+const AUTH  = 'Basic ' + btoa('admin:Sandbox2024');
+const LS_T  = 'pexip_device_templates_v1';
+const LS_AB = 'pexip_addressbook_v1';
+
+const VMRS = [
+  {name:'Sandbox',           alias:'sandbox',   pin:'12345', type:'conference', icon:'🎥'},
+  {name:'Test Call Service', alias:'test_call',  pin:'',      type:'test_call',  icon:'🔬'},
+  {name:'Test VA',           alias:'testva',     pin:'54321', type:'lecture',    icon:'🎓'},
+];
+const TYPE_LBL = {conference:'VMR Conference', lecture:'Webinar / Lecture', test_call:'Test Call'};
+
+// ── STATE ─────────────────────────────────────────────────────
+let templates=[], contacts=[];
+let confs={}, activeId=null;
+let wizStep=1, wizVMR=null, wizTmpl=null;
+let abEditId=null, pollInt=null;
+
+// ── STORAGE ───────────────────────────────────────────────────
+function loadData(){
+  try{templates=JSON.parse(localStorage.getItem(LS_T)||'[]');}catch(e){templates=[];}
+  try{contacts=JSON.parse(localStorage.getItem(LS_AB)||'[]');}catch(e){contacts=[];}
+  if(!contacts.length)seedContacts();
+}
+function saveT(){localStorage.setItem(LS_T,JSON.stringify(templates));}
+function saveAB(){localStorage.setItem(LS_AB,JSON.stringify(contacts));}
+function seedContacts(){
+  contacts=[
+    {id:uid(),name:'Calgary Rm 1',location:'Calgary, AB',sip:'Calgary_Rm_1@smithvcs.queensu.ca',h323:''},
+    {id:uid(),name:'Calgary Rm 2',location:'Calgary, AB',sip:'Calgary_Rm_2@smithvcs.queensu.ca',h323:''},
+    {id:uid(),name:'Calgary Rm 3',location:'Calgary, AB',sip:'Calgary_Rm_3@smithvcs.queensu.ca',h323:''},
+  ];
+  saveAB();
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function mgmtPost(path,body={}){
+  try{
+    const r=await fetch(MGMT+path,{method:'POST',headers:{Authorization:AUTH,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return await r.json();
+  }catch(e){return{status:'failed',error:e.message};}
+}
+async function mgmtGet(path){
+  try{
+    const r=await fetch(MGMT+path,{headers:{Authorization:AUTH}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }catch(e){return null;}
+}
+async function cmdParticipant(action,participantId){
+  return mgmtPost('/api/admin/command/v1/participant/'+action+'/',{participant_id:participantId});
+}
+async function cmdRole(participantId,role){
+  return mgmtPost('/api/admin/command/v1/participant/role/',{participant_id:participantId,role});
+}
+async function cmdDial(ep,alias){
+  return mgmtPost('/api/admin/command/v1/participant/dial/',{
+    conference_alias:alias,destination:ep.address,
+    protocol:ep.protocol||'sip',system_location:'DEV',
+    display_name:ep.name||ep.address,
+  });
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('v-'+id).classList.add('on');
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  if(id==='home'){document.getElementById('nb-home').classList.add('on');renderHome();}
+  if(id==='ab'){document.getElementById('nb-ab').classList.add('on');renderAB();}
+  if(id==='live'){renderLive();startPoll();}
+  if(id==='launch'){wizStep=1;wizVMR=null;wizTmpl=null;renderWiz();}
+  if(id!=='live')stopPoll();
+}
+
+// ── HOME ──────────────────────────────────────────────────────
+function renderHome(){
+  const ids=Object.keys(confs);
+  const el=document.getElementById('home-list');
+  if(!ids.length){el.innerHTML='<div class="no-confs">No active conferences.<br>Click Launch Conference to begin.</div>';return;}
+  el.innerHTML=ids.map(id=>{
+    const c=confs[id];
+    const ok=c.endpoints.filter(e=>e.status==='connected').length;
+    return `<div class="ac-card" onclick="openConf('${id}')">
+      <div class="ac-dot"></div>
+      <div style="flex:1">
+        <div class="ac-name">${esc(c.vmr.name)}</div>
+        <div class="ac-meta">${TYPE_LBL[c.vmr.type]||c.vmr.type} · ${esc(c.vmr.alias)} · ${ago(c.startedAt)}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--green)">${ok}/${c.endpoints.length} connected</div>
+    </div>`;
+  }).join('');
+}
+function openConf(id){activeId=id;updateTabs();showView('live');}
+
+// ── TABS ──────────────────────────────────────────────────────
+function updateTabs(){
+  const el=document.getElementById('conf-tabs');
+  el.innerHTML=Object.keys(confs).map(id=>{
+    const c=confs[id],isA=id===activeId;
+    return `<div class="ctab ${isA?'active':''}" onclick="openConf('${id}')">
+      <div class="ctab-dot"></div>${esc(c.vmr.name)}
+      <span class="ctab-x" onclick="event.stopPropagation();endConf('${id}')">✕</span>
+    </div>`;
+  }).join('')+`<button class="btn-new" onclick="showView('launch')">+ New Conference</button>`;
+}
+
+// ── WIZARD ────────────────────────────────────────────────────
+function renderWiz(){
+  ['ws1','ws2','ws3'].forEach((id,i)=>{
+    document.getElementById(id).className='ws'+(i+1<wizStep?' done':i+1===wizStep?' active':'');
+  });
+  document.getElementById('wb-back').style.display=wizStep>1?'':'none';
+  const nb=document.getElementById('wb-next');
+  if(wizStep===1){
+    nb.textContent='Next →';nb.disabled=!wizVMR;
+    document.getElementById('wiz-body').innerHTML=`<h3>Select VMR</h3>
+      <div class="opt-grid">${VMRS.map(v=>`
+        <div class="opt ${wizVMR?.alias===v.alias?'sel':''}" onclick="pickVMR('${v.alias}')">
+          <div class="opt-icon">${v.icon}</div>
+          <div class="opt-name">${esc(v.name)}</div>
+          <div class="opt-desc">${TYPE_LBL[v.type]||v.type}<br>${v.pin?'PIN: '+v.pin:'No PIN'}</div>
+        </div>`).join('')}
+      </div>`;
+  }else if(wizStep===2){
+    nb.textContent='Launch →';nb.disabled=false;
+    const tOpts=templates.map(t=>`
+      <div class="tmpl-opt ${wizTmpl?.id===t.id?'sel':''}" onclick="pickTmpl('${t.id}')">
+        <div style="width:8px;height:8px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text)">${esc(t.name)}</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${t.devices?.length||0} device${(t.devices?.length||0)!==1?'s':''}</div></div>
+      </div>`).join('');
+    document.getElementById('wiz-body').innerHTML=`<h3>Select Template</h3>
+      <div class="tmpl-opt ${!wizTmpl?'sel':''}" onclick="pickTmpl(null)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></div>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text)">No template</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">Start empty, add sites manually</div></div>
+      </div>${tOpts||'<div class="empty" style="padding:12px 0">No saved templates yet.</div>'}`;
+  }else if(wizStep===3){
+    nb.textContent='Launching…';nb.disabled=true;
+    document.getElementById('wiz-body').innerHTML=`<h3>Launching…</h3>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text3);line-height:2.2">
+        VMR: <span style="color:var(--accent)">${wizVMR?.name}</span><br>
+        Alias: <span style="color:var(--accent)">${wizVMR?.alias}</span><br>
+        Template: <span style="color:var(--purple)">${wizTmpl?.name||'None'}</span><br>
+        Devices: <span style="color:var(--green)">${wizTmpl?.devices?.length||0}</span>
+      </div>`;
+    setTimeout(launchConf,300);
+  }
+}
+function pickVMR(alias){wizVMR=VMRS.find(v=>v.alias===alias);renderWiz();}
+function pickTmpl(id){wizTmpl=id?templates.find(t=>t.id===id):null;renderWiz();}
+function wizNext(){wizStep++;renderWiz();}
+function wizBack(){wizStep--;renderWiz();}
+
+async function launchConf(){
+  const id=uid();
+  const eps=(wizTmpl?.devices||[]).map(d=>({
+    id:uid(),name:d.name||d.address,location:'',address:d.address,
+    protocol:d.protocol||wizTmpl?.protocol||'sip',
+    status:'calling',audioMuted:false,videoMuted:false,isHost:false,
+    participantId:null,busy:false,
+  }));
+  confs[id]={vmr:wizVMR,template:wizTmpl,endpoints:eps,startedAt:Date.now(),
+    timerSecs:0,timerInt:null,recording:false,locked:false};
+  confs[id].timerInt=setInterval(()=>{confs[id].timerSecs++;if(activeId===id)updateTimer();},1000);
+  activeId=id;updateTabs();showView('live');
+  if(eps.length){
+    notify(`Dialling ${eps.length} endpoint${eps.length!==1?'s':''}…`,'ok');
+    await Promise.allSettled(eps.map(ep=>dialEP(ep,wizVMR.alias)));
+    const ok=eps.filter(e=>e.status==='connected').length;
+    notify(`${ok}/${eps.length} connected to ${wizVMR.name}`,ok===eps.length?'ok':'warn');
+  }else{notify(`${wizVMR.name} ready — add sites below`,'ok');}
+}
+
+// ── DIAL ──────────────────────────────────────────────────────
+async function dialEP(ep,alias){
+  ep.status='calling';ep.busy=true;renderEPs();
+  const resp=await cmdDial(ep,alias||confs[activeId]?.vmr?.alias);
+  if(resp?.status==='success'){ep.status='connected';ep.participantId=resp.data?.participant_id;}
+  else{ep.status='failed';ep.failReason=resp?.dial?.reason||resp?.error||'Failed';}
+  ep.busy=false;renderEPs();return resp;
+}
+
+// ── LIVE VIEW ─────────────────────────────────────────────────
+function renderLive(){
+  const c=confs[activeId];if(!c)return;
+  document.getElementById('cb-name').textContent=c.vmr.name;
+  document.getElementById('cb-badge').textContent=TYPE_LBL[c.vmr.type]||c.vmr.type;
+  document.getElementById('cb-badge').className='cb-badge'+(c.vmr.type==='lecture'?' lec':'');
+  document.getElementById('cc-rec').className='cc '+(c.recording?'rec':'amb');
+  document.getElementById('cc-rec').textContent=c.recording?'⏹ Stop Record':'⏺ Record';
+  document.getElementById('cc-lock').textContent=c.locked?'🔓 Unlock':'🔒 Lock';
+  updateTimer();renderEPs();
+}
+function updateTimer(){
+  const c=confs[activeId];if(!c)return;
+  const s=c.timerSecs;
+  document.getElementById('cb-timer').textContent=
+    `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+function renderEPs(){
+  const c=confs[activeId];if(!c)return;
+  const eps=c.endpoints;
+  const ok=eps.filter(e=>e.status==='connected').length;
+  document.getElementById('cb-parts').textContent=`${ok}/${eps.length} connected`;
+  const tbody=document.getElementById('ep-tbody');
+  const empty=document.getElementById('ep-empty');
+  if(!eps.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=eps.map(ep=>{
+    const {busy,audioMuted:ma,videoMuted:mv,isHost,status,failReason,participantId}=ep;
+    const live=status==='connected';
+    return `<tr>
+      <td><div class="ep-dot ${status}"></div></td>
+      <td>
+        <div class="ep-name">${esc(ep.name)}</div>
+        <div class="ep-loc">${esc(ep.location||ep.address)}</div>
+        ${failReason&&status==='failed'?`<div style="font-family:var(--mono);font-size:9px;color:var(--red);margin-top:2px">${esc(failReason)}</div>`:''}
+      </td>
+      <td><span class="ep-st ${status}">${status.toUpperCase()}</span></td>
+      <td><div class="rcw">
+        <button class="rc ${ma?'muted':''}" onclick="epAudio('${ep.id}')" title="${ma?'Unmute':'Mute'} audio" ${!live||busy?'disabled':''}>
+          ${busy?'<span class="spin" style="font-size:11px">◌</span>':ma?'🔇':'🎤'}
+        </button>
+        <button class="rc ${mv?'muted':''}" onclick="epVideo('${ep.id}')" title="${mv?'Enable':'Disable'} video" ${!live||busy?'disabled':''}>
+          ${mv?'🚫':'📷'}
+        </button>
+        <button class="rc ${isHost?'host':''}" onclick="epHost('${ep.id}')" title="${isHost?'Revoke host':'Make host'}" ${!live||busy?'disabled':''}>⭐</button>
+        <div class="rc-sep"></div>
+        ${live||status==='calling'
+          ?`<button class="rc disc" onclick="epDisconnect('${ep.id}')" title="Disconnect" ${busy?'disabled':''}>✕</button>`
+          :`<button class="rc conn" onclick="epReconnect('${ep.id}')" title="Reconnect" ${busy?'disabled':''}>↻</button>`}
+        <button class="rc" onclick="removeEP('${ep.id}')" title="Remove from list" style="font-size:12px;color:var(--text3)">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EP COMMANDS ───────────────────────────────────────────────
+async function epAudio(id){
+  const ep=getEP(id);if(!ep||ep.busy)return;
+  if(!ep.participantId){notify('No participant ID — not yet connected','warn');return;}
+  ep.busy=true;renderEPs();
+  const resp=await cmdParticipant(ep.audioMuted?'unmute':'mute',ep.participantId);
+  if(resp?.status==='success'||resp?.result===true){ep.audioMuted=!ep.audioMuted;notify(`${ep.name}: audio ${ep.audioMuted?'muted':'unmuted'}`,ep.audioMuted?'warn':'ok');}
+  else notify(`${ep.name}: audio command failed`,'err');
+  ep.busy=false;renderEPs();
+}
+async function epVideo(id){
+  const ep=getEP(id);if(!ep||ep.busy)return;
+  if(!ep.participantId){notify('No participant ID','warn');return;}
+  ep.busy=true;renderEPs();
+  const resp=await cmdParticipant(ep.videoMuted?'video_unmuted':'video_muted',ep.participantId);
+  if(resp?.status==='success'||resp?.result===true){ep.videoMuted=!ep.videoMuted;notify(`${ep.name}: video ${ep.videoMuted?'disabled':'enabled'}`,ep.videoMuted?'warn':'ok');}
+  else notify(`${ep.name}: video command failed`,'err');
+  ep.busy=false;renderEPs();
+}
+async function epHost(id){
+  const ep=getEP(id);if(!ep||ep.busy)return;
+  if(!ep.participantId){notify('No participant ID','warn');return;}
+  ep.busy=true;renderEPs();
+  const resp=await cmdRole(ep.participantId,ep.isHost?'guest':'chair');
+  if(resp?.status==='success'||resp?.result===true){ep.isHost=!ep.isHost;notify(`${ep.name}: ${ep.isHost?'host granted':'host revoked'}`,ep.isHost?'ok':'warn');}
+  else notify(`${ep.name}: role command failed`,'err');
+  ep.busy=false;renderEPs();
+}
+async function epDisconnect(id){
+  const ep=getEP(id);if(!ep||ep.busy)return;
+  if(!ep.participantId){ep.status='disconnected';renderEPs();return;}
+  ep.busy=true;renderEPs();
+  await cmdParticipant('disconnect',ep.participantId);
+  ep.status='disconnected';ep.participantId=null;ep.busy=false;
+  renderEPs();notify(`${ep.name} disconnected`,'warn');
+}
+async function epReconnect(id){
+  const ep=getEP(id);if(!ep||ep.busy)return;
+  const c=confs[activeId];if(!c)return;
+  ep.failReason=null;
+  await dialEP(ep,c.vmr.alias);
+  notify(`${ep.name}: ${ep.status}`,ep.status==='connected'?'ok':'err');
+}
+function removeEP(id){
+  const c=confs[activeId];if(!c)return;
+  c.endpoints=c.endpoints.filter(e=>e.id!==id);renderEPs();
+}
+function getEP(id){return confs[activeId]?.endpoints.find(e=>e.id===id);}
+
+// ── ADD SITE ──────────────────────────────────────────────────
+async function addSite(){
+  const c=confs[activeId];if(!c)return;
+  const addr=document.getElementById('add-addr').value.trim();
+  const name=document.getElementById('add-name').value.trim()||addr;
+  const proto=document.getElementById('add-proto').value;
+  if(!addr){notify('Enter an address','err');return;}
+  const ep={id:uid(),name,location:'',address:addr,protocol:proto,status:'calling',audioMuted:false,videoMuted:false,isHost:false,participantId:null,busy:false};
+  c.endpoints.push(ep);
+  document.getElementById('add-addr').value='';
+  document.getElementById('add-name').value='';
+  await dialEP(ep,c.vmr.alias);
+  notify(`${name}: ${ep.status}`,ep.status==='connected'?'ok':'err');
+}
+async function dialFromAB(contactId){
+  const c=confs[activeId];
+  const contact=contacts.find(x=>x.id===contactId);
+  if(!c||!contact){notify('No active conference selected','err');return;}
+  const addr=contact.sip||contact.h323;
+  const proto=contact.sip?'sip':'h323';
+  if(!addr){notify('No address for this contact','err');return;}
+  const ep={id:uid(),name:contact.name,location:contact.location||'',address:addr,protocol:proto,status:'calling',audioMuted:false,videoMuted:false,isHost:false,participantId:null,busy:false};
+  c.endpoints.push(ep);
+  notify(`Dialling ${contact.name} into ${c.vmr.name}…`,'ok');
+  await dialEP(ep,c.vmr.alias);
+  notify(`${contact.name}: ${ep.status}`,ep.status==='connected'?'ok':'err');
+  showView('live');
+}
+
+// ── CONF CONTROLS ─────────────────────────────────────────────
+async function ccMuteAll(mute){
+  const c=confs[activeId];if(!c)return;
+  const live=c.endpoints.filter(e=>e.status==='connected'&&e.participantId);
+  await Promise.allSettled(live.map(async ep=>{
+    const resp=await cmdParticipant(mute?'mute':'unmute',ep.participantId);
+    if(resp?.status==='success'||resp?.result===true)ep.audioMuted=mute;
+  }));
+  renderEPs();notify(mute?'All sites muted':'All sites unmuted',mute?'warn':'ok');
+}
+function ccRecord(){
+  const c=confs[activeId];if(!c)return;
+  c.recording=!c.recording;
+  document.getElementById('cc-rec').className='cc '+(c.recording?'rec':'amb');
+  document.getElementById('cc-rec').textContent=c.recording?'⏹ Stop Record':'⏺ Record';
+  notify(c.recording?'Recording started':'Recording stopped',c.recording?'ok':'warn');
+}
+function ccLock(){
+  const c=confs[activeId];if(!c)return;
+  c.locked=!c.locked;
+  document.getElementById('cc-lock').textContent=c.locked?'🔓 Unlock':'🔒 Lock';
+  notify(c.locked?'Conference locked':'Conference unlocked',c.locked?'warn':'ok');
+}
+function ccEnd(){
+  const c=confs[activeId];if(!c)return;
+  if(!confirm(`End "${c.vmr.name}" and disconnect all sites?`))return;
+  c.endpoints.filter(e=>e.participantId).forEach(ep=>cmdParticipant('disconnect',ep.participantId));
+  clearInterval(c.timerInt);delete confs[activeId];
+  const r=Object.keys(confs);activeId=r.length?r[0]:null;
+  updateTabs();activeId?showView('live'):showView('home');
+  notify('Conference ended','warn');
+}
+function endConf(id){
+  const c=confs[id];if(!c)return;
+  if(!confirm(`End "${c.vmr.name}"?`))return;
+  c.endpoints.filter(e=>e.participantId).forEach(ep=>cmdParticipant('disconnect',ep.participantId));
+  clearInterval(c.timerInt);delete confs[id];
+  if(activeId===id){const r=Object.keys(confs);activeId=r.length?r[0]:null;}
+  updateTabs();activeId?showView('live'):showView('home');
+  notify('Conference ended','warn');
+}
+
+// ── POLLING ───────────────────────────────────────────────────
+function startPoll(){
+  if(pollInt)return;
+  document.getElementById('sync-dot').style.display='block';
+  pollInt=setInterval(pollStatus,8000);
+}
+function stopPoll(){
+  if(pollInt){clearInterval(pollInt);pollInt=null;}
+  const el=document.getElementById('sync-dot');if(el)el.style.display='none';
+}
+async function pollStatus(){
+  const c=confs[activeId];if(!c)return;
+  const data=await mgmtGet(`/api/admin/status/v1/participant/?conference__name=${encodeURIComponent(c.vmr.name)}&limit=100`);
+  if(!data)return;
+  const live=data.objects||data.results||[];
+  const liveIds=new Set(live.map(p=>p.id||p.uuid));
+  c.endpoints.forEach(ep=>{
+    if(ep.participantId&&!liveIds.has(ep.participantId)&&ep.status==='connected'){
+      ep.status='disconnected';ep.participantId=null;
+    }
+  });
+  live.forEach(p=>{
+    const ep=c.endpoints.find(e=>e.participantId===p.id||e.participantId===p.uuid);
+    if(ep){ep.audioMuted=!!p.is_muted;ep.videoMuted=!!p.is_video_muted;ep.isHost=p.role==='chair'||p.role==='host';}
+  });
+  renderEPs();
+}
+
+// ── ADDRESS BOOK ──────────────────────────────────────────────
+function renderAB(){
+  const q=(document.getElementById('ab-q')?.value||'').toLowerCase();
+  const f=contacts.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.location||'').toLowerCase().includes(q)||(c.sip||'').toLowerCase().includes(q)||(c.h323||'').toLowerCase().includes(q));
+  document.getElementById('ab-badge').textContent=contacts.length+' contact'+(contacts.length!==1?'s':'');
+  const tbody=document.getElementById('ab-tbody');
+  const empty=document.getElementById('ab-empty');
+  if(!f.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const hasConf=!!activeId;
+  tbody.innerHTML=f.map(c=>`<tr>
+    <td><div class="ab-name">${esc(c.name)}</div></td>
+    <td><div class="ab-loc">${esc(c.location||'—')}</div></td>
+    <td><div class="ab-sip">${esc(c.sip||'—')}</div></td>
+    <td><div class="ab-h323">${esc(c.h323||'—')}</div></td>
+    <td><div style="display:flex;gap:5px">
+      <button class="dbt dial" ${hasConf?'':'disabled'} onclick="dialFromAB('${c.id}')"
+        title="${hasConf?'Dial into '+confs[activeId]?.vmr?.name:'No active conference'}">
+        ${hasConf?'⏎ Dial':'No Conf'}
+      </button>
+      <button class="dbt edit" onclick="openContact('${c.id}')">Edit</button>
+      <button class="dbt del" onclick="deleteContact('${c.id}')">✕</button>
+    </div></td>
+  </tr>`).join('');
+}
+function openContact(id){
+  abEditId=id;
+  const c=id?contacts.find(x=>x.id===id):null;
+  document.getElementById('ab-m-title').textContent=c?'Edit Contact':'Add Contact';
+  document.getElementById('ab-name').value=c?.name||'';
+  document.getElementById('ab-loc').value=c?.location||'';
+  document.getElementById('ab-sip').value=c?.sip||'';
+  document.getElementById('ab-h323').value=c?.h323||'';
+  document.getElementById('ab-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('ab-name').focus(),100);
+}
+function closeContact(){document.getElementById('ab-modal').classList.remove('open');}
+function saveContact(){
+  const name=document.getElementById('ab-name').value.trim();
+  if(!name){notify('Name required','err');return;}
+  const c={id:abEditId||uid(),name,location:document.getElementById('ab-loc').value.trim(),sip:document.getElementById('ab-sip').value.trim(),h323:document.getElementById('ab-h323').value.trim()};
+  if(abEditId){const i=contacts.findIndex(x=>x.id===abEditId);if(i>=0)contacts[i]=c;}
+  else contacts.push(c);
+  saveAB();renderAB();closeContact();notify(`"${name}" saved`,'ok');
+}
+function deleteContact(id){
+  const c=contacts.find(x=>x.id===id);if(!c)return;
+  if(!confirm(`Delete "${c.name}"?`))return;
+  contacts=contacts.filter(x=>x.id!==id);
+  saveAB();renderAB();notify(`Deleted "${c.name}"`,'warn');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ago(t){const s=Math.floor((Date.now()-t)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';}
+let nTO;
+function notify(msg,type='ok'){
+  const n=document.getElementById('notif');
+  n.textContent=msg;n.className='notif show'+(type==='warn'?' warn':type==='err'?' err':'');
+  clearTimeout(nTO);nTO=setTimeout(()=>n.classList.remove('show'),3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadData();
+showView('home');
+</script>
+</body>
+</html>

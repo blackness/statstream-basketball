@@ -1,0 +1,219 @@
+
+<h2 class="sr-only">Complete investment dashboard combining annual returns 2009–2025, compound average returns by holding period, growth of $10,000, and benchmark comparisons against CDN T-bills, S&P/TSX, and S&P 500.</h2>
+
+<style>
+.d{font-family:var(--font-sans);padding:1.5rem 0 0;}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem;}
+.mc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.85rem 1rem;}
+.ml{font-size:11px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.mv{font-size:20px;font-weight:500;color:var(--color-text-primary);}
+.ms{font-size:10px;color:var(--color-text-tertiary);margin-top:2px;}
+.sec{margin-bottom:1.75rem;}
+.sl{font-size:11px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;}
+.leg span{display:flex;align-items:center;gap:5px;}
+.sw{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.cw{position:relative;width:100%;}
+.tab-bar{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap;}
+.tb{padding:4px 12px;border-radius:var(--border-radius-md);border:.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:transparent;color:var(--color-text-secondary);}
+.tb.on{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;border-color:var(--color-border-primary);}
+.divider{height:.5px;background:var(--color-border-tertiary);margin:1.5rem 0;}
+</style>
+
+<div class="d">
+
+<div class="metrics">
+  <div class="mc"><div class="ml">Best year</div><div class="mv" style="color:#1D9E75;">+148.4%</div><div class="ms">2020</div></div>
+  <div class="mc"><div class="ml">Worst year</div><div class="mv" style="color:#E24B4A;">−54.9%</div><div class="ms">2022</div></div>
+  <div class="mc"><div class="ml">10-yr CAGR</div><div class="mv" style="color:#1D9E75;">22.59%</div><div class="ms">annualised</div></div>
+  <div class="mc"><div class="ml">Up / down years</div><div class="mv">13 / 4</div><div class="ms">of 17</div></div>
+</div>
+
+<div class="sec">
+  <div class="sl">Annual returns 2009–2025</div>
+  <div class="leg">
+    <span><span class="sw" style="background:#1D9E75;"></span>Positive</span>
+    <span><span class="sw" style="background:#E24B4A;"></span>Negative</span>
+  </div>
+  <div class="cw" style="height:260px;"><canvas id="c1" role="img" aria-label="Annual returns 2009 to 2025. Best year 2020 at +148.4%, worst 2022 at -54.9%.">Annual return bars 2009–2025.</canvas></div>
+</div>
+
+<div class="divider"></div>
+
+<div class="sec">
+  <div class="sl">Compound avg. return by holding period</div>
+  <div class="cw" style="height:190px;"><canvas id="c2" role="img" aria-label="CAGR by holding period from 1 to 17 years. Peaks around 3 years at 43%.">CAGR line chart 1–17 years.</canvas></div>
+</div>
+
+<div class="divider"></div>
+
+<div class="sec">
+  <div class="sl">$10,000 growth at 17-yr CAGR (16.24%)</div>
+  <div class="cw" style="height:180px;"><canvas id="c3" role="img" aria-label="Hypothetical $10,000 invested in 2009 growing to approximately $127,000 by 2025.">Growth chart 2009–2025.</canvas></div>
+</div>
+
+<div class="divider"></div>
+
+<div class="sec">
+  <div class="sl">Benchmark comparison</div>
+  <div class="leg">
+    <span><span class="sw" style="background:#534AB7;"></span>Your portfolio</span>
+    <span><span class="sw" style="background:#888780;"></span>CDN T-bills</span>
+    <span><span class="sw" style="background:#D85A30;"></span>S&P/TSX composite</span>
+    <span><span class="sw" style="background:#378ADD;"></span>S&P 500</span>
+  </div>
+  <div class="tab-bar" id="tabs"></div>
+  <div id="bsections"></div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gc = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+const tc = isDark ? '#9a9a8e' : '#888780';
+
+const baseOpts = (fmtY) => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.parsed.y>=0?'+':'')+ctx.parsed.y.toFixed(2)+'%'}}},
+  scales:{
+    x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:45},grid:{color:gc}},
+    y:{ticks:{color:tc,font:{size:11},callback:fmtY||((v)=>(v>=0?'+':'')+v+'%')},grid:{color:gc}}
+  }
+});
+
+const annualData=[
+  {y:'2009',r:6.46},{y:'2010',r:67.91},{y:'2011',r:-38.67},{y:'2012',r:-15.10},
+  {y:'2013',r:45.14},{y:'2014',r:11.88},{y:'2015',r:4.46},{y:'2016',r:22.12},
+  {y:'2017',r:12.96},{y:'2018',r:-8.94},{y:'2019',r:67.37},{y:'2020',r:148.40},
+  {y:'2021',r:10.98},{y:'2022',r:-54.93},{y:'2023',r:44.56},{y:'2024',r:50.70},{y:'2025',r:34.70}
+];
+
+new Chart(document.getElementById('c1'),{
+  type:'bar',
+  data:{
+    labels:annualData.map(d=>d.y),
+    datasets:[{
+      data:annualData.map(d=>d.r),
+      backgroundColor:annualData.map(d=>d.r>=0?'rgba(29,158,117,0.8)':'rgba(226,75,74,0.8)'),
+      borderColor:annualData.map(d=>d.r>=0?'#1D9E75':'#E24B4A'),
+      borderWidth:1,borderRadius:3
+    }]
+  },
+  options:{...baseOpts(),scales:{...baseOpts().scales,x:{ticks:{color:tc,font:{size:10},autoSkip:false,maxRotation:45},grid:{color:gc}}}}
+});
+
+const cagrData=[
+  {yr:1,v:34.70},{yr:2,v:42.47},{yr:3,v:43.16},{yr:4,v:7.24},{yr:5,v:7.98},
+  {yr:6,v:24.06},{yr:7,v:29.48},{yr:8,v:23.91},{yr:9,v:22.64},{yr:10,v:22.59},
+  {yr:11,v:20.82},{yr:12,v:20.05},{yr:13,v:21.81},{yr:14,v:18.71},
+  {yr:15,v:13.60},{yr:16,v:16.41},{yr:17,v:16.24}
+];
+
+new Chart(document.getElementById('c2'),{
+  type:'line',
+  data:{
+    labels:cagrData.map(d=>d.yr+'yr'),
+    datasets:[{
+      data:cagrData.map(d=>d.v),
+      borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.1)',
+      fill:true,tension:0.35,pointRadius:3,
+      pointBackgroundColor:'#378ADD',pointBorderColor:isDark?'#1e1e1e':'#fff',pointBorderWidth:2
+    }]
+  },
+  options:{...baseOpts(),scales:{
+    x:{ticks:{color:tc,font:{size:11},autoSkip:false,maxRotation:0},grid:{color:gc}},
+    y:{ticks:{color:tc,font:{size:11},callback:v=>v+'%'},grid:{color:gc},min:0}
+  }}
+});
+
+const growthLabels=['Start',...Array.from({length:17},(_,i)=>'20'+(String(9+i+1).padStart(2,'0')))];
+const growthVals=Array.from({length:18},(_,i)=>+(10000*Math.pow(1.1624,i)).toFixed(0));
+
+new Chart(document.getElementById('c3'),{
+  type:'line',
+  data:{
+    labels:growthLabels,
+    datasets:[{
+      data:growthVals,
+      borderColor:'#534AB7',backgroundColor:'rgba(83,74,183,0.1)',
+      fill:true,tension:0.3,pointRadius:0,pointHoverRadius:4
+    }]
+  },
+  options:{...baseOpts(),
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString()}}},
+    scales:{
+      x:{ticks:{color:tc,font:{size:11},autoSkip:true,maxTicksLimit:9},grid:{color:gc}},
+      y:{ticks:{color:tc,font:{size:11},callback:v=>'$'+(v/1000).toFixed(0)+'k'},grid:{color:gc},min:0}
+    }
+  }
+});
+
+const benchPeriods={
+  'Year-to-date':{port:-11.35,tbill:0.52,tsx:3.93,sp:-2.71},
+  'Last 12 months':{port:30.92,tbill:2.52,tsx:34.83,sp:14.22},
+  'Last 3 years':{port:29.98,tbill:3.95,tsx:21.18,sp:19.49},
+  'Since inception':{port:15.15,tbill:1.49,tsx:10.29,sp:16.15}
+};
+const bColors={port:'#534AB7',tbill:'#888780',tsx:'#D85A30',sp:'#378ADD'};
+const bLabels={port:'Your portfolio',tbill:'CDN T-bills',tsx:'S&P/TSX composite',sp:'S&P 500'};
+const bKeys=Object.keys(benchPeriods);
+
+const tabBar=document.getElementById('tabs');
+const bsec=document.getElementById('bsections');
+const bCharts={};
+let activeB=0;
+
+bKeys.forEach((p,i)=>{
+  const sec=document.createElement('div');
+  sec.id='bs'+i; sec.style.display=i===0?'':'none';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:relative;width:100%;height:200px;';
+  const cv=document.createElement('canvas');
+  cv.id='bc'+i;
+  cv.setAttribute('role','img');
+  cv.setAttribute('aria-label',p+' benchmark comparison');
+  cv.textContent=p+' returns.';
+  wrap.appendChild(cv); sec.appendChild(wrap); bsec.appendChild(sec);
+
+  const btn=document.createElement('button');
+  btn.className='tb'+(i===0?' on':'');
+  btn.textContent=p;
+  btn.onclick=()=>{
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById('bs'+activeB).style.display='none';
+    document.getElementById('bs'+i).style.display='';
+    if(!bCharts[i]) renderBench(i);
+    activeB=i;
+  };
+  tabBar.appendChild(btn);
+});
+
+function renderBench(i){
+  const p=bKeys[i]; const d=benchPeriods[p];
+  const keys=['port','tbill','tsx','sp'];
+  bCharts[i]=new Chart(document.getElementById('bc'+i),{
+    type:'bar',
+    data:{
+      labels:keys.map(k=>bLabels[k]),
+      datasets:[{
+        data:keys.map(k=>d[k]),
+        backgroundColor:keys.map(k=>bColors[k]+'cc'),
+        borderColor:keys.map(k=>bColors[k]),
+        borderWidth:1.5,borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+(ctx.parsed.y>=0?'+':'')+ctx.parsed.y.toFixed(2)+'%'}}},
+      scales:{
+        x:{ticks:{color:tc,font:{size:11},autoSkip:false},grid:{color:gc}},
+        y:{ticks:{color:tc,font:{size:11},callback:v=>(v>=0?'+':'')+v+'%'},grid:{color:gc}}
+      }
+    }
+  });
+}
+renderBench(0);
+</script>

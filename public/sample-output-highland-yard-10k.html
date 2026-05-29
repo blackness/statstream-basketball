@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highland Yard 10K — August 1, 2026</title>
+<meta name="description" content="Highland Yard 10K race results">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --ink: #0f1115;
+  --ink-2: #2a2e36;
+  --ink-3: #5b6270;
+  --ink-4: #8a909c;
+  --line: #e6e8ec;
+  --line-2: #eef0f3;
+  --accent: #ff5a1f;
+  --accent-deep: #e6511c;
+  --accent-soft: #fff2ed;
+  --radius: 14px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 28px; }
+
+/* HEADER */
+header.top {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 50;
+}
+header.top .inner {
+  max-width: 1280px; margin: 0 auto; padding: 14px 28px;
+  display: flex; align-items: center; gap: 14px;
+}
+header.top .mark, header.top .logo {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: grid; place-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700; font-size: 17px;
+  background: var(--ink); color: #fff;
+  position: relative;
+}
+header.top .mark::after {
+  content:""; position:absolute; right:5px; bottom:5px; width:6px; height:6px; border-radius:50%; background: var(--accent);
+}
+header.top .logo { background: transparent; padding: 0; }
+header.top .logo img { width: 100%; height: 100%; object-fit: contain; }
+header.top .meta-bar { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-4); margin-left: auto; letter-spacing: .04em; }
+header.top .title-block { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+header.top .title-date { font-size: 12px; color: var(--ink-4); font-family: 'JetBrains Mono', monospace; }
+
+/* HERO */
+.hero { padding: 56px 0 28px; }
+.hero .eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent-deep); background: var(--accent-soft);
+  padding: 6px 12px; border-radius: 999px;
+  margin-bottom: 18px;
+}
+.hero .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.hero h1 {
+  font-family: 'Inter', sans-serif; font-weight: 800;
+  font-size: clamp(36px, 5.5vw, 64px); line-height: 1.04; letter-spacing: -.03em;
+  margin: 0 0 12px;
+}
+.hero .subtitle {
+  font-size: 17px; color: var(--ink-3); max-width: 720px; margin: 0;
+}
+.hero .meta {
+  margin-top: 18px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px; font-weight: 500; color: var(--ink-3);
+}
+.hero .meta .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+.hero .meta .pill svg { color: var(--accent); }
+
+/* STATS */
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-top: 28px;
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.stat .num {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  font-size: 30px; line-height: 1; letter-spacing: -.02em; margin-bottom: 4px;
+  font-feature-settings: "tnum";
+}
+.stat .num .accent { color: var(--accent); }
+.stat .label { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+
+/* CONTROLS */
+.controls {
+  margin-top: 28px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+.search-box {
+  flex: 1; min-width: 240px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 4px 4px 16px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.search-box:focus-within {
+  border-color: var(--ink); box-shadow: 0 0 0 3px rgba(15,17,21,.06);
+}
+.search-box svg { color: var(--ink-4); flex-shrink: 0; }
+.search-box input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font: inherit; font-size: 14px; padding: 9px 0;
+  color: var(--ink);
+}
+.search-box .clear {
+  display: none;
+  background: var(--surface-2); border: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; color: var(--ink-3);
+  font-size: 14px; line-height: 1;
+  align-items: center; justify-content: center;
+}
+.search-box.has-val .clear { display: inline-flex; }
+
+.filter, .density {
+  font: inherit; font-size: 13px; padding: 9px 32px 9px 14px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--ink-2); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6270' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  font-weight: 500;
+}
+.filter:focus, .density:focus { outline: none; border-color: var(--ink); }
+
+.export-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border-radius: 999px;
+  background: var(--ink); color: #fff;
+  border: none; font: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .15s ease;
+}
+.export-btn:hover { background: var(--accent); }
+
+/* TABLE */
+.table-wrap {
+  margin-top: 18px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15,17,21,.04);
+}
+.table-scroll { overflow-x: auto; }
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13.5px;
+}
+thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface-2);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-2);
+  text-align: left; padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+thead th.sortable {
+  cursor: pointer; user-select: none;
+  transition: background .12s ease;
+}
+thead th.sortable:hover { background: var(--line-2); }
+thead th.sortable .sort-arrow {
+  display: inline-block; margin-left: 6px;
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink-4);
+  vertical-align: middle;
+  opacity: .35;
+  transition: transform .15s ease, opacity .15s ease, border-top-color .15s ease;
+}
+thead th.sortable.sort-asc .sort-arrow {
+  transform: rotate(180deg); opacity: 1; border-top-color: var(--accent);
+}
+thead th.sortable.sort-desc .sort-arrow { opacity: 1; border-top-color: var(--accent); }
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line-2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--accent-soft); }
+tbody td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--ink-2); font-feature-settings: "tnum"; }
+tbody td.num { text-align: right; }
+tbody td.strong { font-weight: 600; color: var(--ink); }
+tbody td.split-col { color: var(--ink-3); font-weight: 500; }
+tbody td[data-key="place"] {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  color: var(--ink); font-size: 14px;
+}
+tbody tr:nth-child(1) td[data-key="place"]::before {
+  content: "🥇 "; font-size: 12px;
+}
+tbody tr:nth-child(2) td[data-key="place"]::before {
+  content: "🥈 "; font-size: 12px;
+}
+tbody tr:nth-child(3) td[data-key="place"]::before {
+  content: "🥉 "; font-size: 12px;
+}
+tbody tr.hidden { display: none; }
+tbody td[data-key="name"] { font-weight: 600; color: var(--ink); }
+
+/* DENSITY */
+body.compact tbody td { padding: 7px 14px; font-size: 12.5px; }
+body.compact thead th { padding: 9px 14px; }
+
+/* EMPTY */
+.empty {
+  display: none; padding: 60px 20px; text-align: center; color: var(--ink-3);
+}
+.empty.visible { display: block; }
+.empty strong { display: block; font-size: 16px; color: var(--ink); margin-bottom: 6px; }
+
+/* FOOTER */
+footer.bottom {
+  border-top: 1px solid var(--line);
+  padding: 28px 0 36px;
+  margin-top: 60px;
+  font-size: 13px; color: var(--ink-4);
+  text-align: center;
+}
+footer.bottom strong { color: var(--ink-2); font-weight: 600; }
+
+@media (max-width: 720px) {
+  .wrap { padding: 0 18px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .hero { padding-top: 36px; }
+  .hero h1 { font-size: 36px; }
+  thead th, tbody td { padding: 9px 10px; font-size: 12.5px; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <span class="mark">H</span>
+    <div>
+      <div class="title-block">Highland Yard 10K</div>
+      <div class="title-date">August 1, 2026</div>
+    </div>
+    <span class="meta-bar">35 finishers</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow"><span class="dot"></span>Official Results</span>
+    <h1>Highland Yard 10K</h1>
+    <p class="subtitle">10K Open · Final results</p>
+    <div class="meta">
+      <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>August 1, 2026</span>
+      <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Haliburton, ON</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="num"><span class="accent">35</span></div>
+        <div class="label">Finishers</div>
+      </div>
+      <div class="stat">
+        <div class="num">36:42</div>
+        <div class="label">Fastest Time</div>
+      </div>
+      <div class="stat">
+        <div class="num">3</div>
+        <div class="label">Filterable Categories</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search-box" id="searchBox">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search by name, bib, team, city…" autocomplete="off">
+        <button class="clear" id="clearBtn" aria-label="Clear">×</button>
+      </div>
+      <select class="filter" data-facet="gender"><option value="">All Genders</option><option value="F">F</option><option value="M">M</option></select><select class="filter" data-facet="category"><option value="">All Categorys</option><option value="10K Masters">10K Masters</option><option value="10K Open">10K Open</option></select><select class="filter" data-facet="ageGroup"><option value="">All Age Groups</option><option value="F19-24">F19-24</option><option value="F25-29">F25-29</option><option value="F30-34">F30-34</option><option value="F35-39">F35-39</option><option value="F40-44">F40-44</option><option value="M19-24">M19-24</option><option value="M25-29">M25-29</option><option value="M30-34">M30-34</option><option value="M35-39">M35-39</option><option value="M40-44">M40-44</option><option value="M45-49">M45-49</option><option value="M50-54">M50-54</option><option value="M55-59">M55-59</option></select>
+      <select class="density" id="density">
+        <option value="comfort">Comfort</option>
+        <option value="compact">Compact</option>
+      </select>
+      <button class="export-btn" id="exportCsv">Export CSV</button>
+    </div>
+  </section>
+
+  <section class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th data-col="0" data-key="place" class="sortable">Place<span class="sort-arrow"></span></th><th data-col="1" data-key="bib" class="sortable">Bib<span class="sort-arrow"></span></th><th data-col="2" data-key="name">Name</th><th data-col="3" data-key="gender">Gender</th><th data-col="4" data-key="age" class="sortable">Age<span class="sort-arrow"></span></th><th data-col="5" data-key="ageGroup">AG</th><th data-col="6" data-key="category">Category</th><th data-col="7" data-key="team">Team</th><th data-col="8" data-key="city">City</th><th data-col="9" data-key="time" class="sortable">Time<span class="sort-arrow"></span></th><th data-col="10" data-key="gunTime" class="sortable">Gun<span class="sort-arrow"></span></th><th data-col="11" data-key="pace" class="sortable">Pace<span class="sort-arrow"></span></th><th data-col="12" data-key="split:0" class="sortable">5K Split<span class="sort-arrow"></span></th></tr>
+        </thead>
+        <tbody>
+<tr data-search="1 142 sarah patterson f 28 f25-29 10k open peterborough runners peterborough on 36:42" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">1</td><td class="mono" data-key="bib">142</td><td data-key="name">Sarah Patterson</td><td data-key="gender">F</td><td class="mono num" data-key="age">28</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">36:42</td><td class="mono num" data-key="gunTime">36:44</td><td class="mono num" data-key="pace">3:40</td><td class="mono num split-col" data-key="split:0">17:58</td></tr>
+<tr data-search="2 87 michael chen m 32 m30-34 10k open kawartha ac lindsay on 36:55" data-gender="M" data-category="10K Open" data-agegroup="M30-34"><td class="mono" data-key="place">2</td><td class="mono" data-key="bib">87</td><td data-key="name">Michael Chen</td><td data-key="gender">M</td><td class="mono num" data-key="age">32</td><td data-key="ageGroup">M30-34</td><td data-key="category">10K Open</td><td data-key="team">Kawartha AC</td><td data-key="city">Lindsay ON</td><td class="mono num strong" data-key="time">36:55</td><td class="mono num" data-key="gunTime">36:56</td><td class="mono num" data-key="pace">3:42</td><td class="mono num split-col" data-key="split:0">18:05</td></tr>
+<tr data-search="3 201 david romero m 29 m25-29 10k open toronto on 37:14" data-gender="M" data-category="10K Open" data-agegroup="M25-29"><td class="mono" data-key="place">3</td><td class="mono" data-key="bib">201</td><td data-key="name">David Romero</td><td data-key="gender">M</td><td class="mono num" data-key="age">29</td><td data-key="ageGroup">M25-29</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Toronto ON</td><td class="mono num strong" data-key="time">37:14</td><td class="mono num" data-key="gunTime">37:16</td><td class="mono num" data-key="pace">3:43</td><td class="mono num split-col" data-key="split:0">18:22</td></tr>
+<tr data-search="4 55 jenna halloway f 34 f30-34 10k open trent tri club peterborough on 37:48" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">4</td><td class="mono" data-key="bib">55</td><td data-key="name">Jenna Halloway</td><td data-key="gender">F</td><td class="mono num" data-key="age">34</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team">Trent Tri Club</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">37:48</td><td class="mono num" data-key="gunTime">37:51</td><td class="mono num" data-key="pace">3:47</td><td class="mono num split-col" data-key="split:0">18:35</td></tr>
+<tr data-search="5 118 robert anderson m 41 m40-44 10k masters peterborough runners peterborough on 38:02" data-gender="M" data-category="10K Masters" data-agegroup="M40-44"><td class="mono" data-key="place">5</td><td class="mono" data-key="bib">118</td><td data-key="name">Robert Anderson</td><td data-key="gender">M</td><td class="mono num" data-key="age">41</td><td data-key="ageGroup">M40-44</td><td data-key="category">10K Masters</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">38:02</td><td class="mono num" data-key="gunTime">38:04</td><td class="mono num" data-key="pace">3:48</td><td class="mono num split-col" data-key="split:0">18:42</td></tr>
+<tr data-search="6 34 liam pasternak m 24 m19-24 10k open trent university peterborough on 38:31" data-gender="M" data-category="10K Open" data-agegroup="M19-24"><td class="mono" data-key="place">6</td><td class="mono" data-key="bib">34</td><td data-key="name">Liam Pasternak</td><td data-key="gender">M</td><td class="mono num" data-key="age">24</td><td data-key="ageGroup">M19-24</td><td data-key="category">10K Open</td><td data-key="team">Trent University</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">38:31</td><td class="mono num" data-key="gunTime">38:32</td><td class="mono num" data-key="pace">3:51</td><td class="mono num split-col" data-key="split:0">19:01</td></tr>
+<tr data-search="7 176 ashley beaumont f 31 f30-34 10k open peterborough on 39:17" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">7</td><td class="mono" data-key="bib">176</td><td data-key="name">Ashley Beaumont</td><td data-key="gender">F</td><td class="mono num" data-key="age">31</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">39:17</td><td class="mono num" data-key="gunTime">39:20</td><td class="mono num" data-key="pace">3:55</td><td class="mono num split-col" data-key="split:0">19:25</td></tr>
+<tr data-search="8 93 nathan kowalski m 38 m35-39 10k open lakefield runners lakefield on 39:44" data-gender="M" data-category="10K Open" data-agegroup="M35-39"><td class="mono" data-key="place">8</td><td class="mono" data-key="bib">93</td><td data-key="name">Nathan Kowalski</td><td data-key="gender">M</td><td class="mono num" data-key="age">38</td><td data-key="ageGroup">M35-39</td><td data-key="category">10K Open</td><td data-key="team">Lakefield Runners</td><td data-key="city">Lakefield ON</td><td class="mono num strong" data-key="time">39:44</td><td class="mono num" data-key="gunTime">39:46</td><td class="mono num" data-key="pace">3:58</td><td class="mono num split-col" data-key="split:0">19:38</td></tr>
+<tr data-search="9 261 emma sullivan f 26 f25-29 10k open peterborough runners peterborough on 40:15" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">9</td><td class="mono" data-key="bib">261</td><td data-key="name">Emma Sullivan</td><td data-key="gender">F</td><td class="mono num" data-key="age">26</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">40:15</td><td class="mono num" data-key="gunTime">40:17</td><td class="mono num" data-key="pace">4:01</td><td class="mono num split-col" data-key="split:0">19:52</td></tr>
+<tr data-search="10 12 marcus tremblay m 45 m45-49 10k masters peterborough on 40:38" data-gender="M" data-category="10K Masters" data-agegroup="M45-49"><td class="mono" data-key="place">10</td><td class="mono" data-key="bib">12</td><td data-key="name">Marcus Tremblay</td><td data-key="gender">M</td><td class="mono num" data-key="age">45</td><td data-key="ageGroup">M45-49</td><td data-key="category">10K Masters</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">40:38</td><td class="mono num" data-key="gunTime">40:41</td><td class="mono num" data-key="pace">4:03</td><td class="mono num split-col" data-key="split:0">20:04</td></tr>
+<tr data-search="11 189 hannah brookes f 29 f25-29 10k open trent tri club peterborough on 40:55" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">11</td><td class="mono" data-key="bib">189</td><td data-key="name">Hannah Brookes</td><td data-key="gender">F</td><td class="mono num" data-key="age">29</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Trent Tri Club</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">40:55</td><td class="mono num" data-key="gunTime">40:58</td><td class="mono num" data-key="pace">4:05</td><td class="mono num split-col" data-key="split:0">20:11</td></tr>
+<tr data-search="12 77 jordan whitfield m 33 m30-34 10k open toronto on 41:22" data-gender="M" data-category="10K Open" data-agegroup="M30-34"><td class="mono" data-key="place">12</td><td class="mono" data-key="bib">77</td><td data-key="name">Jordan Whitfield</td><td data-key="gender">M</td><td class="mono num" data-key="age">33</td><td data-key="ageGroup">M30-34</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Toronto ON</td><td class="mono num strong" data-key="time">41:22</td><td class="mono num" data-key="gunTime">41:25</td><td class="mono num" data-key="pace">4:08</td><td class="mono num split-col" data-key="split:0">20:24</td></tr>
+<tr data-search="13 224 karen fitzgerald f 42 f40-44 10k masters peterborough runners peterborough on 41:48" data-gender="F" data-category="10K Masters" data-agegroup="F40-44"><td class="mono" data-key="place">13</td><td class="mono" data-key="bib">224</td><td data-key="name">Karen Fitzgerald</td><td data-key="gender">F</td><td class="mono num" data-key="age">42</td><td data-key="ageGroup">F40-44</td><td data-key="category">10K Masters</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">41:48</td><td class="mono num" data-key="gunTime">41:52</td><td class="mono num" data-key="pace">4:11</td><td class="mono num split-col" data-key="split:0">20:38</td></tr>
+<tr data-search="14 156 tom bergeron m 27 m25-29 10k open lindsay on 42:13" data-gender="M" data-category="10K Open" data-agegroup="M25-29"><td class="mono" data-key="place">14</td><td class="mono" data-key="bib">156</td><td data-key="name">Tom Bergeron</td><td data-key="gender">M</td><td class="mono num" data-key="age">27</td><td data-key="ageGroup">M25-29</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Lindsay ON</td><td class="mono num strong" data-key="time">42:13</td><td class="mono num" data-key="gunTime">42:15</td><td class="mono num" data-key="pace">4:13</td><td class="mono num split-col" data-key="split:0">20:51</td></tr>
+<tr data-search="15 302 olivia marchetti f 24 f19-24 10k open trent university peterborough on 42:47" data-gender="F" data-category="10K Open" data-agegroup="F19-24"><td class="mono" data-key="place">15</td><td class="mono" data-key="bib">302</td><td data-key="name">Olivia Marchetti</td><td data-key="gender">F</td><td class="mono num" data-key="age">24</td><td data-key="ageGroup">F19-24</td><td data-key="category">10K Open</td><td data-key="team">Trent University</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">42:47</td><td class="mono num" data-key="gunTime">42:50</td><td class="mono num" data-key="pace">4:16</td><td class="mono num split-col" data-key="split:0">21:08</td></tr>
+<tr data-search="16 68 patrick donnelly m 52 m50-54 10k masters lakefield runners lakefield on 43:14" data-gender="M" data-category="10K Masters" data-agegroup="M50-54"><td class="mono" data-key="place">16</td><td class="mono" data-key="bib">68</td><td data-key="name">Patrick Donnelly</td><td data-key="gender">M</td><td class="mono num" data-key="age">52</td><td data-key="ageGroup">M50-54</td><td data-key="category">10K Masters</td><td data-key="team">Lakefield Runners</td><td data-key="city">Lakefield ON</td><td class="mono num strong" data-key="time">43:14</td><td class="mono num" data-key="gunTime">43:17</td><td class="mono num" data-key="pace">4:19</td><td class="mono num split-col" data-key="split:0">21:21</td></tr>
+<tr data-search="17 245 riley sutherland f 35 f35-39 10k open peterborough on 43:39" data-gender="F" data-category="10K Open" data-agegroup="F35-39"><td class="mono" data-key="place">17</td><td class="mono" data-key="bib">245</td><td data-key="name">Riley Sutherland</td><td data-key="gender">F</td><td class="mono num" data-key="age">35</td><td data-key="ageGroup">F35-39</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">43:39</td><td class="mono num" data-key="gunTime">43:42</td><td class="mono num" data-key="pace">4:21</td><td class="mono num split-col" data-key="split:0">21:34</td></tr>
+<tr data-search="18 109 christopher vance m 36 m35-39 10k open peterborough runners peterborough on 44:02" data-gender="M" data-category="10K Open" data-agegroup="M35-39"><td class="mono" data-key="place">18</td><td class="mono" data-key="bib">109</td><td data-key="name">Christopher Vance</td><td data-key="gender">M</td><td class="mono num" data-key="age">36</td><td data-key="ageGroup">M35-39</td><td data-key="category">10K Open</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">44:02</td><td class="mono num" data-key="gunTime">44:04</td><td class="mono num" data-key="pace">4:24</td><td class="mono num split-col" data-key="split:0">21:48</td></tr>
+<tr data-search="19 178 madeline cho f 30 f30-34 10k open kawartha ac lindsay on 44:28" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">19</td><td class="mono" data-key="bib">178</td><td data-key="name">Madeline Cho</td><td data-key="gender">F</td><td class="mono num" data-key="age">30</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team">Kawartha AC</td><td data-key="city">Lindsay ON</td><td class="mono num strong" data-key="time">44:28</td><td class="mono num" data-key="gunTime">44:32</td><td class="mono num" data-key="pace">4:26</td><td class="mono num split-col" data-key="split:0">21:59</td></tr>
+<tr data-search="20 91 stephen kowalewski m 48 m45-49 10k masters toronto on 44:51" data-gender="M" data-category="10K Masters" data-agegroup="M45-49"><td class="mono" data-key="place">20</td><td class="mono" data-key="bib">91</td><td data-key="name">Stephen Kowalewski</td><td data-key="gender">M</td><td class="mono num" data-key="age">48</td><td data-key="ageGroup">M45-49</td><td data-key="category">10K Masters</td><td data-key="team"></td><td data-key="city">Toronto ON</td><td class="mono num strong" data-key="time">44:51</td><td class="mono num" data-key="gunTime">44:54</td><td class="mono num" data-key="pace">4:29</td><td class="mono num split-col" data-key="split:0">22:11</td></tr>
+<tr data-search="21 267 catherine larkspur f 33 f30-34 10k open trent tri club peterborough on 45:18" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">21</td><td class="mono" data-key="bib">267</td><td data-key="name">Catherine Larkspur</td><td data-key="gender">F</td><td class="mono num" data-key="age">33</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team">Trent Tri Club</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">45:18</td><td class="mono num" data-key="gunTime">45:21</td><td class="mono num" data-key="pace">4:31</td><td class="mono num split-col" data-key="split:0">22:24</td></tr>
+<tr data-search="22 143 andrew magnusson m 29 m25-29 10k open peterborough on 45:42" data-gender="M" data-category="10K Open" data-agegroup="M25-29"><td class="mono" data-key="place">22</td><td class="mono" data-key="bib">143</td><td data-key="name">Andrew Magnusson</td><td data-key="gender">M</td><td class="mono num" data-key="age">29</td><td data-key="ageGroup">M25-29</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">45:42</td><td class="mono num" data-key="gunTime">45:45</td><td class="mono num" data-key="pace">4:34</td><td class="mono num split-col" data-key="split:0">22:38</td></tr>
+<tr data-search="23 205 jessica pemberton f 26 f25-29 10k open peterborough runners peterborough on 46:09" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">23</td><td class="mono" data-key="bib">205</td><td data-key="name">Jessica Pemberton</td><td data-key="gender">F</td><td class="mono num" data-key="age">26</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">46:09</td><td class="mono num" data-key="gunTime">46:13</td><td class="mono num" data-key="pace">4:36</td><td class="mono num split-col" data-key="split:0">22:51</td></tr>
+<tr data-search="24 52 kevin o&#39;sullivan m 55 m55-59 10k masters lakefield runners lakefield on 46:34" data-gender="M" data-category="10K Masters" data-agegroup="M55-59"><td class="mono" data-key="place">24</td><td class="mono" data-key="bib">52</td><td data-key="name">Kevin O&#39;Sullivan</td><td data-key="gender">M</td><td class="mono num" data-key="age">55</td><td data-key="ageGroup">M55-59</td><td data-key="category">10K Masters</td><td data-key="team">Lakefield Runners</td><td data-key="city">Lakefield ON</td><td class="mono num strong" data-key="time">46:34</td><td class="mono num" data-key="gunTime">46:37</td><td class="mono num" data-key="pace">4:39</td><td class="mono num split-col" data-key="split:0">23:04</td></tr>
+<tr data-search="25 288 rebecca holloway f 38 f35-39 10k open peterborough on 47:01" data-gender="F" data-category="10K Open" data-agegroup="F35-39"><td class="mono" data-key="place">25</td><td class="mono" data-key="bib">288</td><td data-key="name">Rebecca Holloway</td><td data-key="gender">F</td><td class="mono num" data-key="age">38</td><td data-key="ageGroup">F35-39</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">47:01</td><td class="mono num" data-key="gunTime">47:04</td><td class="mono num" data-key="pace">4:42</td><td class="mono num split-col" data-key="split:0">23:18</td></tr>
+<tr data-search="26 134 daniel hartwell m 42 m40-44 10k masters peterborough runners peterborough on 47:28" data-gender="M" data-category="10K Masters" data-agegroup="M40-44"><td class="mono" data-key="place">26</td><td class="mono" data-key="bib">134</td><td data-key="name">Daniel Hartwell</td><td data-key="gender">M</td><td class="mono num" data-key="age">42</td><td data-key="ageGroup">M40-44</td><td data-key="category">10K Masters</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">47:28</td><td class="mono num" data-key="gunTime">47:32</td><td class="mono num" data-key="pace">4:44</td><td class="mono num split-col" data-key="split:0">23:31</td></tr>
+<tr data-search="27 217 sophie vaillancourt f 28 f25-29 10k open trent university peterborough on 47:55" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">27</td><td class="mono" data-key="bib">217</td><td data-key="name">Sophie Vaillancourt</td><td data-key="gender">F</td><td class="mono num" data-key="age">28</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Trent University</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">47:55</td><td class="mono num" data-key="gunTime">47:58</td><td class="mono num" data-key="pace">4:47</td><td class="mono num split-col" data-key="split:0">23:44</td></tr>
+<tr data-search="28 79 thomas reinholt m 39 m35-39 10k open toronto on 48:22" data-gender="M" data-category="10K Open" data-agegroup="M35-39"><td class="mono" data-key="place">28</td><td class="mono" data-key="bib">79</td><td data-key="name">Thomas Reinholt</td><td data-key="gender">M</td><td class="mono num" data-key="age">39</td><td data-key="ageGroup">M35-39</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Toronto ON</td><td class="mono num strong" data-key="time">48:22</td><td class="mono num" data-key="gunTime">48:26</td><td class="mono num" data-key="pace">4:50</td><td class="mono num split-col" data-key="split:0">23:58</td></tr>
+<tr data-search="29 195 megan ashworth f 34 f30-34 10k open kawartha ac lindsay on 48:48" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">29</td><td class="mono" data-key="bib">195</td><td data-key="name">Megan Ashworth</td><td data-key="gender">F</td><td class="mono num" data-key="age">34</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team">Kawartha AC</td><td data-key="city">Lindsay ON</td><td class="mono num strong" data-key="time">48:48</td><td class="mono num" data-key="gunTime">48:52</td><td class="mono num" data-key="pace">4:52</td><td class="mono num split-col" data-key="split:0">24:11</td></tr>
+<tr data-search="30 162 brian czerwinski m 46 m45-49 10k masters peterborough runners peterborough on 49:15" data-gender="M" data-category="10K Masters" data-agegroup="M45-49"><td class="mono" data-key="place">30</td><td class="mono" data-key="bib">162</td><td data-key="name">Brian Czerwinski</td><td data-key="gender">M</td><td class="mono num" data-key="age">46</td><td data-key="ageGroup">M45-49</td><td data-key="category">10K Masters</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">49:15</td><td class="mono num" data-key="gunTime">49:18</td><td class="mono num" data-key="pace">4:55</td><td class="mono num split-col" data-key="split:0">24:24</td></tr>
+<tr data-search="31 283 lauren sinclair f 41 f40-44 10k masters peterborough on 49:42" data-gender="F" data-category="10K Masters" data-agegroup="F40-44"><td class="mono" data-key="place">31</td><td class="mono" data-key="bib">283</td><td data-key="name">Lauren Sinclair</td><td data-key="gender">F</td><td class="mono num" data-key="age">41</td><td data-key="ageGroup">F40-44</td><td data-key="category">10K Masters</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">49:42</td><td class="mono num" data-key="gunTime">49:46</td><td class="mono num" data-key="pace">4:58</td><td class="mono num split-col" data-key="split:0">24:38</td></tr>
+<tr data-search="32 128 matthew ravensdale m 32 m30-34 10k open trent tri club peterborough on 50:08" data-gender="M" data-category="10K Open" data-agegroup="M30-34"><td class="mono" data-key="place">32</td><td class="mono" data-key="bib">128</td><td data-key="name">Matthew Ravensdale</td><td data-key="gender">M</td><td class="mono num" data-key="age">32</td><td data-key="ageGroup">M30-34</td><td data-key="category">10K Open</td><td data-key="team">Trent Tri Club</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">50:08</td><td class="mono num" data-key="gunTime">50:12</td><td class="mono num" data-key="pace">5:00</td><td class="mono num split-col" data-key="split:0">24:51</td></tr>
+<tr data-search="33 206 natalie beauchamp f 25 f25-29 10k open peterborough runners peterborough on 50:34" data-gender="F" data-category="10K Open" data-agegroup="F25-29"><td class="mono" data-key="place">33</td><td class="mono" data-key="bib">206</td><td data-key="name">Natalie Beauchamp</td><td data-key="gender">F</td><td class="mono num" data-key="age">25</td><td data-key="ageGroup">F25-29</td><td data-key="category">10K Open</td><td data-key="team">Peterborough Runners</td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">50:34</td><td class="mono num" data-key="gunTime">50:38</td><td class="mono num" data-key="pace">5:03</td><td class="mono num split-col" data-key="split:0">25:04</td></tr>
+<tr data-search="34 85 gregory pendleton m 58 m55-59 10k masters lakefield runners lakefield on 51:01" data-gender="M" data-category="10K Masters" data-agegroup="M55-59"><td class="mono" data-key="place">34</td><td class="mono" data-key="bib">85</td><td data-key="name">Gregory Pendleton</td><td data-key="gender">M</td><td class="mono num" data-key="age">58</td><td data-key="ageGroup">M55-59</td><td data-key="category">10K Masters</td><td data-key="team">Lakefield Runners</td><td data-key="city">Lakefield ON</td><td class="mono num strong" data-key="time">51:01</td><td class="mono num" data-key="gunTime">51:05</td><td class="mono num" data-key="pace">5:06</td><td class="mono num split-col" data-key="split:0">25:18</td></tr>
+<tr data-search="35 241 victoria hutchins f 32 f30-34 10k open peterborough on 51:28" data-gender="F" data-category="10K Open" data-agegroup="F30-34"><td class="mono" data-key="place">35</td><td class="mono" data-key="bib">241</td><td data-key="name">Victoria Hutchins</td><td data-key="gender">F</td><td class="mono num" data-key="age">32</td><td data-key="ageGroup">F30-34</td><td data-key="category">10K Open</td><td data-key="team"></td><td data-key="city">Peterborough ON</td><td class="mono num strong" data-key="time">51:28</td><td class="mono num" data-key="gunTime">51:32</td><td class="mono num" data-key="pace">5:08</td><td class="mono num split-col" data-key="split:0">25:31</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty">
+      <strong>No matching results.</strong>
+      Try a different search term or clear your filters.
+    </div>
+  </section>
+
+  <footer class="bottom">
+    <strong>Highland Yard 10K</strong> · August 1, 2026<br>
+    Generated by <span style="color: var(--accent-deep);">Splits Timing Results Builder</span>
+  </footer>
+</main>
+
+<script>
+(function(){
+  const tbody = document.querySelector('tbody');
+  const allRows = Array.from(tbody.querySelectorAll('tr'));
+  const search = document.getElementById('search');
+  const clearBtn = document.getElementById('clearBtn');
+  const searchBox = document.getElementById('searchBox');
+  const empty = document.getElementById('empty');
+  const filters = Array.from(document.querySelectorAll('.filter'));
+  const density = document.getElementById('density');
+  const exportBtn = document.getElementById('exportCsv');
+
+  function applyFilters() {
+    const term = (search.value || '').trim().toLowerCase();
+    searchBox.classList.toggle('has-val', term.length > 0);
+    const facetVals = {};
+    filters.forEach(f => {
+      if (f.value) facetVals[f.dataset.facet] = f.value.toLowerCase();
+    });
+
+    let visible = 0;
+    allRows.forEach(row => {
+      const hay = row.dataset.search || '';
+      let show = !term || hay.indexOf(term) !== -1;
+      if (show) {
+        for (const k in facetVals) {
+          const v = (row.dataset[k.toLowerCase()] || '').toLowerCase();
+          if (v !== facetVals[k]) { show = false; break; }
+        }
+      }
+      row.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    empty.classList.toggle('visible', visible === 0);
+  }
+
+  search.addEventListener('input', applyFilters);
+  search.addEventListener('keydown', e => { if (e.key === 'Escape') { search.value = ''; applyFilters(); } });
+  clearBtn.addEventListener('click', () => { search.value = ''; applyFilters(); search.focus(); });
+  filters.forEach(f => f.addEventListener('change', applyFilters));
+
+  density.addEventListener('change', () => {
+    document.body.classList.toggle('compact', density.value === 'compact');
+  });
+
+  // Sortable columns
+  const headers = Array.from(document.querySelectorAll('th.sortable'));
+  const state = { col: null, dir: 'asc' };
+
+  function timeToSec(s) {
+    if (!s) return Number.POSITIVE_INFINITY;
+    const parts = s.split(':').map(p => parseFloat(p));
+    if (parts.some(isNaN)) return Number.POSITIVE_INFINITY;
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return parts[0];
+  }
+  function isTimeKey(k) {
+    return k === 'time' || k === 'chipTime' || k === 'gunTime' || k === 'pace' || (k && k.indexOf('split:') === 0);
+  }
+
+  headers.forEach(th => {
+    th.addEventListener('click', () => {
+      const colIdx = parseInt(th.dataset.col, 10);
+      const key = th.dataset.key;
+      if (state.col === colIdx) {
+        state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.col = colIdx;
+        state.dir = 'asc';
+      }
+      headers.forEach(x => { x.classList.remove('sort-asc', 'sort-desc'); });
+      th.classList.add('sort-' + state.dir);
+
+      // Sort rows
+      const rows = Array.from(tbody.children);
+      rows.sort((a, b) => {
+        const av = (a.children[colIdx].textContent || '').trim();
+        const bv = (b.children[colIdx].textContent || '').trim();
+        let cmp;
+        if (isTimeKey(key)) {
+          cmp = timeToSec(av) - timeToSec(bv);
+        } else if (!isNaN(parseFloat(av)) && !isNaN(parseFloat(bv))) {
+          cmp = parseFloat(av) - parseFloat(bv);
+        } else {
+          cmp = av.localeCompare(bv);
+        }
+        return state.dir === 'asc' ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+
+  // CSV export of currently visible rows
+  exportBtn.addEventListener('click', () => {
+    const ths = Array.from(document.querySelectorAll('thead th')).map(t => t.textContent.replace(/\s+/g, ' ').trim());
+    const lines = [ths.map(csvEscape).join(',')];
+    Array.from(tbody.children).forEach(row => {
+      if (row.classList.contains('hidden')) return;
+      const cells = Array.from(row.children).map(td => csvEscape(td.textContent.trim()));
+      lines.push(cells.join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = "highland-yard-10k.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  function csvEscape(s) {
+    s = String(s == null ? '' : s);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+})();
+</script>
+</body>
+</html>
