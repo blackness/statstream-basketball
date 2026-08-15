@@ -390,7 +390,7 @@ const LiveGameView = ({
         home_score: 0, away_score: 0,
         stats: {}, opponent_stats: {}, opponent_roster: [],
         active_players: starters, play_log: [],
-        game_settings: gameSettings, visibility: 'public',
+        game_settings: gameSettings, visibility: 'public_view',
       }]).select().single();
       if (error) throw error;
       setCurrentGameId(data.id);

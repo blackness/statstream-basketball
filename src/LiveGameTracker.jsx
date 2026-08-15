@@ -179,7 +179,7 @@ const LiveGameTracker = ({ user, toast }) => {
         stats: {}, opponent_stats: {}, opponent_roster: [],
         active_players: [], play_log: [],
         game_settings: gameSettings,
-        visibility: 'public', is_scheduled: true,
+        visibility: 'public_view', is_scheduled: true,
       }]);
       toast?.success('Game scheduled!');
       setActiveView('home');
