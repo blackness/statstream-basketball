@@ -1,166 +1,275 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
-const AuthUI = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
-  
-  const { signIn, signUp } = useAuth();
+const inputCls =
+  'w-full px-4 py-3.5 bg-gray-900 border border-gray-700 rounded-xl text-sm ' +
+  'font-semibold text-white placeholder:text-gray-600 placeholder:font-normal ' +
+  'focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition';
 
+const VIEWS = {
+  SIGN_IN:  'signin',
+  SIGN_UP:  'signup',
+  FORGOT:   'forgot',
+  SENT:     'sent',
+};
+
+export default function AuthUI() {
+  const navigate        = useNavigate();
+  const { signIn, signUp, resetPassword } = useAuth();
+
+  const [view,      setView]      = useState(VIEWS.SIGN_IN);
+  const [email,     setEmail]     = useState('');
+  const [password,  setPassword]  = useState('');
+  const [fullName,  setFullName]  = useState('');
+  const [showPass,  setShowPass]  = useState(false);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState(null);
+  const [message,   setMessage]   = useState(null);
+
+  const reset = () => { setError(null); setMessage(null); };
+
+  const goTo = (v) => { reset(); setView(v); };
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setMessage(null);
+    reset();
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        await signUp(email, password, fullName);
-        setMessage('Success! Check your email for verification link.');
-      } else {
+      if (view === VIEWS.SIGN_IN) {
         await signIn(email, password);
-        setMessage('Signed in successfully!');
+        // Auth state change fires → PrivateApp re-renders → shows dashboard
+      } else if (view === VIEWS.SIGN_UP) {
+        await signUp(email, password, fullName);
+        setMessage('Check your email for a verification link.');
+      } else if (view === VIEWS.FORGOT) {
+        await resetPassword(email);
+        setView(VIEWS.SENT);
       }
     } catch (err) {
-      setError(err.message || 'An error occurred');
-      console.error('Auth error:', err);
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <span className="text-4xl">📊</span>
+    <div className="min-h-screen bg-gray-950 flex flex-col">
+
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-900">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-white transition"
+        >
+          <ArrowLeft size={15} /> Home
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-black text-xs">SS</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Sports Stats Tracker</h1>
-          <p className="text-gray-600">
-            {isSignUp ? 'Create your account' : 'Sign in to continue'}
-          </p>
+          <span className="font-black text-white text-sm">StatStream</span>
         </div>
+      </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-            ⚠️ {error}
-          </div>
-        )}
+      {/* Card */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm">
 
-        {/* Success Message */}
-        {message && (
-          <div className="bg-green-50 border-2 border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
-            ✓ {message}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="John Doe"
-                required
-              />
+          {/* ── Email sent state ── */}
+          {view === VIEWS.SENT ? (
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-950 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <span className="text-3xl">📬</span>
+              </div>
+              <h2 className="text-xl font-black text-white mb-2">Check your email</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                We sent a reset link to <span className="text-blue-400 font-bold">{email}</span>
+              </p>
+              <button
+                onClick={() => goTo(VIEWS.SIGN_IN)}
+                className="text-sm font-bold text-blue-500 hover:text-blue-400 transition"
+              >
+                ← Back to sign in
+              </button>
             </div>
+          ) : (
+            <>
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-900/40">
+                  <span className="text-3xl">🏀</span>
+                </div>
+                <h1 className="text-2xl font-black text-white mb-1">
+                  {view === VIEWS.SIGN_IN  && 'Welcome back'}
+                  {view === VIEWS.SIGN_UP  && 'Create account'}
+                  {view === VIEWS.FORGOT   && 'Reset password'}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {view === VIEWS.SIGN_IN  && 'Sign in to your dashboard'}
+                  {view === VIEWS.SIGN_UP  && 'Start tracking stats today'}
+                  {view === VIEWS.FORGOT   && "We'll send you a reset link"}
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="flex items-start gap-2.5 bg-red-950 border border-red-800 text-red-400 px-4 py-3 rounded-xl mb-5 text-sm">
+                  <span className="flex-shrink-0 mt-0.5">⚠</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Success */}
+              {message && (
+                <div className="flex items-start gap-2.5 bg-emerald-950 border border-emerald-800 text-emerald-400 px-4 py-3 rounded-xl mb-5 text-sm">
+                  <span className="flex-shrink-0 mt-0.5">✓</span>
+                  <span>{message}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+
+                {/* Full name — sign up only */}
+                {view === VIEWS.SIGN_UP && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      className={inputCls}
+                      placeholder="Your name"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className={inputCls}
+                    placeholder="you@example.com"
+                    required
+                    autoFocus={view !== VIEWS.SIGN_UP}
+                  />
+                </div>
+
+                {/* Password — not on forgot */}
+                {view !== VIEWS.FORGOT && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Password
+                      </label>
+                      {view === VIEWS.SIGN_IN && (
+                        <button
+                          type="button"
+                          onClick={() => goTo(VIEWS.FORGOT)}
+                          className="text-[11px] text-blue-500 hover:text-blue-400 font-bold transition"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className={`${inputCls} pr-12`}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass(v => !v)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition"
+                      >
+                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {view === VIEWS.SIGN_UP && (
+                      <p className="text-[11px] text-gray-600 mt-1.5">Minimum 6 characters</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl font-black text-sm transition active:scale-95 shadow-lg shadow-blue-900/30 mt-2"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Please wait...
+                    </span>
+                  ) : (
+                    <>
+                      {view === VIEWS.SIGN_IN  && 'Sign In'}
+                      {view === VIEWS.SIGN_UP  && 'Create Account'}
+                      {view === VIEWS.FORGOT   && 'Send Reset Link'}
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Toggle sign in / sign up */}
+              {view !== VIEWS.FORGOT && (
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-gray-600">
+                    {view === VIEWS.SIGN_IN ? "Don't have an account? " : 'Already have an account? '}
+                    <button
+                      type="button"
+                      onClick={() => goTo(view === VIEWS.SIGN_IN ? VIEWS.SIGN_UP : VIEWS.SIGN_IN)}
+                      className="text-blue-500 hover:text-blue-400 font-bold transition"
+                    >
+                      {view === VIEWS.SIGN_IN ? 'Sign up' : 'Sign in'}
+                    </button>
+                  </p>
+                </div>
+              )}
+
+              {view === VIEWS.FORGOT && (
+                <div className="mt-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => goTo(VIEWS.SIGN_IN)}
+                    className="text-sm font-bold text-gray-600 hover:text-white transition"
+                  >
+                    ← Back to sign in
+                  </button>
+                </div>
+              )}
+
+              {/* Footer */}
+              {view === VIEWS.SIGN_UP && (
+                <div className="mt-8 pt-6 border-t border-gray-900 text-center space-y-1.5">
+                  <p className="text-xs text-gray-600">✦ Free · Unlimited teams · No credit card</p>
+                  <p className="text-xs text-gray-700">Your data is encrypted and secure</p>
+                </div>
+              )}
+            </>
           )}
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Password *
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="••••••••"
-              required
-              minLength={6}
-            />
-            <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
-          </div>
-
-          {/* Submit Button - VERY VISIBLE */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Please wait...
-              </span>
-            ) : (
-              <span>{isSignUp ? '🚀 CREATE ACCOUNT' : '🔐 SIGN IN'}</span>
-            )}
-          </button>
-        </form>
-
-        {/* Toggle Sign Up / Sign In */}
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setMessage(null);
-            }}
-            className="text-blue-600 hover:text-blue-700 font-semibold text-sm hover:underline"
-          >
-            {isSignUp 
-              ? '← Already have an account? Sign in' 
-              : "Don't have an account? Sign up →"}
-          </button>
-        </div>
-
-        {/* Footer Info */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="text-center space-y-2">
-            <p className="text-xs text-gray-500">
-              ✨ Free plan includes unlimited teams
-            </p>
-            <p className="text-xs text-gray-400">
-              Your data is secure and encrypted
-            </p>
-          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default AuthUI;
+}

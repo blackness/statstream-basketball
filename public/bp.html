@@ -22,35 +22,17 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:20px 16px 80px;max-width:600px;margin:0 auto;}
 h1{font-size:26px;font-weight:300;letter-spacing:-.02em;margin-bottom:4px;}
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:20px;}
-
-/* Profile picker overlay */
-.profile-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:500;align-items:center;justify-content:center;padding:30px;}
-.profile-overlay.show{display:flex;}
-.profile-box{width:100%;max-width:400px;}
-.profile-box h2{font-size:22px;font-weight:300;margin-bottom:6px;}
-.profile-box p{font-size:13px;color:var(--muted);margin-bottom:28px;}
-.profile-list{display:flex;flex-direction:column;gap:10px;}
-.profile-btn{padding:18px 20px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:16px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:14px;font-family:inherit;}
-.profile-btn:hover{border-color:var(--ink);background:var(--ink);color:var(--bg);}
-.profile-avatar{width:40px;height:40px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0;}
-
-/* Sync + profile bar */
 .top-bar{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;margin-bottom:20px;gap:10px;}
 .sync-status{font-size:12px;flex:1;}
 .top-bar-right{display:flex;align-items:center;gap:8px;}
 .sync-btn{padding:6px 14px;font-size:12px;font-weight:500;border-radius:8px;border:1px solid var(--pulse);background:transparent;color:var(--pulse);cursor:pointer;white-space:nowrap;}
 .sync-btn:hover{background:rgba(46,125,82,.08);}
-.profile-chip{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;flex-shrink:0;transition:opacity .15s;}
-.profile-chip:hover{opacity:.8;}
+.profile-chip{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;border:none;flex-shrink:0;}
 .ok{color:var(--pulse);}.err{color:var(--accent);}.muted{color:var(--muted);}
-
-/* Tabs */
 .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
 .tab{padding:7px 12px;font-size:13px;font-weight:500;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
 .tab.active{background:var(--card);color:var(--ink);border-color:var(--ink);}
 .panel{display:none;}.panel.active{display:block;}
-
-/* Metrics */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;}
 .metric{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;}
 .metric-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
@@ -61,11 +43,9 @@ h1{font-size:26px;font-weight:300;letter-spacing:-.02em;margin-bottom:4px;}
 .date-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
 .date-row label{font-size:12px;color:var(--muted);}
 input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2px solid var(--border);background:transparent;color:var(--ink);outline:none;font-family:inherit;}
-
-/* Stepper */
 .stepper-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
 .stepper-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
-.stepper{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .2s;}
+.stepper{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:14px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;}
 .stepper-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
 .stepper-value{font-family:'Georgia','Times New Roman',serif;font-size:2.4rem;font-weight:700;line-height:1;color:var(--ink);cursor:text;text-align:center;border:none;background:transparent;outline:none;-moz-appearance:textfield;width:100%;}
 .stepper-value::-webkit-inner-spin-button,.stepper-value::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -81,15 +61,11 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 .stepper.amber .stepper-value{color:var(--amber);}
 .stepper.amber .s-btn:hover{border-color:var(--amber);background:var(--amber);color:#fff;}
 .save-btn{width:100%;padding:14px;font-size:14px;font-weight:500;border-radius:10px;border:none;background:var(--ink);color:var(--bg);cursor:pointer;transition:opacity .15s;font-family:inherit;margin-top:4px;}
-.save-btn:hover{opacity:.85;}.save-btn:active{transform:scale(.98);}
-
-/* Charts */
+.save-btn:hover{opacity:.85;}
 .chart-wrap{position:relative;width:100%;}
 .legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
 .legend-dot{width:10px;height:10px;border-radius:2px;}
-
-/* History */
 .hist-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
 .toolbar-right{display:flex;gap:8px;}
 .action-btn{font-size:13px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;}
@@ -103,8 +79,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 .del-btn{background:none;border:none;color:var(--border);cursor:pointer;font-size:18px;padding:4px 8px;transition:color .15s;}
 .del-btn:hover{color:var(--accent);}
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;}
-
-/* Insights */
 .range-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;}
 .range-bar-label{width:72px;color:var(--muted);flex-shrink:0;}
 .range-bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;position:relative;}
@@ -114,8 +88,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 .insight-card{background:var(--bg);border-radius:10px;padding:14px;}
 .insight-val{font-size:18px;font-weight:500;margin-bottom:2px;}
 .insight-lbl{font-size:12px;color:var(--muted);}
-
-/* Checklist */
 .cl-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .cl-date-label{font-size:15px;font-weight:500;}
 .cl-nav-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--ink);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
@@ -139,15 +111,12 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 .cl-check.done::after{content:'✓';color:#fff;font-size:13px;font-weight:600;}
 .cl-item-text{font-size:14px;flex:1;transition:color .2s;}
 .cl-item-text.done{color:var(--muted);text-decoration:line-through;}
-.cl-tag{font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;}
 .cl-progress{height:6px;background:var(--border);border-radius:3px;margin-bottom:16px;overflow:hidden;}
 .cl-progress-fill{height:100%;background:var(--pulse);border-radius:3px;transition:width .4s ease;}
-/* todo add row */
 .todo-add-row{display:flex;gap:8px;margin-top:10px;}
 .todo-input{flex:1;font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);outline:none;font-family:inherit;}
 .todo-input:focus{border-color:var(--ink);}
 .todo-add-btn{padding:10px 16px;border-radius:8px;border:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;}
-/* manage habits modal */
 .manage-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;padding:0;}
 .manage-modal-bg.show{display:flex;}
 .manage-modal{background:var(--card);border-radius:var(--radius) var(--radius) 0 0;padding:20px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;}
@@ -163,8 +132,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 .habit-add-input{flex:1;font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);outline:none;font-family:inherit;}
 .habit-tag-select{font-size:12px;padding:10px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;outline:none;}
 .habit-add-submit{padding:10px 16px;border-radius:8px;border:none;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;}
-
-/* Modal */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.show{display:flex;}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:320px;width:100%;text-align:center;}
@@ -185,18 +152,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 </head>
 <body>
 
-<!-- Profile Picker Overlay -->
-<div class="profile-overlay" id="profileOverlay">
-  <div class="profile-box">
-    <h2>Who are you?</h2>
-    <p>Select your profile. This device will remember your choice.</p>
-    <div class="profile-list" id="profileList">
-      <div style="color:var(--muted);font-size:13px">Loading profiles…</div>
-    </div>
-  </div>
-</div>
-
-<!-- Manage Habits Modal -->
 <div class="manage-modal-bg" id="manageModalBg">
   <div class="manage-modal">
     <div class="manage-modal-header">
@@ -219,13 +174,13 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 </div>
 
 <h1>Health Tracker</h1>
-<p class="subtitle" id="appSubtitle">blood pressure · checklist · vitals</p>
+<p class="subtitle" id="appSubtitle">Tim's health tracker</p>
 
 <div class="top-bar">
   <div class="sync-status muted" id="syncStatus">Connecting…</div>
   <div class="top-bar-right">
     <button class="sync-btn" onclick="connectSheet()">Sync</button>
-    <button class="profile-chip" id="profileChip" onclick="switchProfile()" title="Switch profile">?</button>
+    <button class="profile-chip" id="profileChip" title="Current profile">T</button>
   </div>
 </div>
 
@@ -238,7 +193,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   <button class="tab" onclick="switchTab('history')">History</button>
 </div>
 
-<!-- BP LOG -->
 <div id="tab-log" class="panel active">
   <div class="metrics" id="sumMetrics"></div>
   <div class="card">
@@ -275,7 +229,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   </div>
 </div>
 
-<!-- CHECKLIST -->
 <div id="tab-checklist" class="panel">
   <div class="cl-stats" id="clStats"></div>
   <div class="cl-nav">
@@ -306,7 +259,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   </div>
 </div>
 
-<!-- VITALS -->
 <div id="tab-vitals" class="panel">
   <div class="metrics" id="vitalsMetrics"></div>
   <div class="card">
@@ -336,7 +288,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   </div>
 </div>
 
-<!-- CHARTS -->
 <div id="tab-charts" class="panel">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -371,12 +322,10 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   </div>
 </div>
 
-<!-- INSIGHTS -->
 <div id="tab-insights" class="panel">
   <div class="card" id="insightContent"></div>
 </div>
 
-<!-- HISTORY -->
 <div id="tab-history" class="panel">
   <div class="hist-toolbar">
     <span style="font-size:13px;color:var(--muted)" id="histCount"></span>
@@ -388,7 +337,6 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
   <div id="historyList"></div>
 </div>
 
-<!-- Confirm Modal -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
     <div class="modal-msg" id="modalMsg"></div>
@@ -402,7 +350,8 @@ input[type=date]{flex:1;font-size:14px;padding:6px 0;border:none;border-bottom:2
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Seed data (Tim's BP history) ───────────────────────────────────────────
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzX8We7ICqQ-kz5SeuYtpuxmfM1r49CYGeYCBIgmipQe5Xe1jezs7yg9FUxNWsnekzlyg/exec';
+
 const SEED=[
   {date:'2023-05-04',readings:[[112,65,null],[103,73,55]]},
   {date:'2023-05-10',readings:[[108,67,63],[109,69,61]]},
@@ -448,18 +397,13 @@ const DEFAULT_HABITS=[
   {tag:'Supplements',text:'Take supplements'},
 ];
 
-// ── State ──────────────────────────────────────────────────────────────────
-const LS_PROFILE='hp_profile_v1';
 const LS_DATA='bp_entries_v3',LS_WEIGHT='hp_weight_v1',LS_DAILY='hp_daily_v1';
 const LS_HABITS='hp_habits_v1',LS_CHECKLIST='hp_checklist_v1';
 
 let ALL=[],WEIGHT=[],DAILY=[],HABITS=[],CHECKLIST=[];
-let SCRIPT_URL='active',charts={},pendingAction=null,showMA=false;
+let charts={},pendingAction=null,showMA=false;
 let CL_DATE=today();
-let CURRENT_PROFILE=null;
-let PROFILES=[];
 
-// ── Utils ──────────────────────────────────────────────────────────────────
 function uid(){return Date.now()+'_'+Math.random().toString(36).slice(2);}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(d){if(!d)return '';const[y,m,day]=d.split('-');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+parseInt(day)+', '+y;}
@@ -476,177 +420,163 @@ function persistAll(){
 }
 function setStatus(msg,cls='muted'){const el=document.getElementById('syncStatus');el.textContent=msg;el.className='sync-status '+cls;}
 
-// ── Profile system ─────────────────────────────────────────────────────────
-const MASTER_URL=null; // set via env — loaded from /api/profiles
-
-async function loadProfiles(){
-  try{
-    const r=await fetch('/api/profiles');
-    if(!r.ok)throw new Error('no profiles endpoint');
-    const data=await r.json();
-    return data.profiles||[];
-  }catch{
-    // fallback: read from env via sheets proxy
-    return [];
+function dedupeById(arr){
+  const map=new Map();
+  for(const item of arr||[]){
+    if(!item) continue;
+    const key=item.id||uid();
+    if(!map.has(key)) map.set(key,item);
   }
+  return [...map.values()];
 }
 
-function showProfilePicker(){
-  document.getElementById('profileOverlay').classList.add('show');
-  const list=document.getElementById('profileList');
-  if(!PROFILES.length){
-    list.innerHTML='<div style="color:var(--muted);font-size:13px">No profiles found. Check your master sheet has a <strong>profiles</strong> tab with columns: name, script_url, initials</div>';
-    return;
+function mergeById(localArr=[],sheetArr=[]){
+  const map=new Map();
+  for(const item of sheetArr){ if(item && item.id) map.set(item.id,item); }
+  for(const item of localArr){ if(item && item.id && !map.has(item.id)) map.set(item.id,item); }
+  return [...map.values()];
+}
+
+function mergeByDate(localArr=[],sheetArr=[]){
+  const map=new Map();
+  for(const item of sheetArr){
+    if(item && item.date) map.set(normDate(item.date), {...item,date:normDate(item.date)});
   }
-  list.innerHTML=PROFILES.map(p=>`
-    <button class="profile-btn" onclick="selectProfile('${p.name}','${p.script_url}','${p.initials||p.name[0]}')">
-      <div class="profile-avatar" style="background:var(--border);color:var(--ink)">${p.initials||p.name[0].toUpperCase()}</div>
-      <div>
-        <div>${p.name}</div>
-        <div style="font-size:12px;color:var(--muted);font-weight:400;margin-top:2px">${p.script_url?'Sheet connected':'No sheet URL'}</div>
-      </div>
-    </button>`).join('');
+  for(const item of localArr){
+    if(item && item.date){
+      const key=normDate(item.date);
+      if(!map.has(key)) map.set(key,{...item,date:key});
+    }
+  }
+  return [...map.values()];
 }
 
-function selectProfile(name,scriptUrl,initials){
-  CURRENT_PROFILE={name,scriptUrl,initials};
-  saveLocal(LS_PROFILE,CURRENT_PROFILE);
-  document.getElementById('profileOverlay').classList.remove('show');
-  document.getElementById('profileChip').textContent=initials||name[0].toUpperCase();
-  document.getElementById('appSubtitle').textContent=name+"'s health tracker";
-  // clear local data for new profile
-  ALL=[];WEIGHT=[];DAILY=[];HABITS=[];CHECKLIST=[];
-  connectSheet();
-}
-
-function switchProfile(){
-  saveLocal(LS_PROFILE,null);
-  CURRENT_PROFILE=null;
-  showProfilePicker();
-}
-
-// ── Sheet API ──────────────────────────────────────────────────────────────
 async function sheetGet(){
-  const url=CURRENT_PROFILE?.scriptUrl;
-  if(!url)throw new Error('no profile selected');
-  const r=await fetch('/api/sheets?url='+encodeURIComponent(url));
-  if(!r.ok)throw new Error('HTTP '+r.status);
-  return r.json();
+  const r = await fetch(APPS_SCRIPT_URL,{method:'GET'});
+  const text = await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,120)}`);
+  try{return JSON.parse(text);}catch{throw new Error('Apps Script returned non-JSON: '+text.slice(0,120));}
 }
+
 async function sheetPost(body){
-  const url=CURRENT_PROFILE?.scriptUrl;
-  if(!url)return;
-  await fetch('/api/sheets?t='+Date.now(),{
+  const r = await fetch(APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({...body,scriptUrl:url}),
-    headers:{'Content-Type':'application/json'}
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(body)
   });
+  const text = await r.text();
+  if(!r.ok) throw new Error(`HTTP ${r.status}: ${text.slice(0,120)}`);
+  try{return JSON.parse(text);}catch{return {ok:true,raw:text};}
 }
 
 async function connectSheet(){
-  if(!CURRENT_PROFILE){showProfilePicker();return;}
   setStatus('Syncing…','muted');
+
+  const localALL=dedupeById(loadLocal(LS_DATA)||ALL||[]);
+  const localWEIGHT=mergeByDate(loadLocal(LS_WEIGHT)||WEIGHT||[],[]);
+  const localDAILY=mergeByDate(loadLocal(LS_DAILY)||DAILY||[],[]);
+  const localHABITS=dedupeById(loadLocal(LS_HABITS)||HABITS||[]);
+  const localCHECKLIST=dedupeById(loadLocal(LS_CHECKLIST)||CHECKLIST||[]);
+
   try{
     const data=await sheetGet();
-    if(!data||!data.ok)throw new Error('bad response');
-    if(data.entries&&data.entries.length) ALL=data.entries.map(e=>({...e,date:normDate(e.date)}));
-    if(data.weight&&data.weight.length)   WEIGHT=data.weight.map(e=>({...e,date:normDate(e.date)}));
-    if(data.daily&&data.daily.length)     DAILY=data.daily.map(e=>({...e,date:normDate(e.date)}));
-    if(data.habits&&data.habits.length)   HABITS=data.habits;
-    if(data.checklist&&data.checklist.length) CHECKLIST=data.checklist.map(e=>({...e,date:normDate(e.date)}));
+    if(!data||data.ok===false) throw new Error(data?.error||'bad response');
 
-    // Seed BP if empty (Tim's profile only)
-    if(!ALL.length&&CURRENT_PROFILE.name==='Tim'){
-      for(const day of SEED)
-        for(const[s,d,p]of day.readings)
+    const sheetALL=(data.entries||[]).map(e=>({...e,date:normDate(e.date)}));
+    const sheetWEIGHT=(data.weight||[]).map(e=>({...e,date:normDate(e.date)}));
+    const sheetDAILY=(data.daily||[]).map(e=>({...e,date:normDate(e.date)}));
+    const sheetHABITS=(data.habits||[]);
+    const sheetCHECKLIST=(data.checklist||[]).map(e=>({...e,date:normDate(e.date)}));
+
+    ALL=mergeById(localALL,sheetALL).sort((a,b)=>b.date.localeCompare(a.date));
+    WEIGHT=mergeByDate(localWEIGHT,sheetWEIGHT).sort((a,b)=>a.date.localeCompare(b.date));
+    DAILY=mergeByDate(localDAILY,sheetDAILY).sort((a,b)=>a.date.localeCompare(b.date));
+    HABITS=mergeById(localHABITS,sheetHABITS);
+    CHECKLIST=mergeById(localCHECKLIST,sheetCHECKLIST);
+
+    if(!ALL.length){
+      for(const day of SEED){
+        for(const [s,d,p] of day.readings){
           ALL.push({id:uid(),date:day.date,sys:s,dia:d,pulse:p});
+        }
+      }
       ALL.sort((a,b)=>b.date.localeCompare(a.date));
-      await sheetPost({action:'bulk',sheet:'Sheet1',entries:ALL});
     }
-    // Seed habits if empty
+
     if(!HABITS.length){
       HABITS=DEFAULT_HABITS.map((h,i)=>({id:uid(),name:h.text,tag:h.tag,order:i,active:true}));
-      await sheetPost({action:'bulk',sheet:'habits',entries:HABITS});
     }
+
     persistAll();
-    setStatus('Synced · '+ALL.length+' BP · '+HABITS.length+' habits','ok');
     renderAll();
+    setStatus('Synced (merged local + sheet)','ok');
   }catch(e){
+    ALL=localALL;
+    WEIGHT=localWEIGHT.sort((a,b)=>a.date.localeCompare(b.date));
+    DAILY=localDAILY.sort((a,b)=>a.date.localeCompare(b.date));
+    HABITS=localHABITS.length?localHABITS:DEFAULT_HABITS.map((h,i)=>({id:uid(),name:h.text,tag:h.tag,order:i,active:true}));
+    CHECKLIST=localCHECKLIST;
+
+    if(!ALL.length){
+      for(const day of SEED){
+        for(const [s2,d,p] of day.readings){
+          ALL.push({id:uid(),date:day.date,sys:s2,dia:d,pulse:p});
+        }
+      }
+      ALL.sort((a,b)=>b.date.localeCompare(a.date));
+    }
+
+    persistAll();
     setStatus('Sync failed: '+e.message,'err');
     renderAll();
   }
 }
 
-// ── Init ───────────────────────────────────────────────────────────────────
 async function init(){
   document.getElementById('entryDate').value=today();
   document.getElementById('vitalsDate').value=today();
+  document.getElementById('profileChip').textContent='T';
+  document.getElementById('appSubtitle').textContent="Tim's health tracker";
   CL_DATE=today();
 
-  // Load saved profile
-  const saved=loadLocal(LS_PROFILE);
-  if(saved&&saved.name&&saved.scriptUrl){
-    CURRENT_PROFILE=saved;
-    document.getElementById('profileChip').textContent=saved.initials||saved.name[0].toUpperCase();
-    document.getElementById('appSubtitle').textContent=saved.name+"'s health tracker";
-  }
+  ALL=loadLocal(LS_DATA)||[];
+  WEIGHT=loadLocal(LS_WEIGHT)||[];
+  DAILY=loadLocal(LS_DAILY)||[];
+  HABITS=loadLocal(LS_HABITS)||[];
+  CHECKLIST=loadLocal(LS_CHECKLIST)||[];
 
-  // Load local data
-  const s=loadLocal(LS_DATA);if(s)ALL=s;
-  const sw=loadLocal(LS_WEIGHT);if(sw)WEIGHT=sw;
-  const sd=loadLocal(LS_DAILY);if(sd)DAILY=sd;
-  const sh=loadLocal(LS_HABITS);if(sh)HABITS=sh;
-  const sc=loadLocal(LS_CHECKLIST);if(sc)CHECKLIST=sc;
-
-  // Seed defaults if nothing
-  if(!ALL.length&&CURRENT_PROFILE?.name==='Tim'){
-    for(const day of SEED)
-      for(const[s2,d,p]of day.readings)
+  if(!ALL.length){
+    for(const day of SEED){
+      for(const [s2,d,p] of day.readings){
         ALL.push({id:uid(),date:day.date,sys:s2,dia:d,pulse:p});
+      }
+    }
     ALL.sort((a,b)=>b.date.localeCompare(a.date));
   }
+
   if(!HABITS.length){
     HABITS=DEFAULT_HABITS.map((h,i)=>({id:uid(),name:h.text,tag:h.tag,order:i,active:true}));
   }
 
   renderAll();
-
-  // Load profiles from master sheet, then check profile
-  try{
-    const r=await fetch('/api/profiles');
-    if(r.ok){const d=await r.json();PROFILES=d.profiles||[];}
-  }catch{}
-
-  if(!CURRENT_PROFILE){
-    showProfilePicker();
-  } else {
-    connectSheet();
-  }
+  connectSheet();
 }
 
-// ── Checklist ──────────────────────────────────────────────────────────────
 function clChangeDay(n){CL_DATE=addDays(CL_DATE,n);renderChecklist();}
 function clGoToday(){CL_DATE=today();renderChecklist();}
-
-function getClEntries(date){return CHECKLIST.filter(e=>e.date===date);}
-
-function clIsChecked(date,habitId){
-  return CHECKLIST.some(e=>e.date===date&&e.habit_id===habitId&&e.completed);
-}
-function clGetTodos(date){
-  return CHECKLIST.filter(e=>e.date===date&&e.type==='todo');
-}
+function clIsChecked(date,habitId){return CHECKLIST.some(e=>e.date===date&&e.habit_id===habitId&&e.completed);}
+function clGetTodos(date){return CHECKLIST.filter(e=>e.date===date&&e.type==='todo');}
 
 function clToggleHabit(habitId){
   const date=CL_DATE;
   const existing=CHECKLIST.find(e=>e.date===date&&e.habit_id===habitId&&e.type==='habit');
   if(existing){
     existing.completed=!existing.completed;
-    sheetPost({action:'save',sheet:'checklist',entry:existing}).catch(()=>{});
+    sheetPost({action:'save',sheet:'checklist',entry:existing}).catch(e=>setStatus('Checklist sync failed: '+e.message,'err'));
   } else {
     const entry={id:uid(),date,habit_id:habitId,completed:true,type:'habit',todo_text:''};
     CHECKLIST.push(entry);
-    sheetPost({action:'save',sheet:'checklist',entry}).catch(()=>{});
+    sheetPost({action:'save',sheet:'checklist',entry}).catch(e=>setStatus('Checklist sync failed: '+e.message,'err'));
   }
   persistAll();
   renderChecklist();
@@ -657,7 +587,7 @@ function clToggleTodo(id){
   const e=CHECKLIST.find(x=>x.id===id);
   if(!e)return;
   e.completed=!e.completed;
-  sheetPost({action:'save',sheet:'checklist',entry:e}).catch(()=>{});
+  sheetPost({action:'save',sheet:'checklist',entry:e}).catch(er=>setStatus('Checklist sync failed: '+er.message,'err'));
   persistAll();
   renderChecklist();
 }
@@ -668,7 +598,7 @@ function addTodo(){
   if(!text)return;
   const entry={id:uid(),date:CL_DATE,habit_id:'',completed:false,type:'todo',todo_text:text};
   CHECKLIST.push(entry);
-  sheetPost({action:'save',sheet:'checklist',entry}).catch(()=>{});
+  sheetPost({action:'save',sheet:'checklist',entry}).catch(e=>setStatus('Checklist sync failed: '+e.message,'err'));
   persistAll();
   input.value='';
   renderChecklist();
@@ -676,7 +606,7 @@ function addTodo(){
 
 function deleteTodo(id){
   CHECKLIST=CHECKLIST.filter(e=>e.id!==id);
-  sheetPost({action:'delete',sheet:'checklist',id}).catch(()=>{});
+  sheetPost({action:'delete',sheet:'checklist',id}).catch(e=>setStatus('Checklist sync failed: '+e.message,'err'));
   persistAll();
   renderChecklist();
 }
@@ -693,7 +623,7 @@ function calcStreak(){
   for(let i=0;i<365;i++){
     const pct=clCompletionForDate(d);
     if(pct===100)streak++;
-    else if(i>0)break; // allow today to be incomplete
+    else if(i>0)break;
     d=addDays(d,-1);
   }
   return streak;
@@ -701,8 +631,7 @@ function calcStreak(){
 
 function calcBestStreak(){
   let best=0,cur=0;
-  const days=[];
-  let d=today();
+  const days=[];let d=today();
   for(let i=0;i<90;i++){days.push(d);d=addDays(d,-1);}
   days.reverse();
   for(const day of days){
@@ -721,9 +650,7 @@ function calc30DayAvg(){
 }
 
 function renderClStats(){
-  const streak=calcStreak();
-  const best=calcBestStreak();
-  const avg30=calc30DayAvg();
+  const streak=calcStreak(),best=calcBestStreak(),avg30=calc30DayAvg();
   document.getElementById('clStats').innerHTML=`
     <div class="cl-stat"><div class="cl-stat-val" style="color:var(--pulse)">${streak}</div><div class="cl-stat-lbl">Day streak</div></div>
     <div class="cl-stat"><div class="cl-stat-val">${avg30}%</div><div class="cl-stat-lbl">30-day avg</div></div>
@@ -740,7 +667,6 @@ function renderChecklist(){
   const pct=active.length?Math.round(doneCount/active.length*100):0;
   document.getElementById('clProgressFill').style.width=pct+'%';
 
-  // Group habits by tag
   const tags=['Morning','Day','Evening','Supplements',''];
   let html='';
   for(const tag of tags){
@@ -757,7 +683,6 @@ function renderChecklist(){
   }
   document.getElementById('habitList').innerHTML=html||'<div class="empty">No habits yet — tap Manage to add some.</div>';
 
-  // Todos
   const todos=clGetTodos(date);
   let thtml=todos.map(t=>`
     <div class="cl-item">
@@ -770,15 +695,8 @@ function renderChecklist(){
   renderClStats();
 }
 
-// ── Manage Habits Modal ────────────────────────────────────────────────────
-function openManageModal(){
-  renderManageList();
-  document.getElementById('manageModalBg').classList.add('show');
-}
-function closeManageModal(){
-  document.getElementById('manageModalBg').classList.remove('show');
-  renderChecklist();
-}
+function openManageModal(){renderManageList();document.getElementById('manageModalBg').classList.add('show');}
+function closeManageModal(){document.getElementById('manageModalBg').classList.remove('show');renderChecklist();}
 function renderManageList(){
   const active=HABITS.filter(h=>h.active!==false);
   document.getElementById('habitManageList').innerHTML=active.map(h=>`
@@ -796,7 +714,7 @@ function addHabit(){
   if(!text)return;
   const entry={id:uid(),name:text,tag,order:HABITS.length,active:true};
   HABITS.push(entry);
-  sheetPost({action:'save',sheet:'habits',entry}).catch(()=>{});
+  sheetPost({action:'save',sheet:'habits',entry}).catch(e=>setStatus('Habit sync failed: '+e.message,'err'));
   persistAll();
   document.getElementById('newHabitText').value='';
   renderManageList();
@@ -804,12 +722,11 @@ function addHabit(){
 function removeHabit(id){
   const h=HABITS.find(x=>x.id===id);if(!h)return;
   h.active=false;
-  sheetPost({action:'save',sheet:'habits',entry:h}).catch(()=>{});
+  sheetPost({action:'save',sheet:'habits',entry:h}).catch(e=>setStatus('Habit sync failed: '+e.message,'err'));
   persistAll();
   renderManageList();
 }
 
-// ── BP + Vitals ────────────────────────────────────────────────────────────
 function dayGroups(){const g={};for(const e of ALL){if(!g[e.date])g[e.date]=[];g[e.date].push(e);}return g;}
 function dayAvgs(){
   const g=dayGroups();
@@ -856,7 +773,6 @@ function renderVitalsMetrics(){
 function adj(id,delta){const el=document.getElementById(id);const val=parseInt(el.value)||0;el.value=Math.max(parseInt(el.min)||0,Math.min(parseInt(el.max)||999,val+delta));}
 function adjF(id,delta){const el=document.getElementById(id);const val=parseFloat(el.value)||0;el.value=Math.max(parseFloat(el.min)||0,Math.min(parseFloat(el.max)||999,Math.round((val+delta)*10)/10));}
 
-// Hold-to-repeat
 (function(){
   let timer=null,speed=300,holdTime=0;
   function startHold(id,delta,isFloat){
@@ -892,14 +808,27 @@ async function saveEntry(keepValues){
   const pulse=parseInt(document.getElementById('pulse').value)||null;
   const date=document.getElementById('entryDate').value;
   if(!sys||!dia||!date)return;
+
   const entry={id:uid(),date,sys,dia,pulse};
-  ALL.unshift(entry);ALL.sort((a,b)=>b.date.localeCompare(a.date));
+  ALL.unshift(entry);
+  ALL.sort((a,b)=>b.date.localeCompare(a.date));
   persistAll();
-  sheetPost({action:'save',sheet:'Sheet1',entry}).catch(()=>{});
-  renderAll();showToast(keepValues?'Saved — add another':'BP saved');
+  renderAll();
+
+  try{
+    await sheetPost({action:'save',sheet:'Sheet1',entry});
+    setStatus('Saved to sheet','ok');
+    showToast(keepValues?'Saved — add another':'BP saved');
+  }catch(e){
+    setStatus('Save failed: '+e.message,'err');
+    showToast('Saved locally only');
+  }
+
   if(!keepValues){
-    document.getElementById('sys').value=115;document.getElementById('dia').value=65;
-    document.getElementById('pulse').value=60;document.getElementById('entryDate').value=today();
+    document.getElementById('sys').value=115;
+    document.getElementById('dia').value=65;
+    document.getElementById('pulse').value=60;
+    document.getElementById('entryDate').value=today();
   }
 }
 
@@ -908,21 +837,36 @@ async function saveVitals(){
   const alcohol=parseInt(document.getElementById('alcoholVal').value);
   const date=document.getElementById('vitalsDate').value;
   if(!date)return;
+
+  let weightEntry=null,dailyEntry=null;
+
   if(!isNaN(lbs)&&lbs>0){
     const existing=WEIGHT.findIndex(e=>e.date===date);
-    const entry={id:uid(),date,lbs};
-    if(existing>=0)WEIGHT[existing]=entry;else WEIGHT.push(entry);
+    weightEntry={id:uid(),date,lbs};
+    if(existing>=0)WEIGHT[existing]=weightEntry;else WEIGHT.push(weightEntry);
     WEIGHT.sort((a,b)=>a.date.localeCompare(b.date));
-    sheetPost({action:'save',sheet:'weight',entry}).catch(()=>{});
   }
+
   if(!isNaN(alcohol)){
     const existing=DAILY.findIndex(e=>e.date===date);
-    const entry={id:uid(),date,alcohol};
-    if(existing>=0)DAILY[existing]=entry;else DAILY.push(entry);
+    dailyEntry={id:uid(),date,alcohol};
+    if(existing>=0)DAILY[existing]=dailyEntry;else DAILY.push(dailyEntry);
     DAILY.sort((a,b)=>a.date.localeCompare(b.date));
-    sheetPost({action:'save',sheet:'daily',entry}).catch(()=>{});
   }
-  persistAll();renderAll();showToast('Vitals saved');
+
+  persistAll();
+  renderAll();
+
+  try{
+    if(weightEntry) await sheetPost({action:'save',sheet:'weight',entry:weightEntry});
+    if(dailyEntry) await sheetPost({action:'save',sheet:'daily',entry:dailyEntry});
+    setStatus('Vitals saved to sheet','ok');
+    showToast('Vitals saved');
+  }catch(e){
+    setStatus('Vitals save failed: '+e.message,'err');
+    showToast('Vitals saved locally only');
+  }
+
   document.getElementById('vitalsDate').value=today();
   document.getElementById('weightVal').value=175;
   document.getElementById('alcoholVal').value=0;
@@ -962,7 +906,6 @@ function buildCharts(){
     charts.alcohol=new Chart(document.getElementById('chartAlcohol'),{type:'bar',data:{labels:dl,datasets:[{label:'Drinks',data:dSorted.map(d=>d.alcohol),backgroundColor:'rgba(183,121,31,.6)',borderColor:'#b7791f',borderWidth:1,borderRadius:3}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,ticks:{...base.scales.y.ticks,stepSize:1}}}}});
   }else{document.getElementById('chartAlcohol').parentElement.innerHTML='<div class="empty">No alcohol data yet.</div>';}
 
-  // Habit completion chart — last 30 days
   const hDays=[];let hd=today();
   for(let i=0;i<30;i++){hDays.unshift(hd);hd=addDays(hd,-1);}
   const hPcts=hDays.map(d=>clCompletionForDate(d));
@@ -981,29 +924,74 @@ function toggleMA(){showMA=!showMA;const btn=document.getElementById('maBtn');bt
 
 function renderInsights(){
   const avgs=dayAvgs();
-  if(!avgs.length){document.getElementById('insightContent').innerHTML='<div class="empty">No data yet.</div>';return;}
-  const allSys=ALL.map(e=>e.sys),allDia=ALL.map(e=>e.dia),allPulse=ALL.map(e=>e.pulse).filter(p=>p!=null);
-  const maxSys=Math.max(...allSys),minSys=Math.min(...allSys);
-  const maxDay=ALL.find(e=>e.sys===maxSys),minDay=ALL.find(e=>e.sys===minSys);
-  const oAvg=avg(allSys),rAvg=avg(avgs.slice(-3).map(d=>d.sys));
+  if(!avgs.length){
+    document.getElementById('insightContent').innerHTML='<div class="empty">No data yet.</div>';
+    return;
+  }
+
+  const allSys=ALL.map(e=>e.sys);
+  const allDia=ALL.map(e=>e.dia);
+  const allPulse=ALL.map(e=>e.pulse).filter(p=>p!=null);
+
+  const maxSys=Math.max(...allSys);
+  const minSys=Math.min(...allSys);
+
+  const maxDay=ALL.find(e=>e.sys===maxSys);
+  const minDay=ALL.find(e=>e.sys===minSys);
+
+  const maxDia=maxDay ? (maxDay.dia || '') : '';
+  const minDia=minDay ? (minDay.dia || '') : '';
+
+  const oAvg=avg(allSys);
+  const rAvg=avg(avgs.slice(-3).map(d=>d.sys));
   const cat=oAvg<120?'Normal':oAvg<130?'Elevated':oAvg<140?'High Stage 1':'High Stage 2';
   const catCol=oAvg<120?'#2e7d52':oAvg<130?'#ef9f27':'#c0392b';
+
   const weights=WEIGHT.map(e=>e.lbs).filter(v=>v!=null);
   const latestW=weights.length?weights[weights.length-1]:null;
   const wChange=weights.length>1?Math.round((weights[weights.length-1]-weights[0])*10)/10:null;
   const drinks=DAILY.map(e=>e.alcohol).filter(v=>v!=null);
-  const streak=calcStreak(),best=calcBestStreak(),avg30=calc30DayAvg();
+
+  const streak=calcStreak();
+  const best=calcBestStreak();
+  const avg30=calc30DayAvg();
+
   document.getElementById('insightContent').innerHTML=`
     <div class="section-label">BP classification</div>
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px"><span style="font-size:28px;font-weight:500;color:${catCol}">${oAvg}/${avg(allDia)}</span><span style="font-size:13px;color:${catCol};font-weight:500">${cat}</span></div>
-    <div class="section-label" style="margin-bottom:10px">Systolic distribution</div>
-    ${['Optimal (<120)','Normal (120–129)','Elevated (130–139)','High (140+)'].map((l,i)=>{const t=[[0,120],[120,130],[130,140],[140,200]];const[lo,hi]=t[i];const cnt=avgs.filter(d=>d.sys>=lo&&d.sys<hi).length;const pct=Math.round(cnt/avgs.length*100);const cols=['#2e7d52','#5dcaa5','#ef9f27','#c0392b'];return`<div class="range-bar"><span class="range-bar-label">${l.split('(')[0].trim()}</span><div class="range-bar-track"><div class="range-bar-fill" style="width:${pct}%;background:${cols[i]}"></div></div><span class="range-bar-val" style="color:${cols[i]}">${pct}%</span></div>`;}).join('')}
-    <div class="insight-grid">
-      <div class="insight-card"><div class="insight-val" style="color:#c0392b">${maxSys}/${maxDay?ALL.find(e=>e.sys===maxSys&&e.date===maxDay.date)?.dia||'':''}</div><div class="insight-lbl">Highest · ${maxDay?fmtDate(maxDay.date):''}</div></div>
-      <div class="insight-card"><div class="insight-val" style="color:#2e7d52">${minSys}/${minDay?ALL.find(e=>e.sys===minSys&&e.date===minDay.date)?.dia||'':''}</div><div class="insight-lbl">Lowest · ${minDay?fmtDate(minDay.date):''}</div></div>
-      <div class="insight-card"><div class="insight-val">${rAvg||'—'}</div><div class="insight-lbl">Recent avg systolic (last 3 visits)</div></div>
-      <div class="insight-card"><div class="insight-val" style="color:#2e7d52">${allPulse.length?Math.min(...allPulse)+'–'+Math.max(...allPulse):'—'}</div><div class="insight-lbl">Pulse range · avg ${avg(allPulse)||'—'}</div></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">
+      <span style="font-size:28px;font-weight:500;color:${catCol}">${oAvg}/${avg(allDia)}</span>
+      <span style="font-size:13px;color:${catCol};font-weight:500">${cat}</span>
     </div>
+
+    <div class="section-label" style="margin-bottom:10px">Systolic distribution</div>
+    ${['Optimal (<120)','Normal (120–129)','Elevated (130–139)','High (140+)'].map((l,i)=>{
+      const t=[[0,120],[120,130],[130,140],[140,200]];
+      const[lo,hi]=t[i];
+      const cnt=avgs.filter(d=>d.sys>=lo&&d.sys<hi).length;
+      const pct=Math.round(cnt/avgs.length*100);
+      const cols=['#2e7d52','#5dcaa5','#ef9f27','#c0392b'];
+      return `<div class="range-bar"><span class="range-bar-label">${l.split('(')[0].trim()}</span><div class="range-bar-track"><div class="range-bar-fill" style="width:${pct}%;background:${cols[i]}"></div></div><span class="range-bar-val" style="color:${cols[i]}">${pct}%</span></div>`;
+    }).join('')}
+
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="insight-val" style="color:#c0392b">${maxSys}/${maxDia}</div>
+        <div class="insight-lbl">Highest · ${maxDay ? fmtDate(maxDay.date) : ''}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-val" style="color:#2e7d52">${minSys}/${minDia}</div>
+        <div class="insight-lbl">Lowest · ${minDay ? fmtDate(minDay.date) : ''}</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-val">${rAvg||'—'}</div>
+        <div class="insight-lbl">Recent avg systolic (last 3 visits)</div>
+      </div>
+      <div class="insight-card">
+        <div class="insight-val" style="color:#2e7d52">${allPulse.length?Math.min(...allPulse)+'–'+Math.max(...allPulse):'—'}</div>
+        <div class="insight-lbl">Pulse range · avg ${avg(allPulse)||'—'}</div>
+      </div>
+    </div>
+
     <div class="section-label" style="margin-top:20px">Habits</div>
     <div class="insight-grid">
       <div class="insight-card"><div class="insight-val" style="color:var(--pulse)">${streak} days</div><div class="insight-lbl">Current streak</div></div>
@@ -1011,9 +999,13 @@ function renderInsights(){
       <div class="insight-card"><div class="insight-val" style="color:var(--amber)">${best} days</div><div class="insight-lbl">Best streak ever</div></div>
       <div class="insight-card"><div class="insight-val">${HABITS.filter(h=>h.active!==false).length}</div><div class="insight-lbl">Active habits</div></div>
     </div>
+
     ${weights.length?`<div class="section-label" style="margin-top:20px">Weight</div><div class="insight-grid"><div class="insight-card"><div class="insight-val" style="color:var(--amber)">${latestW} lbs</div><div class="insight-lbl">Current</div></div><div class="insight-card"><div class="insight-val" style="color:${wChange>0?'#c0392b':wChange<0?'#2e7d52':'var(--ink)'}">${wChange!=null?(wChange>0?'+':'')+wChange+' lbs':'—'}</div><div class="insight-lbl">Change since first log</div></div></div>`:''}
+
     ${drinks.length?`<div class="section-label" style="margin-top:20px">Alcohol</div><div class="insight-grid"><div class="insight-card"><div class="insight-val" style="color:var(--amber)">${avgF(drinks)}</div><div class="insight-lbl">Avg drinks/day logged</div></div><div class="insight-card"><div class="insight-val">${drinks.filter(v=>v>0).length}/${DAILY.length}</div><div class="insight-lbl">Days with any drinks</div></div></div>`:''}
-    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Based on ${ALL.length} BP readings across ${avgs.length} visits. Not medical advice.</div>`;
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">Based on ${ALL.length} BP readings across ${avgs.length} visits. Not medical advice.</div>
+  `;
 }
 
 function renderHistory(){
@@ -1031,12 +1023,10 @@ function renderHistory(){
     const dEntry=DAILY.find(d=>d.date===date);
     const clPct=clCompletionForDate(date);
     html+=`<div class="day-header"><span>${fmtDate(date)}</span><span style="font-size:11px">${multi}${clPct?` · <span style="color:var(--pulse)">${clPct}%</span>`:''}</span></div>`;
-    for(const e of es)
-      html+=`<div class="entry"><div class="entry-vals"><span class="e-sys">${e.sys}</span><span style="color:var(--muted)"> / </span><span>${e.dia}</span>${e.pulse?`<span class="e-pulse"> · ${e.pulse} bpm</span>`:''}</div><button class="del-btn" onclick="confirmDelete('${e.id}','${date}','bp')">×</button></div>`;
+    for(const e of es) html+=`<div class="entry"><div class="entry-vals"><span class="e-sys">${e.sys}</span><span style="color:var(--muted)"> / </span><span>${e.dia}</span>${e.pulse?`<span class="e-pulse"> · ${e.pulse} bpm</span>`:''}</div><button class="del-btn" onclick="confirmDelete('${e.id}','${date}','bp')">×</button></div>`;
     if(wEntry) html+=`<div class="entry"><div class="entry-vals" style="color:var(--amber)">${wEntry.lbs} lbs</div><button class="del-btn" onclick="confirmDelete('${wEntry.id}','${date}','weight')">×</button></div>`;
     if(dEntry&&dEntry.alcohol!=null) html+=`<div class="entry"><div class="entry-vals" style="color:var(--amber)">${dEntry.alcohol} drink${dEntry.alcohol!==1?'s':''}</div><button class="del-btn" onclick="confirmDelete('${dEntry.id}','${date}','daily')">×</button></div>`;
   }
-  // Dates with only vitals
   const bpDates=new Set(dates);
   const allDates=new Set([...WEIGHT.map(e=>e.date),...DAILY.map(e=>e.date)]);
   for(const date of [...allDates].sort((a,b)=>b.localeCompare(a))){
@@ -1061,17 +1051,21 @@ function confirmDelete(id,date,type){
     if(type==='bp')ALL=ALL.filter(x=>x.id!==id);
     if(type==='weight')WEIGHT=WEIGHT.filter(x=>x.id!==id);
     if(type==='daily')DAILY=DAILY.filter(x=>x.id!==id);
-    persistAll();sheetPost({action:'delete',sheet:sm[type],id}).catch(()=>{});
-    renderAll();showToast('Deleted');
+    persistAll();
+    sheetPost({action:'delete',sheet:sm[type],id}).catch(e=>setStatus('Delete sync failed: '+e.message,'err'));
+    renderAll();
+    showToast('Deleted');
   });
 }
 
 function confirmClearAll(){
   if(!ALL.length&&!WEIGHT.length&&!DAILY.length)return;
   showModal('Delete all data? This cannot be undone.',async()=>{
-    ALL=[];WEIGHT=[];DAILY=[];persistAll();
-    ['Sheet1','weight','daily'].forEach(s=>sheetPost({action:'clear',sheet:s}).catch(()=>{}));
-    renderAll();showToast('All data cleared');
+    ALL=[];WEIGHT=[];DAILY=[];
+    persistAll();
+    ['Sheet1','weight','daily'].forEach(s=>sheetPost({action:'clear',sheet:s}).catch(e=>setStatus('Clear sync failed: '+e.message,'err')));
+    renderAll();
+    showToast('All data cleared');
   });
 }
 

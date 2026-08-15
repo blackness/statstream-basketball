@@ -1,27 +1,26 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import AuthUI from './services/AuthUI';
 import LiveGameTracker from './LiveGameTracker';
+import PublicHome from './pages/PublicHome';
+import TeamPage from './pages/TeamPage';
+import LiveGamePage from './pages/LiveGamePage';
 import { ToastContainer, useToast } from './components/Shared/Toast';
 
-function AppContent() {
+function PrivateApp() {
   const { user, loading } = useAuth();
   const toast = useToast();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!user) {
-    return <AuthUI />;
-  }
+  if (!user) return <AuthUI />;
 
   return (
     <>
@@ -33,9 +32,17 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/"           element={<PublicHome />} />
+          <Route path="/team/:slug" element={<TeamPage />} />
+          <Route path="/game/:id"   element={<LiveGamePage />} />
+          <Route path="/app"        element={<PrivateApp />} />
+          <Route path="*"           element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

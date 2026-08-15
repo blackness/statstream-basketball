@@ -1,10 +1,9 @@
 
-
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>East Regionals Live</title>
+  <title>East Regionals - Live</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -25,7 +24,6 @@
       --warn: #ca8a04;
       --dim: #64748b;
       --changed: #2563eb;
-      --danger: #ef4444;
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
     }
 
@@ -78,63 +76,7 @@
       font-size: 30px;
       font-weight: 800;
       letter-spacing: -0.02em;
-    }
-
-    .page-subtitle {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(22,163,74,0.12);
-      color: #bbf7d0;
-      border: 1px solid rgba(22,163,74,0.35);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 700;
       white-space: nowrap;
-    }
-
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(120px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .stat-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 14px 12px;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .stat-value {
-      font-size: 26px;
-      font-weight: 800;
-      margin-top: 6px;
-      line-height: 1;
     }
 
     .controls-row {
@@ -193,7 +135,7 @@
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 20px;
-      min-height: calc(100vh - 180px);
+      min-height: calc(100vh - 120px);
     }
 
     .sidebar,
@@ -244,16 +186,11 @@
       background: rgba(15,23,42,0.55);
     }
 
-    .event-group.hidden {
-      display: none;
-    }
-
     .event-header {
       width: 100%;
       background: transparent;
       color: var(--text);
       border: none;
-      border-bottom: 1px solid transparent;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -266,10 +203,6 @@
 
     .event-header:hover {
       background: rgba(30,41,59,0.55);
-    }
-
-    .event-header-left {
-      min-width: 0;
     }
 
     .event-family-name {
@@ -306,6 +239,14 @@
       display: block;
     }
 
+    .race-entry {
+      margin-bottom: 6px;
+    }
+
+    .race-entry:last-child {
+      margin-bottom: 0;
+    }
+
     .race-item {
       width: 100%;
       border: 1px solid transparent;
@@ -319,11 +260,6 @@
       gap: 10px;
       text-align: left;
       cursor: pointer;
-      margin-bottom: 6px;
-    }
-
-    .race-item:last-child {
-      margin-bottom: 0;
     }
 
     .race-item:hover {
@@ -335,10 +271,6 @@
       background: var(--accent-soft);
       border-color: rgba(59,130,246,0.5);
       box-shadow: inset 0 0 0 1px rgba(59,130,246,0.35);
-    }
-
-    .race-item-left {
-      min-width: 0;
     }
 
     .race-label {
@@ -446,7 +378,6 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
       text-decoration: none;
       border-radius: 12px;
       padding: 10px 12px;
@@ -535,8 +466,13 @@
       border-radius: 14px;
     }
 
-    .muted {
-      color: var(--muted);
+    .mobile-inline-detail {
+      display: none;
+      margin: 8px 0 10px 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(2,6,23,0.35);
     }
 
     .error-box,
@@ -549,22 +485,12 @@
     }
 
     .error-box {
-      border-color: rgba(239,68,68,0.35);
       color: #fecaca;
+      border-color: rgba(239,68,68,0.35);
     }
 
     .hide {
       display: none !important;
-    }
-
-    @media (max-width: 1180px) {
-      .app-shell {
-        grid-template-columns: 320px 1fr;
-      }
-
-      .stats-row {
-        grid-template-columns: repeat(3, minmax(120px, 1fr));
-      }
     }
 
     @media (max-width: 900px) {
@@ -572,33 +498,122 @@
         grid-template-columns: 1fr;
       }
 
-      .stats-row {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      .content-shell {
+        grid-template-rows: auto auto;
       }
 
-      .sidebar {
-        max-height: none;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .topbar-inner,
-      .app-shell {
-        padding-left: 14px;
-        padding-right: 14px;
+      .detail-pane {
+        display: none !important;
       }
 
-      .page-title {
-        font-size: 24px;
+      .mobile-inline-detail {
+        display: block;
       }
 
       .race-detail-title {
         font-size: 22px;
       }
 
-      .stats-row {
-        grid-template-columns: 1fr 1fr;
+      .page-title {
+        font-size: 24px;
       }
+.mobile-results-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-result-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(2,6,23,0.35);
+  padding: 10px 12px;
+}
+
+.mobile-result-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(51,65,85,0.55);
+}
+
+.mobile-result-row:last-child {
+  border-bottom: none;
+}
+
+.mobile-result-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobile-result-value {
+  color: var(--text);
+  font-size: 14px;
+  word-break: break-word;
+}
+
+@media (min-width: 901px) {
+  .mobile-results-list {
+    display: none;
+  }
+}
+.mobile-compact-results {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-compact-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(2,6,23,0.35);
+  padding: 10px 12px;
+}
+
+.mobile-compact-line1 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mobile-place {
+  flex: 0 0 auto;
+  min-width: 20px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.mobile-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-compact-line2 {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 901px) {
+  .mobile-compact-results {
+    display: none;
+  }
+}
+
     }
   </style>
 </head>
@@ -607,16 +622,9 @@
     <div class="topbar-inner">
       <div class="title-row">
         <div>
-          <h1 class="page-title" id="meetTitle">East Regionals Live</h1>
-          <div class="page-subtitle" id="subtitle">Loading...</div>
-        </div>
-        <div class="live-pill">
-          <span class="live-dot"></span>
-          <span>Live Monitor</span>
+          <h1 class="page-title" id="meetTitle">East Regionals - Live</h1>
         </div>
       </div>
-
-      <div class="stats-row" id="stats"></div>
 
       <div class="controls-row">
         <div class="search-wrap">
@@ -624,11 +632,11 @@
         </div>
         <div class="toggle-row">
           <label class="toggle">
-            <input type="checkbox" id="postedOnly" />
+            <input type="checkbox" id="postedOnly" checked />
             <span>Posted only</span>
           </label>
           <label class="toggle">
-            <input type="checkbox" id="partialVisible" checked />
+            <input type="checkbox" id="partialVisible" />
             <span>Include partial</span>
           </label>
         </div>
@@ -649,7 +657,7 @@
       <div class="detail-pane" id="detailPane">
         <div class="detail-empty">
           <div>
-            <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No race selected</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">No race selected</div>
             <div>Select an event and race from the left to view results.</div>
           </div>
         </div>
@@ -669,13 +677,11 @@
 
   <script>
     const SUPABASE_URL = "https://sclhzmgdafotyiynrjwr.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_N1UhoXnqybNEFCGBMdWXWg_BujE6Eh-";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjbGh6bWdkYWZvdHlpeW5yandyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDIyMzMsImV4cCI6MjA4NjcxODIzM30.lNrQF2Bpe7f2dno0rZ9XzqGSzyFi3vwKkLny8VPnBH8";
     const MEET_KEY = "ofsaa-east-regionals-2026";
     const REFRESH_MS = 60000;
 
     const meetTitleEl = document.getElementById("meetTitle");
-    const subtitleEl = document.getElementById("subtitle");
-    const statsEl = document.getElementById("stats");
     const sidebarEl = document.getElementById("sidebar");
     const sidebarMetaEl = document.getElementById("sidebarMeta");
     const detailPaneEl = document.getElementById("detailPane");
@@ -697,8 +703,8 @@
         .replaceAll('"', "&quot;");
     }
 
-    function byId(id) {
-      return document.getElementById(id);
+    function isMobileLayout() {
+      return window.innerWidth <= 900;
     }
 
     function getEventFamilySortKey(eventFamily) {
@@ -774,6 +780,39 @@
       return label;
     }
 
+    function isPlaceholder(value) {
+      const v = String(value ?? "").trim().toUpperCase();
+      return v === "" || v === "-" || v === "--";
+    }
+
+    function clientEffectiveStatus(race) {
+      const results = race.results || [];
+      const headers = race.headers || [];
+      if (!results.length) return "not_posted";
+
+      const preferred = ["Time", "Mark", "Result", "Performance", "Distance", "Height", "Best"];
+      const presentPreferred = headers.filter(h => preferred.includes(h));
+
+      if (presentPreferred.length) {
+        for (const row of results) {
+          for (const col of presentPreferred) {
+            if (!isPlaceholder(row[col])) return "posted";
+          }
+        }
+      }
+
+      const ignored = new Set(["Place", "Name", "Bib", "School", "Team", "Heat", "Lane"]);
+      for (const row of results) {
+        if (/^\d+$/.test(String(row.Place || "").trim())) return "posted";
+        for (const [k, v] of Object.entries(row)) {
+          if (ignored.has(k)) continue;
+          if (!isPlaceholder(v)) return "posted";
+        }
+      }
+
+      return race.status || "partial";
+    }
+
     function groupRacesByEventFamily(races) {
       const grouped = new Map();
 
@@ -827,6 +866,7 @@
 
             return (a.race_name || "").localeCompare(b.race_name || "");
           });
+
           return [family, sorted];
         })
         .sort((a, b) => {
@@ -869,7 +909,7 @@
       }
 
       return [...map.values()]
-        .map((x) => ({
+        .map(x => ({
           school: x.school,
           entries: x.entries,
           top3: x.top3,
@@ -884,23 +924,6 @@
         );
     }
 
-    function renderStats(summary) {
-      const items = [
-        ["Total events", summary?.total ?? 0],
-        ["Posted", summary?.posted ?? 0],
-        ["Partial", summary?.partial ?? 0],
-        ["Not posted", summary?.not_posted ?? 0],
-        ["Changed", summary?.changed ?? 0],
-      ];
-
-      statsEl.innerHTML = items.map(([label, value]) => `
-        <div class="stat-card">
-          <div class="stat-label">${esc(label)}</div>
-          <div class="stat-value">${esc(value)}</div>
-        </div>
-      `).join("");
-    }
-
     function statusClass(status) {
       if (status === "posted") return "status-posted";
       if (status === "partial") return "status-partial";
@@ -909,6 +932,8 @@
     }
 
     function raceMatchesFilters(race, q, postedOnly, includePartial) {
+      const effectiveStatus = clientEffectiveStatus(race);
+
       const hay = [
         race.event_family,
         race.race_name,
@@ -916,15 +941,13 @@
         race.category,
         race.kind,
         race.phase,
-        race.status,
+        effectiveStatus,
         ...(race.results || []).flatMap(row => Object.values(row || {}))
       ].join(" ").toLowerCase();
 
       if (q && !hay.includes(q)) return false;
-
-      if (postedOnly && race.status !== "posted") return false;
-
-      if (!includePartial && race.status === "partial") return false;
+      if (postedOnly && effectiveStatus !== "posted") return false;
+      if (!includePartial && effectiveStatus === "partial") return false;
 
       return true;
     }
@@ -942,129 +965,101 @@
         .filter(([, races]) => races.length > 0);
     }
 
-    function renderSidebar() {
-      const grouped = getFilteredGrouped();
-      sidebarMetaEl.textContent = `${grouped.length} event groups`;
-
-      if (!grouped.length) {
-        sidebarEl.innerHTML = `<div class="loading-box">No events match your current filters.</div>`;
-        return;
-      }
-
-      sidebarEl.innerHTML = grouped.map(([family, races], idx) => {
-        const familyKey = family;
-        const expanded = expandedFamilies.has(familyKey);
-        const postedCount = races.filter(r => r.status === "posted").length;
-        const partialCount = races.filter(r => r.status === "partial").length;
-
-        return `
-          <section class="event-group ${expanded ? "expanded" : ""}" data-family="${esc(familyKey)}">
-            <button class="event-header" data-action="toggle-family" data-family="${esc(familyKey)}">
-              <div class="event-header-left">
-                <div class="event-family-name">${esc(family)}</div>
-                <div class="event-family-meta">
-                  ${races.length} race${races.length === 1 ? "" : "s"} • ${postedCount} posted${partialCount ? ` • ${partialCount} partial` : ""}
-                </div>
-              </div>
-              <div class="event-chevron">▶</div>
-            </button>
-
-            <div class="race-list">
-              ${races.map(race => `
-                <button
-                  class="race-item ${race.url === selectedRaceUrl ? "active" : ""}"
-                  data-action="select-race"
-                  data-race-url="${esc(race.url)}"
-                >
-                  <div class="race-item-left">
-                    <div class="race-label">${esc(raceLabel(race))}</div>
-                    <div class="race-meta">
-                      ${esc(race.status)}${race.row_count ? ` • ${esc(race.row_count)} rows` : ""}
-                    </div>
-                  </div>
-                  <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
-                    <span class="status-badge ${statusClass(race.status)}">${esc(race.status)}</span>
-                    ${race.just_changed ? `<span class="status-badge status-changed">changed</span>` : ``}
-                  </div>
-                </button>
-              `).join("")}
-            </div>
-          </section>
-        `;
-      }).join("");
-    }
-
     function findRaceByUrl(url) {
       if (!currentData?.races) return null;
       return currentData.races.find(r => r.url === url) || null;
     }
 
-    function renderRaceTable(race) {
-      if (race.status === "not_posted" || !race.headers?.length || !race.results?.length) {
-        return `<div class="detail-empty" style="min-height:240px;"><div><div style="font-size:18px;font-weight:700;margin-bottom:8px;">No results table yet</div><div>This race has not published a full table yet.</div></div></div>`;
-      }
+function renderRaceTable(race) {
+  if (!race.headers?.length || !race.results?.length) {
+    return `<div class="detail-empty" style="min-height:240px;"><div><div style="font-size:18px;font-weight:700;margin-bottom:8px;">No results table yet</div><div>This race has not published a table yet.</div></div></div>`;
+  }
 
-      const head = `
-        <thead>
-          <tr>
-            ${race.headers.map(h => `<th>${esc(h)}</th>`).join("")}
-          </tr>
-        </thead>
-      `;
+  if (isMobileLayout()) {
+    const perfKey =
+      ["Time", "Mark", "Result", "Performance", "Distance", "Height", "Best"]
+        .find(k => race.headers.includes(k)) || null;
 
-      const body = `
-        <tbody>
-          ${race.results.map(row => {
-            const place = String(row["Place"] || "").trim();
-            let cls = "";
-            if (place === "1") cls = "gold";
-            else if (place === "2") cls = "silver";
-            else if (place === "3") cls = "bronze";
+    return `
+      <div class="mobile-compact-results">
+        ${race.results.map(row => {
+          const place = String(row["Place"] || "").trim();
+          let cls = "";
+          if (place === "1") cls = "gold";
+          else if (place === "2") cls = "silver";
+          else if (place === "3") cls = "bronze";
 
-            return `
-              <tr class="${cls}">
-                ${race.headers.map(h => `<td>${esc(row[h] ?? "")}</td>`).join("")}
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      `;
+          const name = row["Name"] || "";
+          const school = row["School"] || row["Team"] || "";
+          const bib = row["Bib"] ? `Bib ${row["Bib"]}` : "";
+          const heat = row["Heat"] ? `Heat ${row["Heat"]}` : "";
+          const lane = row["Lane"] ? `Lane ${row["Lane"]}` : "";
+          const perf = perfKey ? (row[perfKey] || "") : "";
 
-      return `
-        <div class="table-wrap">
-          <table>
-            ${head}
-            ${body}
-          </table>
-        </div>
-      `;
-    }
+          const meta = [school, bib, heat, lane, perf].filter(Boolean).join(" • ");
 
-    function renderDetailPane() {
-      const race = findRaceByUrl(selectedRaceUrl);
-
-      if (!race) {
-        detailPaneEl.innerHTML = `
-          <div class="detail-empty">
-            <div>
-              <div style="font-size:18px;font-weight:700;margin-bottom:8px;">No race selected</div>
-              <div>Select an event and race from the left to view results.</div>
+          return `
+            <div class="mobile-compact-row ${cls}">
+              <div class="mobile-compact-line1">
+                ${place ? `<span class="mobile-place">${esc(place)}</span>` : ""}
+                <span class="mobile-name">${esc(name)}</span>
+              </div>
+              <div class="mobile-compact-line2">${esc(meta)}</div>
             </div>
-          </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  const head = `
+    <thead>
+      <tr>
+        ${race.headers.map(h => `<th>${esc(h)}</th>`).join("")}
+      </tr>
+    </thead>
+  `;
+
+  const body = `
+    <tbody>
+      ${race.results.map(row => {
+        const place = String(row["Place"] || "").trim();
+        let cls = "";
+        if (place === "1") cls = "gold";
+        else if (place === "2") cls = "silver";
+        else if (place === "3") cls = "bronze";
+
+        return `
+          <tr class="${cls}">
+            ${race.headers.map(h => `<td>${esc(row[h] ?? "")}</td>`).join("")}
+          </tr>
         `;
-        return;
-      }
+      }).join("")}
+    </tbody>
+  `;
+
+  return `
+    <div class="table-wrap">
+      <table>
+        ${head}
+        ${body}
+      </table>
+    </div>
+  `;
+}
+    function renderRaceDetailContent(race) {
+      const effectiveStatus = clientEffectiveStatus(race);
 
       const chips = [
         `<span class="chip">${esc(race.gender || "Other")}</span>`,
         `<span class="chip">${esc(race.category || "Other")}</span>`,
         `<span class="chip">${esc(race.kind || "Other")}</span>`,
         race.phase ? `<span class="chip">${esc(race.phase)}</span>` : "",
-        `<span class="chip ${statusClass(race.status)}">${esc(race.status)}</span>`,
+        `<span class="chip ${statusClass(effectiveStatus)}">${esc(effectiveStatus)}</span>`,
         race.just_changed ? `<span class="chip status-changed">changed this poll</span>` : "",
       ].filter(Boolean).join("");
 
-      detailPaneEl.innerHTML = `
+      return `
         <div class="race-detail-header">
           <div>
             <h2 class="race-detail-title">${esc(race.race_name)}</h2>
@@ -1080,11 +1075,99 @@
 
         <div class="detail-note">
           Last seen: ${esc(race.last_seen || "")}
-          ${race.first_posted_at ? ` • First fully posted: ${esc(race.first_posted_at)}` : ""}
         </div>
 
         ${renderRaceTable(race)}
       `;
+    }
+
+    function renderDetailPane() {
+      if (isMobileLayout()) {
+        detailPaneEl.classList.add("hide");
+        return;
+      }
+
+      detailPaneEl.classList.remove("hide");
+
+      const race = findRaceByUrl(selectedRaceUrl);
+
+      if (!race) {
+        detailPaneEl.innerHTML = `
+          <div class="detail-empty">
+            <div>
+              <div style="font-size:18px;font-weight:700;margin-bottom:8px;">No race selected</div>
+              <div>Select an event and race from the left to view results.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      detailPaneEl.innerHTML = renderRaceDetailContent(race);
+    }
+
+    function renderSidebar() {
+      const grouped = getFilteredGrouped();
+      sidebarMetaEl.textContent = `${grouped.length} event groups`;
+
+      if (!grouped.length) {
+        sidebarEl.innerHTML = `<div class="loading-box">No events match your current filters.</div>`;
+        return;
+      }
+
+      sidebarEl.innerHTML = grouped.map(([family, races]) => {
+        const expanded = expandedFamilies.has(family);
+        const postedCount = races.filter(r => clientEffectiveStatus(r) === "posted").length;
+        const partialCount = races.filter(r => clientEffectiveStatus(r) === "partial").length;
+
+        return `
+          <section class="event-group ${expanded ? "expanded" : ""}" data-family="${esc(family)}">
+            <button class="event-header" data-action="toggle-family" data-family="${esc(family)}">
+              <div>
+                <div class="event-family-name">${esc(family)}</div>
+                <div class="event-family-meta">
+                  ${races.length} race${races.length === 1 ? "" : "s"} • ${postedCount} posted${partialCount ? ` • ${partialCount} partial` : ""}
+                </div>
+              </div>
+              <div class="event-chevron">▶</div>
+            </button>
+
+            <div class="race-list">
+              ${races.map(race => {
+                const effectiveStatus = clientEffectiveStatus(race);
+                const isSelected = race.url === selectedRaceUrl;
+
+                return `
+                  <div class="race-entry">
+                    <button
+                      class="race-item ${isSelected ? "active" : ""}"
+                      data-action="select-race"
+                      data-race-url="${esc(race.url)}"
+                    >
+                      <div>
+                        <div class="race-label">${esc(raceLabel(race))}</div>
+                        <div class="race-meta">
+                          ${esc(effectiveStatus)}${race.row_count ? ` • ${esc(race.row_count)} rows` : ""}
+                        </div>
+                      </div>
+                      <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+                        <span class="status-badge ${statusClass(effectiveStatus)}">${esc(effectiveStatus)}</span>
+                        ${race.just_changed ? `<span class="status-badge status-changed">changed</span>` : ``}
+                      </div>
+                    </button>
+
+                    ${isMobileLayout() && isSelected ? `
+                      <div class="mobile-inline-detail">
+                        ${renderRaceDetailContent(race)}
+                      </div>
+                    ` : ""}
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
     }
 
     function renderSchoolSummary(flatRows) {
@@ -1134,14 +1217,15 @@
         return;
       }
 
-      const firstPosted = allVisible.find(r => r.status === "posted");
-      const firstPartial = allVisible.find(r => r.status === "partial");
+      const firstPosted = allVisible.find(r => clientEffectiveStatus(r) === "posted");
+      const firstPartial = allVisible.find(r => clientEffectiveStatus(r) === "partial");
       const firstAny = allVisible[0];
 
       const chosen = firstPosted || firstPartial || firstAny || null;
       selectedRaceUrl = chosen?.url || null;
 
       if (chosen?.event_family) {
+        expandedFamilies.clear();
         expandedFamilies.add(chosen.event_family);
       }
     }
@@ -1160,6 +1244,7 @@
 
       const selectedRace = findRaceByUrl(selectedRaceUrl);
       if (selectedRace?.event_family) {
+        expandedFamilies.clear();
         expandedFamilies.add(selectedRace.event_family);
       }
     }
@@ -1197,9 +1282,7 @@
         const data = await fetchLiveMeet();
 
         if (!data) {
-          meetTitleEl.textContent = "East Regionals Live";
-          subtitleEl.textContent = "No live snapshot found yet.";
-          statsEl.innerHTML = "";
+          meetTitleEl.textContent = "East Regionals - Live";
           sidebarMetaEl.textContent = "No data";
           sidebarEl.innerHTML = `<div class="loading-box">No live data found.</div>`;
           detailPaneEl.innerHTML = `<div class="error-box">No snapshot was returned from Supabase.</div>`;
@@ -1208,11 +1291,7 @@
         }
 
         currentData = data;
-
-        meetTitleEl.textContent = `${data.meet_name} - Live`;
-        subtitleEl.textContent = `Updated: ${data.updated_at} • Auto-refresh every ${Math.round(REFRESH_MS / 1000)}s`;
-
-        renderStats(data.summary || {});
+        meetTitleEl.textContent = "East Regionals - Live";
         rerenderAll();
       } catch (err) {
         detailPaneEl.innerHTML = `<div class="error-box">${esc(err.message || String(err))}</div>`;
@@ -1229,10 +1308,19 @@
         const family = btn.getAttribute("data-family");
         if (!family) return;
 
-        if (expandedFamilies.has(family)) expandedFamilies.delete(family);
-        else expandedFamilies.add(family);
+        if (expandedFamilies.has(family)) {
+          expandedFamilies.delete(family);
+        } else {
+          expandedFamilies.clear();
+          expandedFamilies.add(family);
+        }
+
+        if (isMobileLayout()) {
+          selectedRaceUrl = null;
+        }
 
         renderSidebar();
+        renderDetailPane();
         return;
       }
 
@@ -1240,9 +1328,16 @@
         const url = btn.getAttribute("data-race-url");
         if (!url) return;
 
-        selectedRaceUrl = url;
-        const race = findRaceByUrl(url);
-        if (race?.event_family) expandedFamilies.add(race.event_family);
+        if (isMobileLayout() && selectedRaceUrl === url) {
+          selectedRaceUrl = null;
+        } else {
+          selectedRaceUrl = url;
+          const race = findRaceByUrl(url);
+          if (race?.event_family) {
+            expandedFamilies.clear();
+            expandedFamilies.add(race.event_family);
+          }
+        }
 
         renderSidebar();
         renderDetailPane();
@@ -1259,6 +1354,11 @@
 
     partialVisibleEl.addEventListener("change", () => {
       rerenderAll();
+    });
+
+    window.addEventListener("resize", () => {
+      renderSidebar();
+      renderDetailPane();
     });
 
     loadData();

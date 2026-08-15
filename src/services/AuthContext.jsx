@@ -73,22 +73,31 @@ export const AuthProvider = ({ children }) => {
     const data = await authService.signIn(email, password);
     return data;
   };
-
+const resetPassword = async (email) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/app`,
+  });
+  if (error) throw error;
+};
   const signOut = async () => {
     await authService.signOut();
     setUser(null);
     setSession(null);
   };
 
-  const value = {
-    user,
-    session,
-    loading,
-    isCloudMode,
-    signUp,
-    signIn,
-    signOut
-  };
+
+// Add to value object:
+const value = {
+  user,
+  session,
+  loading,
+  isCloudMode,
+  signUp,
+  signIn,
+  signOut,
+  resetPassword,  // ✅ add this
+};
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
