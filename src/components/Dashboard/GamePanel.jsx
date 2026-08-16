@@ -28,6 +28,7 @@ const GamePanel = ({
 
   const live      = games.filter(g => g.status === 'in_progress');
   const scheduled = games.filter(g => g.status === 'scheduled');
+  console.log('scheduled games:', scheduled);
   const history   = games.filter(g => g.status === 'completed');
 
   const showLive      = filter === 'All' || filter === 'Live';

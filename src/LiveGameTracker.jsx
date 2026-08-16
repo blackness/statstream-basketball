@@ -48,7 +48,7 @@ const LiveGameTracker = ({ user, toast }) => {
       .channel('lgt-games')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'games' },
+        { event: '*', schema: 'public_view', table: 'games' },
         ({ eventType, new: newGame, old: oldGame }) => {
           if (eventType === 'INSERT') {
             setGameHistory(prev => [newGame, ...prev]);
@@ -167,28 +167,43 @@ const LiveGameTracker = ({ user, toast }) => {
     setActiveView('liveGame');
   };
 
-  const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
-    try {
-      await supabase.from('games').insert([{
-        user_id: user.id, team_id: team.id,
-        opponent: gameSettings.opponent,
-        home_team: gameSettings.isHome ? team.name : gameSettings.opponent,
-        status: 'scheduled', scheduled_at: scheduledAt,
-        home_score: 0, away_score: 0, period: 1,
-        time_remaining: gameSettings.periodLength * 60,
-        stats: {}, opponent_stats: {}, opponent_roster: [],
-        active_players: [], play_log: [],
-        game_settings: gameSettings,
-        visibility: 'public_view', is_scheduled: true,
-      }]);
-      toast?.success('Game scheduled!');
-      setActiveView('home');
-    } catch (err) {
-      console.error(err);
-      toast?.error('Failed to schedule game');
-    }
-  };
+// ✅ After
+const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
+  try {
+    const { data, error } = await supabase.from('games').insert([{
+      user_id: user.id,
+      team_id: team.id,
+      opponent: gameSettings.opponent,
+      home_team: gameSettings.isHome ? team.name : gameSettings.opponent,
+      status: 'scheduled',
+      scheduled_at: scheduledAt,
+      home_score: 0,
+      away_score: 0,
+      period: 1,
+      time_remaining: gameSettings.periodLength * 60,
+      stats: {},
+      opponent_stats: {},
+      opponent_roster: [],
+      active_players: [],
+      play_log: [],
+      game_settings: gameSettings,
+      visibility: 'public_view',
+      is_scheduled: true,
+    }]);
 
+    if (error) {
+      console.error('Supabase insert error:', error);  // ✅ surface the real error
+      throw error;
+    }
+
+    toast?.success('Game scheduled!');
+    setActiveView('home');
+    loadData();
+  } catch (err) {
+    console.error('Schedule error full:', err);
+    toast?.error(err.message || 'Failed to schedule game');
+  }
+};
   const handleResumeGame = async (game) => {
     const team = teams.find(t => t.id === game.team_id);
     if (!team) { toast?.error('Team not found'); return; }
