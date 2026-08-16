@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AppHeader from '../Shared/AppHeader';
 import { Plus, X, Users, Eye, EyeOff, Copy, Check, RefreshCw } from 'lucide-react';
 import { slugify } from '../../utils/slugify';
+import { teamGradientStyle, darkenHex } from '../../utils/colorUtils';
 
 const CreateTeam = ({ user, onSave, onCancel, toast }) => {
   const [teamName, setTeamName] = useState('');
@@ -15,6 +16,7 @@ const CreateTeam = ({ user, onSave, onCancel, toast }) => {
   const [showPin,   setShowPin]   = useState(false);
   const [pinCopied, setPinCopied] = useState(false);
   const [slug, setSlug] = useState('');
+  const [teamColor, setTeamColor] = useState('#3b82f6');
 
   const addPlayer = () => {
     if (!playerName.trim()) {
@@ -61,6 +63,7 @@ const CreateTeam = ({ user, onSave, onCancel, toast }) => {
       wins: 0,
       losses: 0,
       pin: pin,
+      colors: teamColor, 
       slug: slug || null
     });
     setSaving(false);
@@ -120,9 +123,26 @@ onChange={handleNameChange}
                 />
               </div>
 
-              <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <span className="text-2xl">🏀</span>
-                <span className="font-bold text-blue-900">Basketball</span>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Team Color
+                </label>
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <input
+                    type="color"
+                    value={teamColor}
+                    onChange={e => setTeamColor(e.target.value)}
+                    className="w-12 h-12 rounded-xl border-2 border-gray-200 cursor-pointer p-1 bg-white"
+                  />
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900 text-sm">Pick a color</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Used on cards, scoreboard, and public pages</p>
+                  </div>
+                  <div
+                    className="w-14 h-14 rounded-xl shadow-md flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${teamColor}, ${darkenHex(teamColor, 0.3)})` }}
+                  />
+                </div>
               </div>
             </div>
           </div>

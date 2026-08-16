@@ -1,8 +1,9 @@
 import React from 'react';
 import { Trash2, Edit2, ChevronRight, RotateCcw } from 'lucide-react';
 import { buildRow, maxBy } from '../../utils/statsHelpers';
+import ShareButton from '../Shared/ShareButton';
 
-const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit, onReopen}) => {
+const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit, onReopen, toast}) => {
   const teamName = team?.name || 'Unknown';
   const isHome   = game.home_team === teamName;
   const ourScore = isHome ? game.home_score : game.away_score;
@@ -131,6 +132,14 @@ const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit, onReopen
           <ChevronRight size={13} />
           Box Score
         </button>
+        <ShareButton
+          path={`/game/${game.id}`}
+          title={`${team?.name} vs ${game.opponent}`}
+          toast={toast}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition"
+        />
+        <div className="w-px bg-gray-50" />
+
       </div>
     </div>
   );

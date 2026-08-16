@@ -29,7 +29,6 @@ const GamePanel = ({
 
   const live      = games.filter(g => g.status === 'in_progress');
   const scheduled = games.filter(g => g.status === 'scheduled');
-  console.log('scheduled games:', scheduled);
   const history   = games.filter(g => g.status === 'completed');
 
   const showLive      = filter === 'All' || filter === 'Live';
@@ -138,6 +137,7 @@ const GamePanel = ({
                     onResume={() => onResumeGame(game)}
                     onViewStats={() => onViewStats(game)}
                     onEnd={() => onEndGame(game)}
+                    toast={toast} 
                   />
                 );
               })}
@@ -187,6 +187,7 @@ const GamePanel = ({
                     onDelete={() => onDeleteGame(game)}
                     onEdit={() => setEditingGame(game)}
                     onReopen={() => onReopenGame(game)}
+                    toast={toast} 
                   />
                 );
               })}

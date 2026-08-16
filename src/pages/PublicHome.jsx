@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabase';
 import { useAuth } from '../services/AuthContext';
 import { LogIn, Calendar, Trophy } from 'lucide-react';
+import { teamGradientStyle, isHexColor } from '../utils/colorUtils';
 
 const GRADIENTS = [
   'from-blue-500 to-blue-700', 'from-purple-500 to-purple-700',
@@ -81,7 +82,15 @@ export default function PublicHome() {
   const live       = allGames.filter(g => g.status === 'in_progress');
   const scheduled  = allGames.filter(g => g.status === 'scheduled');
   const history    = allGames.filter(g => g.status === 'completed');
+  const avatarStyle = (team) =>
+    isHexColor(team.colors)
+      ? teamGradientStyle(team.colors)
+      : undefined;
 
+  const avatarClass = (team) =>
+    `w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 ${
+      !isHexColor(team.colors) ? `bg-gradient-to-br ${gradient(team.name)}` : ''
+    }`;
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -326,6 +335,9 @@ export default function PublicHome() {
                 <p className="font-black text-gray-400">No games yet</p>
               </div>
             )}
+            <div className={avatarClass(team)} style={avatarStyle(team)}>
+              {team.name[0]?.toUpperCase()}
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Play, BarChart2, StopCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import ActivityFeed from '../Shared/ActivityFeed';
+import ShareButton from '../Shared/ShareButton';
 
-const LiveGameCard = ({ game, teamName, onResume, onViewStats, onEnd, canManage }) => {
+const LiveGameCard = ({ game, teamName, onResume, onViewStats, onEnd, canManage, toast }) => {
   const [feedOpen, setFeedOpen] = useState(false);
 
   const isHome   = game.home_team === teamName;
@@ -95,6 +96,13 @@ const LiveGameCard = ({ game, teamName, onResume, onViewStats, onEnd, canManage 
               <Play size={12} fill="currentColor" />
               Resume
             </button>
+            <ShareButton
+              path={`/game/${game.id}`}
+              title={`LIVE: ${teamName} vs ${game.opponent}`}
+              toast={toast}
+              compact
+              className="text-gray-400 hover:text-white hover:bg-gray-800 transition rounded-lg"
+            />
           </>
         )}
         {!canManage && (

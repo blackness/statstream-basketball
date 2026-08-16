@@ -1,5 +1,26 @@
 {
   "rewrites": [
-    { "source": "/((?!.*\\.).*)", "destination": "/index.html" }
+    {
+      "source": "/game/:id",
+      "has": [{
+        "type": "header",
+        "key": "user-agent",
+        "value": "(?i).*(bot|slack|whatsapp|telegram|twitter|facebook|discord|linkedin|preview|curl|wget).*"
+      }],
+      "destination": "/api/og/game/:id"
+    },
+    {
+      "source": "/team/:slug",
+      "has": [{
+        "type": "header",
+        "key": "user-agent",
+        "value": "(?i).*(bot|slack|whatsapp|telegram|twitter|facebook|discord|linkedin|preview|curl|wget).*"
+      }],
+      "destination": "/api/og/team/:slug"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
   ]
 }

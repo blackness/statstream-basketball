@@ -69,44 +69,65 @@ useEffect(() => {
 // ✅ After — watches both games and teams
 useEffect(() => {
   if (!user) return;
+
+  let gameTimer = null;
+
   const channel = supabase
     .channel('lgt-realtime')
-    .on(
-      'postgres_changes',
+    .on('postgres_changes',
       { event: '*', schema: 'public', table: 'games' },
       ({ eventType, new: newGame, old: oldGame }) => {
-        if (eventType === 'INSERT') {
-          setGameHistory(prev => [newGame, ...prev]);
-        } else if (eventType === 'UPDATE') {
-          setGameHistory(prev => prev.map(g => g.id === newGame.id ? newGame : g));
-        } else if (eventType === 'DELETE') {
-          setGameHistory(prev => prev.filter(g => g.id !== oldGame.id));
-        }
+        // Debounce rapid-fire updates (auto-save fires every 5s)
+        clearTimeout(gameTimer);
+        gameTimer = setTimeout(() => {
+          if (eventType === 'INSERT') {
+            setGameHistory(prev => {
+              if (prev.find(g => g.id === newGame.id)) return prev; // ✅ skip dupes
+              return [newGame, ...prev];
+            });
+          } else if (eventType === 'UPDATE') {
+            setGameHistory(prev => prev.map(g => g.id === newGame.id ? newGame : g));
+          } else if (eventType === 'DELETE') {
+            setGameHistory(prev => prev.filter(g => g.id !== oldGame.id));
+          }
+        }, 300);
       }
     )
-    .on(
-      'postgres_changes',
+    .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'teams' },
       ({ new: newTeam }) => {
         setTeams(prev => prev.map(t =>
           t.id === newTeam.id
-            ? { ...t, ...newTeam, roster: t.roster } // ✅ preserve roster, update record
+            ? { ...t, ...newTeam, roster: t.roster }
             : t
         ));
       }
     )
     .subscribe();
-  return () => supabase.removeChannel(channel);
+
+  return () => {
+    clearTimeout(gameTimer);
+    supabase.removeChannel(channel);
+  };
 }, [user]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-
       const [teamsRes, gamesRes, accessRes] = await Promise.all([
-        supabase.from('teams').select('*, players:players(*)').order('created_at', { ascending: false }),
-        supabase.from('games').select('*').order('created_at', { ascending: false }),
-        user ? supabase.from('team_access').select('team_id').eq('user_id', user.id) : { data: [] },
+        supabase
+          .from('teams')
+          .select('*, players:players(*)')
+          .eq('archived', false)            // ✅ skip archived teams
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('games')
+          .select('id,user_id,team_id,status,opponent,home_team,home_score,away_score,period,time_remaining,game_type,game_settings,scheduled_at,created_at,updated_at,play_log,opponent_roster,stats,opponent_stats,active_players,starters')  // ✅ skip unused columns
+          .order('created_at', { ascending: false })
+          .limit(100),                      // ✅ cap at 100 games
+        user
+          ? supabase.from('team_access').select('team_id').eq('user_id', user.id)
+          : Promise.resolve({ data: [] }),
       ]);
 
       if (teamsRes.error) throw teamsRes.error;
@@ -114,7 +135,6 @@ useEffect(() => {
 
       setTeams((teamsRes.data || []).map(t => ({ ...t, roster: t.players || [] })));
       setGameHistory(gamesRes.data || []);
-
       if (accessRes.data?.length) {
         setGrantedTeams(new Set(accessRes.data.map(a => a.team_id)));
       }
@@ -383,13 +403,26 @@ const handleReopenGame = async (game) => {
   };
   // ── Routing ────────────────────────────────────────────────────────────────
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm text-gray-500">Loading...</p>
+  <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
+    {/* Keep the header visible */}
+    <div className="h-14 bg-white border-b border-gray-100 flex items-center px-5 flex-shrink-0">
+      <div className="w-24 h-5 bg-gray-100 rounded-lg animate-pulse" />
+    </div>
+    {/* Skeleton content */}
+    <div className="flex-1 flex">
+      <div className="w-[300px] border-r border-gray-100 p-5 space-y-3">
+        {[1,2,3].map(i => (
+          <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+      <div className="flex-1 p-5 space-y-3">
+        {[1,2,3].map(i => (
+          <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+        ))}
       </div>
     </div>
-  );
+  </div>
+);
 
   if (activeView === 'createTeam') return (
     <CreateTeam

@@ -6,6 +6,7 @@ import {
   Archive, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { slugify } from '../../utils/slugify';
+import { teamGradientStyle, darkenHex, isHexColor } from '../../utils/colorUtils';
 
 const SPORTS = [
   'basketball', 'baseball', 'soccer',
@@ -50,7 +51,8 @@ const EditTeam = ({ user, team, onSave, onCancel, toast }) => {
     notes:           team.notes           || '',
     visibility:      team.visibility      || 'public',
     pin:             team.pin             || '',
-    slug: team.slug || '',
+    slug:            team.slug || '',
+    colors:          isHexColor(team.colors) ? team.colors : '#3b82f6',
     
   });
 
@@ -179,14 +181,25 @@ const EditTeam = ({ user, team, onSave, onCancel, toast }) => {
               </div>
             </Field>
 
-            <Field label="Team Colors">
-              <input
-                type="text"
-                value={form.colors}
-                onChange={e => set('colors', e.target.value)}
-                className={inputCls}
-                placeholder="e.g. Red & Black"
-              />
+            <Field label="Team Color">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <input
+                  type="color"
+                  value={isHexColor(form.colors) ? form.colors : '#3b82f6'}
+                  onChange={e => set('colors', e.target.value)}
+                  className="w-12 h-12 rounded-xl border-2 border-gray-200 cursor-pointer p-1 bg-white"
+                />
+                <div className="flex-1">
+                  <p className="font-bold text-gray-900 text-sm">Team Color</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Used on cards, scoreboard, and public pages</p>
+                </div>
+                <div
+                  className="w-14 h-14 rounded-xl shadow-md flex-shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${form.colors || '#3b82f6'}, ${darkenHex(form.colors || '#3b82f6', 0.3)})`
+                  }}
+                />
+              </div>
             </Field>
             <Field label="Public URL Slug" hint="yoursite.com/team/your-slug">
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">

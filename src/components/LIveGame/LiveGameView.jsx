@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../../supabase';
 import {
   Play, Pause, Undo2,
@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { buildRow, sumRows, fmtPct, STAT_COLS, EMPTY_STATS } from '../../utils/statsHelpers';
 import LineupModal from '../Game/LineupModal';
+import { teamGradientStyle, isHexColor } from '../../utils/colorUtils';
+import ShareButton from '../Shared/ShareButton';
 
 // ─── Orientation hook ─────────────────────────────────────────────────────────
 const useOrientation = () => {
@@ -43,10 +45,14 @@ const OTHER = [
   { key:'pf',   label:'FOUL', updates:{pf:1},   cls:'bg-red-600     active:bg-red-700     text-white' },
 ];
 
-const genId = () => `${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
+// ✅ Fixed — no extra $ characters
+const genId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+const formatTime = (s) =>
+  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 // ─── PlayerCard ───────────────────────────────────────────────────────────────
-const PlayerCard = ({ player, isOpp, isSelected, onSelect, pts }) => {
+const PlayerCard = React.memo(({ player, isOpp, isSelected, onSelect, pts }) => {
   const border = isSelected
     ? isOpp ? 'border-red-500 bg-red-950' : 'border-blue-500 bg-blue-950'
     : 'border-gray-700 bg-gray-800 hover:border-gray-600';
@@ -64,10 +70,10 @@ const PlayerCard = ({ player, isOpp, isSelected, onSelect, pts }) => {
       <span className={`text-sm font-black leading-none mt-0.5 tabular-nums ${ptsCls}`}>{pts ?? 0}</span>
     </button>
   );
-};
+});
 
 // ─── StatGrid ─────────────────────────────────────────────────────────────────
-const StatGrid = ({ onStat, disabled }) => (
+const StatGrid = React.memo(({ onStat, disabled }) => (
   <div className="flex-1 flex flex-col gap-1.5 p-2 overflow-hidden min-h-0">
     <div className="flex-1 flex flex-col gap-0.5 min-h-0">
       <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest flex-shrink-0">Scoring</p>
@@ -101,10 +107,10 @@ const StatGrid = ({ onStat, disabled }) => (
       </div>
     </div>
   </div>
-);
+));
 
 // ─── BoxScoreModal ────────────────────────────────────────────────────────────
-const BoxScoreModal = ({ team, opponent, ourStats, opponentStats, opponentRoster, onClose }) => {
+const BoxScoreModal = React.memo(({ team, opponent, ourStats, opponentStats, opponentRoster, onClose }) => {
   const [tab, setTab] = useState('ours');
   const isOurs  = tab === 'ours';
   const roster  = team?.roster || [];
@@ -181,10 +187,10 @@ const BoxScoreModal = ({ team, opponent, ourStats, opponentStats, opponentRoster
       </div>
     </div>
   );
-};
+});
 
 // ─── EditPlayModal ────────────────────────────────────────────────────────────
-const EditPlayModal = ({ play, onDelete, onClose }) => {
+const EditPlayModal = React.memo(({ play, onDelete, onClose }) => {
   const [deleting, setDeleting] = useState(false);
   const LABELS = {
     fg2m:'2PT Make', fg2miss:'2PT Miss', fg3m:'3PT Make', fg3miss:'3PT Miss',
@@ -219,14 +225,19 @@ const EditPlayModal = ({ play, onDelete, onClose }) => {
       </div>
     </div>
   );
-};
+});
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const LiveGameView = ({
   user, team, gameSettings, existingGame = null, onGoHome, toast,
 }) => {
   const isLandscape = useOrientation();
-
+  const scoreboardStyle = isHexColor(team.colors)
+    ? teamGradientStyle(team.colors)
+    : undefined;
+  const scoreboardClass = `flex-shrink-0 border-b border-black/20 px-3 py-2 ${
+    !isHexColor(team.colors) ? 'bg-gray-900' : ''
+  }`;
   // ── Game state ───────────────────────────────────────────────────────────────
   const [currentGameId,  setCurrentGameId]  = useState(existingGame?.id || null);
   const [homeScore,      setHomeScore]      = useState(existingGame?.home_score || 0);
@@ -269,33 +280,34 @@ const LiveGameView = ({
   const live          = useRef({});
   const creatingGame  = useRef(false);
   const minuteTracker = useRef({ entryTimes: {}, accSeconds: {} });
+  const isDirty       = useRef(false); // ✅ dirty flag for auto-save
 
-  useEffect(() => { live.current.homeScore      = homeScore;      }, [homeScore]);
-  useEffect(() => { live.current.awayScore      = awayScore;      }, [awayScore]);
-  useEffect(() => { live.current.currentPeriod  = currentPeriod;  }, [currentPeriod]);
-  useEffect(() => { live.current.gameTime       = gameTime;       }, [gameTime]);
-  useEffect(() => { live.current.ourStats       = ourStats;       }, [ourStats]);
-  useEffect(() => { live.current.opponentStats  = opponentStats;  }, [opponentStats]);
-  useEffect(() => { live.current.activePlayers  = activePlayers;  }, [activePlayers]);
-  useEffect(() => { live.current.opponentRoster = opponentRoster; }, [opponentRoster]);
-  useEffect(() => { live.current.playLog        = playLog;        }, [playLog]);
+  // ✅ Single useEffect syncs all refs — replaces 9 individual effects
+  useEffect(() => {
+    live.current = {
+      homeScore, awayScore, currentPeriod, gameTime,
+      ourStats, opponentStats, activePlayers, opponentRoster, playLog,
+    };
+    isDirty.current = true; // mark dirty whenever any value changes
+  }, [homeScore, awayScore, currentPeriod, gameTime,
+      ourStats, opponentStats, activePlayers, opponentRoster, playLog]);
 
   // ── Minute helpers ───────────────────────────────────────────────────────────
-  const getElapsed = () => {
+  const getElapsed = useCallback(() => {
     const r = live.current;
     return (r.currentPeriod - 1) * gameSettings.periodLength * 60 +
            (gameSettings.periodLength * 60 - r.gameTime);
-  };
+  }, [gameSettings.periodLength]);
 
-  const initMinuteTracking = (ids, resumedStats = null) => {
+  const initMinuteTracking = useCallback((ids, resumedStats = null) => {
     const elapsed = getElapsed();
     minuteTracker.current = {
       entryTimes: Object.fromEntries(ids.map(id => [id, elapsed])),
       accSeconds: Object.fromEntries(ids.map(id => [id, ((resumedStats?.[id]?.min) || 0) * 60])),
     };
-  };
+  }, [getElapsed]);
 
-  const flushMinutes = (ids, statsSnap, elapsed) => {
+  const flushMinutes = useCallback((ids, statsSnap, elapsed) => {
     const { entryTimes, accSeconds } = minuteTracker.current;
     const updated = { ...statsSnap };
     ids.forEach(id => {
@@ -310,16 +322,16 @@ const LiveGameView = ({
     });
     minuteTracker.current.accSeconds = accSeconds;
     return updated;
-  };
+  }, []);
 
-  const getLiveMin = (id) => {
+  const getLiveMin = useCallback((id) => {
     const { entryTimes, accSeconds } = minuteTracker.current;
     const acc   = accSeconds[id] || 0;
     const entry = entryTimes[id];
     if (entry === undefined) return Math.round(acc / 60);
     const total = acc + Math.max(0, getElapsed() - entry);
     return total > 0 ? Math.max(1, Math.round(total / 60)) : 0;
-  };
+  }, [getElapsed]);
 
   // ── Init ─────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -327,7 +339,7 @@ const LiveGameView = ({
       initMinuteTracking(existingGame.active_players || [], existingGame.stats || {});
       toast?.success('Game resumed!');
     }
-  }, []);
+  }, []); // eslint-disable-line
 
   // ── Timer ────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -339,19 +351,26 @@ const LiveGameView = ({
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [isTimerRunning]);
+  }, [isTimerRunning]); // eslint-disable-line
 
-  // ── Auto-save ────────────────────────────────────────────────────────────────
+  // ✅ Auto-save — only fires when dirty
   useEffect(() => {
     if (!currentGameId) return;
     const id = setInterval(() => {
+      if (!isDirty.current) return;
+      isDirty.current = false;
       const r = live.current;
       supabase.from('games').update({
-        home_score: r.homeScore, away_score: r.awayScore,
-        period: r.currentPeriod, time_remaining: r.gameTime,
-        stats: r.ourStats, opponent_stats: r.opponentStats,
-        opponent_roster: r.opponentRoster, active_players: r.activePlayers,
-        play_log: r.playLog, updated_at: new Date().toISOString(),
+        home_score:      r.homeScore,
+        away_score:      r.awayScore,
+        period:          r.currentPeriod,
+        time_remaining:  r.gameTime,
+        stats:           r.ourStats,
+        opponent_stats:  r.opponentStats,
+        opponent_roster: r.opponentRoster,
+        active_players:  r.activePlayers,
+        play_log:        r.playLog,
+        updated_at:      new Date().toISOString(),
       }).eq('id', currentGameId);
     }, 5000);
     return () => clearInterval(id);
@@ -361,15 +380,22 @@ const LiveGameView = ({
   const createGame = async (starters = []) => {
     try {
       const { data, error } = await supabase.from('games').insert([{
-        user_id: user.id, team_id: team.id,
-        opponent: gameSettings.opponent,
-        home_team: gameSettings.isHome ? team.name : gameSettings.opponent,
-        status: 'in_progress', period: 1,
-        time_remaining: gameSettings.periodLength * 60,
-        home_score: 0, away_score: 0,
-        stats: {}, opponent_stats: {}, opponent_roster: [],
-        active_players: starters, play_log: [],
-        game_settings: gameSettings, visibility: 'public_view',
+        user_id:         user.id,
+        team_id:         team.id,
+        opponent:        gameSettings.opponent,
+        home_team:       gameSettings.isHome ? team.name : gameSettings.opponent,
+        status:          'in_progress',
+        period:          1,
+        time_remaining:  gameSettings.periodLength * 60,
+        home_score:      0,
+        away_score:      0,
+        stats:           {},
+        opponent_stats:  {},
+        opponent_roster: [],
+        active_players:  starters,
+        play_log:        [],
+        game_settings:   gameSettings,
+        visibility:      'public_view',
       }]).select().single();
       if (error) throw error;
       setCurrentGameId(data.id);
@@ -378,6 +404,7 @@ const LiveGameView = ({
         entryTimes: Object.fromEntries(starters.map(id => [id, 0])),
         accSeconds: {},
       };
+      isDirty.current = false; // fresh game — nothing to save yet
       toast?.success('Game started!');
     } catch (err) {
       console.error(err);
@@ -396,17 +423,17 @@ const LiveGameView = ({
     }
   };
 
-  const handleLineupConfirmed = (starters) => {
+  const handleLineupConfirmed = useCallback((starters) => {
     setShowLineup(false);
     setActivePlayers(starters);
     if (!creatingGame.current && !currentGameId) {
       creatingGame.current = true;
       createGame(starters);
     }
-  };
+  }, [currentGameId]); // eslint-disable-line
 
   // ── Stat action ──────────────────────────────────────────────────────────────
-  const handleStatAction = async (action, ctx = 'ours') => {
+  const handleStatAction = useCallback(async (action, ctx = 'ours') => {
     const player = ctx === 'ours' ? ourPlayer : oppPlayer;
     if (!player) { toast?.info('Select a player first'); return; }
 
@@ -428,26 +455,27 @@ const LiveGameView = ({
     }
 
     const newPlay = {
-      id: genId(),
+      id:        genId(),
       timestamp: new Date().toISOString(),
-      period: live.current.currentPeriod,
-      clock: formatTime(live.current.gameTime ?? gameTime),
-      team: ctx,
-      player: { id: player.id, name: player.name, number: player.number || '—' },
-      action: action.key,
-      label: `#${player.number || '—'} ${player.name.split(' ')[0]}`,
+      period:    live.current.currentPeriod,
+      clock:     formatTime(live.current.gameTime),
+      team:      ctx,
+      player:    { id: player.id, name: player.name, number: player.number || '—' },
+      action:    action.key,
+      label:     `#${player.number || '—'} ${player.name.split(' ')[0]}`,
       pts,
-      updates: action.updates,
+      updates:   action.updates,
     };
     const newPlayLog = [newPlay, ...live.current.playLog];
 
     setLastAction({
       isOurs,
-      prevStats: base,
-      prevHome: live.current.homeScore,
-      prevAway: live.current.awayScore,
+      prevStats:   base,
+      prevHome:    live.current.homeScore,
+      prevAway:    live.current.awayScore,
       prevPlayLog: live.current.playLog,
     });
+
     if (isOurs) setOurStats(nextStats); else setOpponentStats(nextStats);
     setPlayLog(newPlayLog);
 
@@ -458,10 +486,10 @@ const LiveGameView = ({
       opponent_stats: isOurs ? live.current.opponentStats : nextStats,
       play_log:       newPlayLog,
     });
-  };
+  }, [ourPlayer, oppPlayer, gameSettings.isHome]); // eslint-disable-line
 
   // ── Undo ─────────────────────────────────────────────────────────────────────
-  const handleUndo = async () => {
+  const handleUndo = useCallback(async () => {
     if (!lastAction) return;
     const { isOurs, prevStats, prevHome, prevAway, prevPlayLog } = lastAction;
     if (isOurs) setOurStats(prevStats); else setOpponentStats(prevStats);
@@ -477,10 +505,10 @@ const LiveGameView = ({
       play_log:       prevPlayLog,
     });
     toast?.info('Undone');
-  };
+  }, [lastAction]); // eslint-disable-line
 
   // ── Delete specific play ──────────────────────────────────────────────────────
-  const handleDeletePlay = async (play) => {
+  const handleDeletePlay = useCallback(async (play) => {
     const isOurs  = play.team === 'ours';
     const base    = isOurs ? live.current.ourStats : live.current.opponentStats;
     const pStat   = { ...(base[play.player.id] || { ...EMPTY_STATS }) };
@@ -512,13 +540,14 @@ const LiveGameView = ({
       play_log:       newPlayLog,
     });
     toast?.info('Play removed');
-  };
+  }, [gameSettings.isHome]); // eslint-disable-line
 
   // ── Substitution ──────────────────────────────────────────────────────────────
-  const handleSub = async (outPlayer) => {
+  const handleSub = useCallback(async (outPlayer) => {
     if (!subIncoming) return;
     const elapsed = getElapsed();
     const { entryTimes, accSeconds } = minuteTracker.current;
+
     if (entryTimes[outPlayer.id] !== undefined) {
       const stint = Math.max(0, elapsed - entryTimes[outPlayer.id]);
       accSeconds[outPlayer.id] = (accSeconds[outPlayer.id] || 0) + stint;
@@ -528,9 +557,9 @@ const LiveGameView = ({
     minuteTracker.current = { entryTimes, accSeconds };
 
     const updatedStats = { ...live.current.ourStats };
-    const outS = { ...(updatedStats[outPlayer.id] || { ...EMPTY_STATS }) };
-    const totalSecs = accSeconds[outPlayer.id] || 0;
-    outS.min = totalSecs > 0 ? Math.max(1, Math.round(totalSecs / 60)) : 0;
+    const outS         = { ...(updatedStats[outPlayer.id] || { ...EMPTY_STATS }) };
+    const totalSecs    = accSeconds[outPlayer.id] || 0;
+    outS.min           = totalSecs > 0 ? Math.max(1, Math.round(totalSecs / 60)) : 0;
     updatedStats[outPlayer.id] = outS;
 
     const newActive = live.current.activePlayers.map(id =>
@@ -538,16 +567,16 @@ const LiveGameView = ({
     );
 
     const subPlay = {
-      id: genId(),
+      id:        genId(),
       timestamp: new Date().toISOString(),
-      period: live.current.currentPeriod,
-      clock: formatTime(live.current.gameTime),
-      team: 'ours',
-      player: { id: subIncoming.id, name: subIncoming.name, number: subIncoming.number || '—' },
-      action: 'sub_in',
-      label: `${subIncoming.name.split(' ')[0]} for ${outPlayer.name.split(' ')[0]}`,
-      pts: 0,
-      updates: {},
+      period:    live.current.currentPeriod,
+      clock:     formatTime(live.current.gameTime),
+      team:      'ours',
+      player:    { id: subIncoming.id, name: subIncoming.name, number: subIncoming.number || '—' },
+      action:    'sub_in',
+      label:     `${subIncoming.name.split(' ')[0]} for ${outPlayer.name.split(' ')[0]}`,
+      pts:       0,
+      updates:   {},
     };
     const newPlayLog = [subPlay, ...live.current.playLog];
 
@@ -557,30 +586,26 @@ const LiveGameView = ({
     setSubIncoming(null);
     setShowSubPanel(false);
     if (ourPlayer?.id === outPlayer.id) setOurPlayer(null);
-    toast?.info(`${subIncoming.name.split(' ')[0]} in for ${outPlayer.name.split(' ')[0]}`);
 
+    toast?.info(`${subIncoming.name.split(' ')[0]} in for ${outPlayer.name.split(' ')[0]}`);
     await persist({ stats: updatedStats, active_players: newActive, play_log: newPlayLog });
-  };
+  }, [subIncoming, ourPlayer, getElapsed]); // eslint-disable-line
 
   // ── Add opponent player ───────────────────────────────────────────────────────
-  const handleAddOppPlayer = async () => {
+  const handleAddOppPlayer = useCallback(async () => {
     if (!newOppName.trim()) return;
-    const player = {
-      id: `opp-${Date.now()}`,
-      name: newOppName.trim(),
-      number: newOppNum.trim() || '?',
-    };
+    const player  = { id: `opp-${Date.now()}`, name: newOppName.trim(), number: newOppNum.trim() || '?' };
     const updated = [...opponentRoster, player];
     setOpponentRoster(updated);
     setNewOppName('');
     setNewOppNum('');
     setShowAddOpp(false);
     await persist({ opponent_roster: updated });
-  };
+  }, [newOppName, newOppNum, opponentRoster]); // eslint-disable-line
 
   // ── Next period ───────────────────────────────────────────────────────────────
-  const handleNextPeriod = async () => {
-    const r = live.current;
+  const handleNextPeriod = useCallback(async () => {
+    const r         = live.current;
     const periodEnd = r.currentPeriod * gameSettings.periodLength * 60;
     const flushed   = flushMinutes(r.activePlayers, r.ourStats, periodEnd);
     r.activePlayers.forEach(id => {
@@ -595,32 +620,27 @@ const LiveGameView = ({
     setOurPlayer(null);
     toast?.info(`Q${next} starting`);
     await persist({ stats: flushed });
-  };
+  }, [gameSettings.periodLength, flushMinutes]); // eslint-disable-line
 
   // ── Update team record ────────────────────────────────────────────────────────
- const updateTeamRecord = async (finalHome, finalAway) => {
-  const ourScore = gameSettings.isHome ? finalHome : finalAway;
-  const oppScore = gameSettings.isHome ? finalAway : finalHome;
-  console.log('updateTeamRecord:', { finalHome, finalAway, ourScore, oppScore, teamId: team.id, isHome: gameSettings.isHome });
-  if (ourScore === oppScore) {
-    console.log('Draw — skipping record update');
-    return;
-  }
-  try {
-    const { data, error } = await supabase.rpc('increment_team_record', {
-      p_team_id:    team.id,
-      p_won:        ourScore > oppScore,
-      p_is_playoff: gameSettings.game_type === 'playoff',
-    });
-    console.log('RPC result:', { data, error });
-    if (error) throw error;
-  } catch (err) {
-    console.error('Failed to update team record:', err);
-  }
-};
+  const updateTeamRecord = useCallback(async (finalHome, finalAway) => {
+    const ourScore = gameSettings.isHome ? finalHome : finalAway;
+    const oppScore = gameSettings.isHome ? finalAway : finalHome;
+    if (ourScore === oppScore) return;
+    try {
+      const { error } = await supabase.rpc('increment_team_record', {
+        p_team_id:    team.id,
+        p_won:        ourScore > oppScore,
+        p_is_playoff: gameSettings.game_type === 'playoff',
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Failed to update team record:', err);
+    }
+  }, [gameSettings.isHome, gameSettings.game_type, team.id]);
 
   // ── End game ──────────────────────────────────────────────────────────────────
-  const handleEndGame = async () => {
+  const handleEndGame = useCallback(async () => {
     const r       = live.current;
     const elapsed = getElapsed();
     const flushed = flushMinutes(r.activePlayers, r.ourStats, elapsed);
@@ -644,12 +664,9 @@ const LiveGameView = ({
       console.error(err);
       toast?.error('Failed to end game');
     }
-  };
+  }, [getElapsed, flushMinutes, updateTeamRecord, onGoHome]); // eslint-disable-line
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
-  const formatTime = (s) =>
-    `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-
+  // ── Derived values ────────────────────────────────────────────────────────────
   const courtPlayers = team.roster?.filter(p => activePlayers.includes(p.id)) || [];
   const benchPlayers = team.roster?.filter(p => !activePlayers.includes(p.id)) || [];
   const ourScore     = gameSettings.isHome ? homeScore : awayScore;
@@ -658,12 +675,28 @@ const LiveGameView = ({
   const ourSel       = ourPlayer;
   const ourSelStats  = ourSel ? (ourStats[ourSel.id] || { ...EMPTY_STATS }) : null;
 
-  // ── PORTRAIT ──────────────────────────────────────────────────────────────────
+  // ── Shared panel props (avoids prop drilling repetition) ──────────────────────
+  const oppPanelProps = {
+    gameSettings, opponentRoster, oppPlayer, setOppPlayer,
+    opponentStats, showAddOpp, setShowAddOpp,
+    newOppName, setNewOppName, newOppNum, setNewOppNum,
+    handleAddOppPlayer, handleStatAction,
+    setShowOppPanel,
+  };
+
+  const subPanelProps = {
+    subIncoming, setSubIncoming,
+    benchPlayers, courtPlayers,
+    getLiveMin, handleSub,
+    setShowSubPanel,
+  };
+
+  // ─── PORTRAIT ────────────────────────────────────────────────────────────────
   const Portrait = () => (
     <div className="h-screen w-full bg-gray-950 flex flex-col overflow-hidden text-white">
 
       {/* Scoreboard */}
-      <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-3 py-2">
+      <div className={scoreboardClass} style={scoreboardStyle}>
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
             <p className="text-[9px] text-gray-500 font-bold truncate">
@@ -721,7 +754,7 @@ const LiveGameView = ({
         )}
       </div>
 
-      {/* Court players row */}
+      {/* Court players */}
       <div className="flex-shrink-0 px-2 py-1.5 border-b border-gray-800 bg-gray-900">
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {courtPlayers.map(p => (
@@ -762,14 +795,11 @@ const LiveGameView = ({
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-gray-500 truncate">
                 <span className="text-blue-400 font-bold">{lastPlay.label}</span>
-                {' · '}
-                <span>Q{lastPlay.period} {lastPlay.clock}</span>
+                {' · Q'}{lastPlay.period} {lastPlay.clock}
                 {lastPlay.pts > 0 && <span className="text-emerald-500"> +{lastPlay.pts}</span>}
               </p>
             </div>
-            <button onClick={() => setEditingPlay(lastPlay)} className="text-[10px] text-gray-600 hover:text-gray-400 font-bold flex-shrink-0 transition">
-              EDIT
-            </button>
+            <button onClick={() => setEditingPlay(lastPlay)} className="text-[10px] text-gray-600 hover:text-gray-400 font-bold flex-shrink-0 transition">EDIT</button>
             <button onClick={() => setShowPlays(true)} className="text-[10px] text-blue-600 hover:text-blue-400 font-bold flex-shrink-0 transition flex items-center gap-0.5">
               ALL <ChevronRight size={10} />
             </button>
@@ -817,216 +847,39 @@ const LiveGameView = ({
       </button>
 
       {/* Opp Panel */}
-      {showOppPanel && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
-          <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-              <h3 className="font-black text-sm text-red-400">{gameSettings.opponent}</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAddOpp(v => !v)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:bg-gray-700 transition"
-                >
-                  <UserPlus size={11} /> Add Player
-                </button>
-                <button onClick={() => setShowOppPanel(false)} className="p-1 text-gray-600 hover:text-white">
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-            {showAddOpp && (
-              <div className="flex gap-2 px-4 py-2 border-b border-gray-800 flex-shrink-0">
-                <input autoFocus type="text" placeholder="Name" value={newOppName}
-                  onChange={e => setNewOppName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
-                />
-                <input type="text" placeholder="#" value={newOppNum}
-                  onChange={e => setNewOppNum(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
-                  className="w-14 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
-                />
-                <button onClick={handleAddOppPlayer} className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition">
-                  Add
-                </button>
-              </div>
-            )}
-            {opponentRoster.length > 0 && (
-              <div className="px-4 py-2 border-b border-gray-800 flex-shrink-0">
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {opponentRoster.map(p => (
-                    <PlayerCard key={p.id} player={p} isOpp={true}
-                      isSelected={oppPlayer?.id === p.id}
-                      onSelect={() => setOppPlayer(prev => prev?.id === p.id ? null : p)}
-                      pts={opponentStats[p.id]?.pts || 0}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex-1 min-h-0">
-              {oppPlayer ? (
-                <>
-                  <div className="px-4 py-1.5 border-b border-gray-800 flex-shrink-0">
-                    <p className="text-xs font-black text-red-400">
-                      #{oppPlayer.number} {oppPlayer.name}
-                      <span className="ml-2 text-white">{opponentStats[oppPlayer.id]?.pts || 0}pts</span>
-                    </p>
-                  </div>
-                  <StatGrid onStat={a => handleStatAction(a, 'opponent')} disabled={false} />
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-24">
-                  <p className="text-gray-600 text-sm font-bold">
-                    {opponentRoster.length === 0 ? 'Add opponent players above' : 'Select an opponent player'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <OppPanel {...oppPanelProps} />
 
       {/* Sub Panel */}
-      {showSubPanel && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
-          <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[60vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-              <h3 className="font-black text-sm text-white">
-                {!subIncoming ? '① Select player coming IN' : '② Select player going OUT'}
-              </h3>
-              <button onClick={() => { setShowSubPanel(false); setSubIncoming(null); }}>
-                <X size={16} className="text-gray-600" />
-              </button>
-            </div>
-            {!subIncoming ? (
-              <div className="flex-1 overflow-y-auto px-4 py-3">
-                {benchPlayers.length === 0 ? (
-                  <p className="text-center text-gray-600 py-8 text-sm">No bench players</p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {benchPlayers.map(p => (
-                      <button key={p.id} onClick={() => setSubIncoming(p)}
-                        className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95"
-                      >
-                        <p className="text-[10px] text-gray-500">#{p.number || '—'}</p>
-                        <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
-                        <p className="text-[10px] text-gray-600 mt-0.5">{getLiveMin(p.id)} min</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto px-4 py-3">
-                <div className="flex items-center gap-2 mb-3 p-2 bg-blue-950 rounded-xl">
-                  <span className="text-[10px] text-blue-400 font-bold">IN:</span>
-                  <span className="text-xs font-black text-white">#{subIncoming.number || '—'} {subIncoming.name}</span>
-                  <button onClick={() => setSubIncoming(null)} className="ml-auto text-[10px] text-gray-600 hover:text-white">← back</button>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {courtPlayers.map(p => (
-                    <button key={p.id} onClick={() => handleSub(p)}
-                      className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95"
-                    >
-                      <p className="text-[10px] text-orange-500">#{p.number || '—'}</p>
-                      <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
-                      <p className="text-[10px] text-orange-700 mt-0.5">{getLiveMin(p.id)} min</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <SubPanel {...subPanelProps} />
 
-      {/* Next Period confirmation */}
-      {showNextQ && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0" />
-              <h3 className="font-black text-white">End Q{currentPeriod}?</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
-              <div className="text-center">
-                <p className="text-2xl font-black text-white">{ourScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{team.name}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-black text-white">{oppScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{gameSettings.opponent}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowNextQ(false)} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
-              <button onClick={handleNextPeriod} className="flex-1 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-xl font-black text-sm transition">Start Q{currentPeriod + 1}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirmations */}
+      <NextQModal
+        show={showNextQ}
+        currentPeriod={currentPeriod}
+        ourScore={ourScore}
+        oppScore={oppScore}
+        teamName={team.name}
+        opponent={gameSettings.opponent}
+        onCancel={() => setShowNextQ(false)}
+        onConfirm={handleNextPeriod}
+      />
+      <EndGameModal
+        show={showEndGame}
+        ourScore={ourScore}
+        oppScore={oppScore}
+        teamName={team.name}
+        opponent={gameSettings.opponent}
+        onCancel={() => setShowEndGame(false)}
+        onConfirm={handleEndGame}
+      />
 
-      {/* End game confirmation */}
-      {showEndGame && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle size={20} className="text-red-500 flex-shrink-0" />
-              <h3 className="font-black text-white">End Game?</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
-              <div className="text-center">
-                <p className="text-3xl font-black text-white">{ourScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{team.name}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-black text-white">{oppScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{gameSettings.opponent}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowEndGame(false)} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
-              <button onClick={handleEndGame} className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-sm transition">End Game</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Plays modal */}
-      {showPlays && (
-        <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-            <h2 className="font-black text-white text-sm">All Plays</h2>
-            <button onClick={() => setShowPlays(false)} className="p-1.5 text-gray-600 hover:text-white">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="divide-y divide-gray-900">
-              {playLog.map(play => (
-                <div key={play.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-900 cursor-pointer"
-                  onClick={() => { setEditingPlay(play); setShowPlays(false); }}
-                >
-                  <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">Q{play.period} {play.clock}</span>
-                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'}`}>
-                    {play.action.replace('fg2','2PT ').replace('fg3','3PT ').replace('m','✓').replace('miss','✗')
-                      .replace('oreb','OREB').replace('dreb','DREB').replace('ast','AST').replace('stl','STL')
-                      .replace('blk','BLK').replace('to','TO').replace('pf','FOUL').replace('sub_in','SUB').toUpperCase()}
-                  </span>
-                  <span className="flex-1 text-xs text-gray-400 font-semibold truncate">{play.label}</span>
-                  {play.pts > 0 && (
-                    <span className={`text-xs font-black flex-shrink-0 ${play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'}`}>
-                      +{play.pts}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {playLog.length === 0 && <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Plays */}
+      <PlaysModal
+        show={showPlays}
+        playLog={playLog}
+        onClose={() => setShowPlays(false)}
+        onEditPlay={(play) => { setEditingPlay(play); setShowPlays(false); }}
+      />
     </div>
   );
 
@@ -1038,7 +891,7 @@ const LiveGameView = ({
       <div className="w-[200px] flex-shrink-0 flex flex-col border-r border-gray-800 bg-gray-900">
 
         {/* Score */}
-        <div className="flex-shrink-0 px-3 pt-3 pb-2 border-b border-gray-800">
+        <div className="flex-shrink-0 px-3 pt-3 pb-2 border-b border-black/20" style={scoreboardStyle}>
           <div className="flex items-center justify-between mb-1">
             <span className="text-[9px] text-gray-600 font-bold uppercase">Q{currentPeriod}</span>
             <span className="text-sm font-black tabular-nums">{formatTime(gameTime)}</span>
@@ -1103,6 +956,22 @@ const LiveGameView = ({
             className="w-full py-1.5 flex items-center justify-center gap-1 text-[10px] text-gray-700 hover:text-blue-400 transition font-bold">
             <BarChart2 size={10} /> Box Score
           </button>
+          <div className="flex-shrink-0 flex items-center justify-between px-3 py-1.5 bg-gray-950 border-t border-gray-900">
+          <button
+            onClick={() => setShowBoxScore(true)}
+            className="flex items-center gap-1.5 text-[10px] text-gray-700 hover:text-blue-400 transition font-bold"
+          >
+            <BarChart2 size={10} /> VIEW BOX SCORE
+          </button>
+          {currentGameId && (
+            <ShareButton
+              path={`/game/${currentGameId}`}
+              title={`${team.name} vs ${gameSettings.opponent}`}
+              toast={toast}
+              className="text-[10px] text-gray-700 hover:text-blue-400 transition font-bold flex items-center gap-1"
+            />
+          )}
+        </div>
         </div>
       </div>
 
@@ -1167,164 +1036,34 @@ const LiveGameView = ({
         </div>
       </div>
 
-      {/* Landscape overlays */}
-      {showOppPanel && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
-          <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-              <h3 className="font-black text-sm text-red-400">{gameSettings.opponent}</h3>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setShowAddOpp(v => !v)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:bg-gray-700 transition">
-                  <UserPlus size={11} /> Add
-                </button>
-                <button onClick={() => setShowOppPanel(false)}><X size={16} className="text-gray-600" /></button>
-              </div>
-            </div>
-            {showAddOpp && (
-              <div className="flex gap-2 px-4 py-2 border-b border-gray-800 flex-shrink-0">
-                <input autoFocus type="text" placeholder="Name" value={newOppName}
-                  onChange={e => setNewOppName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
-                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
-                />
-                <input type="text" placeholder="#" value={newOppNum}
-                  onChange={e => setNewOppNum(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
-                  className="w-14 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none"
-                />
-                <button onClick={handleAddOppPlayer} className="px-3 py-2 bg-red-700 text-white rounded-xl text-sm font-bold">Add</button>
-              </div>
-            )}
-            {opponentRoster.length > 0 && (
-              <div className="px-4 py-2 border-b border-gray-800 flex-shrink-0">
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {opponentRoster.map(p => (
-                    <PlayerCard key={p.id} player={p} isOpp={true}
-                      isSelected={oppPlayer?.id === p.id}
-                      onSelect={() => setOppPlayer(prev => prev?.id === p.id ? null : p)}
-                      pts={opponentStats[p.id]?.pts || 0}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex-1 min-h-0">
-              {oppPlayer ? (
-                <>
-                  <div className="px-4 py-1.5 border-b border-gray-800">
-                    <p className="text-xs font-black text-red-400">
-                      #{oppPlayer.number} {oppPlayer.name}
-                      <span className="ml-2 text-white">{opponentStats[oppPlayer.id]?.pts || 0}pts</span>
-                    </p>
-                  </div>
-                  <StatGrid onStat={a => handleStatAction(a, 'opponent')} disabled={false} />
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-24">
-                  <p className="text-gray-600 text-sm">{opponentRoster.length === 0 ? 'Add players above' : 'Select a player'}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showSubPanel && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
-          <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[50vh] flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-              <h3 className="font-black text-sm text-white">{!subIncoming ? '① Coming IN' : '② Going OUT'}</h3>
-              <button onClick={() => { setShowSubPanel(false); setSubIncoming(null); }}>
-                <X size={16} className="text-gray-600" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3">
-              {!subIncoming ? (
-                <div className="grid grid-cols-4 gap-2">
-                  {benchPlayers.map(p => (
-                    <button key={p.id} onClick={() => setSubIncoming(p)}
-                      className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95">
-                      <p className="text-[10px] text-gray-500">#{p.number || '—'}</p>
-                      <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
-                      <p className="text-[10px] text-gray-600 mt-0.5">{getLiveMin(p.id)} min</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 mb-3 p-2 bg-blue-950 rounded-xl">
-                    <span className="text-[10px] text-blue-400 font-bold">IN:</span>
-                    <span className="text-xs font-black text-white">#{subIncoming.number || '—'} {subIncoming.name}</span>
-                    <button onClick={() => setSubIncoming(null)} className="ml-auto text-[10px] text-gray-600 hover:text-white">← back</button>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {courtPlayers.map(p => (
-                      <button key={p.id} onClick={() => handleSub(p)}
-                        className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95">
-                        <p className="text-[10px] text-orange-500">#{p.number || '—'}</p>
-                        <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
-                        <p className="text-[10px] text-orange-700 mt-0.5">{getLiveMin(p.id)} min</p>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Shared modals */}
-      {showNextQ && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle size={20} className="text-yellow-500" />
-              <h3 className="font-black text-white">End Q{currentPeriod}?</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
-              <div className="text-center">
-                <p className="text-2xl font-black text-white">{ourScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{team.name}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-black text-white">{oppScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{gameSettings.opponent}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowNextQ(false)} className="flex-1 py-3 bg-gray-800 text-gray-400 rounded-xl font-bold text-sm">Cancel</button>
-              <button onClick={handleNextPeriod} className="flex-1 py-3 bg-blue-700 text-white rounded-xl font-black text-sm">Start Q{currentPeriod + 1}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEndGame && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle size={20} className="text-red-500" />
-              <h3 className="font-black text-white">End Game?</h3>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
-              <div className="text-center">
-                <p className="text-3xl font-black text-white">{ourScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{team.name}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-3xl font-black text-white">{oppScore}</p>
-                <p className="text-[10px] text-gray-500 truncate">{gameSettings.opponent}</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setShowEndGame(false)} className="flex-1 py-3 bg-gray-800 text-gray-400 rounded-xl font-bold text-sm">Cancel</button>
-              <button onClick={handleEndGame} className="flex-1 py-3 bg-red-800 text-white rounded-xl font-black text-sm">End Game</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Landscape overlays — reuse same panel components */}
+      <OppPanel {...oppPanelProps} />
+      <SubPanel {...subPanelProps} />
+      <NextQModal
+        show={showNextQ}
+        currentPeriod={currentPeriod}
+        ourScore={ourScore}
+        oppScore={oppScore}
+        teamName={team.name}
+        opponent={gameSettings.opponent}
+        onCancel={() => setShowNextQ(false)}
+        onConfirm={handleNextPeriod}
+      />
+      <EndGameModal
+        show={showEndGame}
+        ourScore={ourScore}
+        oppScore={oppScore}
+        teamName={team.name}
+        opponent={gameSettings.opponent}
+        onCancel={() => setShowEndGame(false)}
+        onConfirm={handleEndGame}
+      />
+      <PlaysModal
+        show={showPlays}
+        playLog={playLog}
+        onClose={() => setShowPlays(false)}
+        onEditPlay={(play) => { setEditingPlay(play); setShowPlays(false); }}
+      />
     </div>
   );
 
@@ -1355,43 +1094,230 @@ const LiveGameView = ({
           onClose={() => setEditingPlay(null)}
         />
       )}
-
-      {showPlays && (
-        <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-            <h2 className="font-black text-white text-sm">All Plays</h2>
-            <button onClick={() => setShowPlays(false)} className="p-1.5 text-gray-600 hover:text-white">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {playLog.map(play => (
-              <div key={play.id}
-                onClick={() => { setEditingPlay(play); setShowPlays(false); }}
-                className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-900 hover:bg-gray-900 cursor-pointer"
-              >
-                <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">Q{play.period} {play.clock}</span>
-                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'}`}>
-                  {play.action.toUpperCase()
-                    .replace('FG2M','2PT✓').replace('FG2MISS','2PT✗')
-                    .replace('FG3M','3PT✓').replace('FG3MISS','3PT✗')
-                    .replace('FTM','FT✓').replace('FTMISS','FT✗')
-                    .replace('SUB_IN','SUB')}
-                </span>
-                <span className="flex-1 text-xs text-gray-400 font-semibold truncate">{play.label}</span>
-                {play.pts > 0 && (
-                  <span className={`text-xs font-black flex-shrink-0 ${play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'}`}>
-                    +{play.pts}
-                  </span>
-                )}
-              </div>
-            ))}
-            {playLog.length === 0 && <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>}
-          </div>
-        </div>
-      )}
     </>
   );
 };
+
+// ─── Panel sub-components (outside LiveGameView — stable references) ──────────
+
+const OppPanel = React.memo(({
+  gameSettings, opponentRoster, oppPlayer, setOppPlayer,
+  opponentStats, showAddOpp, setShowAddOpp,
+  newOppName, setNewOppName, newOppNum, setNewOppNum,
+  handleAddOppPlayer, handleStatAction, setShowOppPanel,
+}) => (
+  <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
+    <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[80vh] flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
+        <h3 className="font-black text-sm text-red-400">{gameSettings.opponent}</h3>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAddOpp(v => !v)}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:bg-gray-700 transition">
+            <UserPlus size={11} /> Add Player
+          </button>
+          <button onClick={() => setShowOppPanel(false)} className="p-1 text-gray-600 hover:text-white">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      {showAddOpp && (
+        <div className="flex gap-2 px-4 py-2 border-b border-gray-800 flex-shrink-0">
+          <input autoFocus type="text" placeholder="Name" value={newOppName}
+            onChange={e => setNewOppName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
+            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
+          />
+          <input type="text" placeholder="#" value={newOppNum}
+            onChange={e => setNewOppNum(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
+            className="w-14 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
+          />
+          <button onClick={handleAddOppPlayer} className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition">Add</button>
+        </div>
+      )}
+      {opponentRoster.length > 0 && (
+        <div className="px-4 py-2 border-b border-gray-800 flex-shrink-0">
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            {opponentRoster.map(p => (
+              <PlayerCard key={p.id} player={p} isOpp={true}
+                isSelected={oppPlayer?.id === p.id}
+                onSelect={() => setOppPlayer(prev => prev?.id === p.id ? null : p)}
+                pts={opponentStats[p.id]?.pts || 0}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="flex-1 min-h-0">
+        {oppPlayer ? (
+          <>
+            <div className="px-4 py-1.5 border-b border-gray-800 flex-shrink-0">
+              <p className="text-xs font-black text-red-400">
+                #{oppPlayer.number} {oppPlayer.name}
+                <span className="ml-2 text-white">{opponentStats[oppPlayer.id]?.pts || 0}pts</span>
+              </p>
+            </div>
+            <StatGrid onStat={a => handleStatAction(a, 'opponent')} disabled={false} />
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-24">
+            <p className="text-gray-600 text-sm font-bold">
+              {opponentRoster.length === 0 ? 'Add opponent players above' : 'Select an opponent player'}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
+const SubPanel = React.memo(({
+  subIncoming, setSubIncoming,
+  benchPlayers, courtPlayers,
+  getLiveMin, handleSub, setShowSubPanel,
+}) => (
+  <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
+    <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[60vh] flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
+        <h3 className="font-black text-sm text-white">
+          {!subIncoming ? '① Select player coming IN' : '② Select player going OUT'}
+        </h3>
+        <button onClick={() => { setShowSubPanel(false); setSubIncoming(null); }}>
+          <X size={16} className="text-gray-600" />
+        </button>
+      </div>
+      {!subIncoming ? (
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {benchPlayers.length === 0 ? (
+            <p className="text-center text-gray-600 py-8 text-sm">No bench players</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {benchPlayers.map(p => (
+                <button key={p.id} onClick={() => setSubIncoming(p)}
+                  className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95">
+                  <p className="text-[10px] text-gray-500">#{p.number || '—'}</p>
+                  <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5">{getLiveMin(p.id)} min</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <div className="flex items-center gap-2 mb-3 p-2 bg-blue-950 rounded-xl">
+            <span className="text-[10px] text-blue-400 font-bold">IN:</span>
+            <span className="text-xs font-black text-white">#{subIncoming.number || '—'} {subIncoming.name}</span>
+            <button onClick={() => setSubIncoming(null)} className="ml-auto text-[10px] text-gray-600 hover:text-white">← back</button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {courtPlayers.map(p => (
+              <button key={p.id} onClick={() => handleSub(p)}
+                className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95">
+                <p className="text-[10px] text-orange-500">#{p.number || '—'}</p>
+                <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
+                <p className="text-[10px] text-orange-700 mt-0.5">{getLiveMin(p.id)} min</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+));
+
+const NextQModal = React.memo(({ show, currentPeriod, ourScore, oppScore, teamName, opponent, onCancel, onConfirm }) => {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0" />
+          <h3 className="font-black text-white">End Q{currentPeriod}?</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
+          <div className="text-center">
+            <p className="text-2xl font-black text-white">{ourScore}</p>
+            <p className="text-[10px] text-gray-500 truncate">{teamName}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-black text-white">{oppScore}</p>
+            <p className="text-[10px] text-gray-500 truncate">{opponent}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
+          <button onClick={onConfirm} className="flex-1 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-xl font-black text-sm transition">Start Q{currentPeriod + 1}</button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const EndGameModal = React.memo(({ show, ourScore, oppScore, teamName, opponent, onCancel, onConfirm }) => {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle size={20} className="text-red-500 flex-shrink-0" />
+          <h3 className="font-black text-white">End Game?</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-4 bg-gray-800 rounded-xl p-3">
+          <div className="text-center">
+            <p className="text-3xl font-black text-white">{ourScore}</p>
+            <p className="text-[10px] text-gray-500 truncate">{teamName}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl font-black text-white">{oppScore}</p>
+            <p className="text-[10px] text-gray-500 truncate">{opponent}</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
+          <button onClick={onConfirm} className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-sm transition">End Game</button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const PlaysModal = React.memo(({ show, playLog, onClose, onEditPlay }) => {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
+        <h2 className="font-black text-white text-sm">All Plays</h2>
+        <button onClick={onClose} className="p-1.5 text-gray-600 hover:text-white">
+          <X size={18} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {playLog.map(play => (
+          <div key={play.id}
+            onClick={() => onEditPlay(play)}
+            className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-900 hover:bg-gray-900 cursor-pointer"
+          >
+            <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">Q{play.period} {play.clock}</span>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'}`}>
+              {play.action.toUpperCase()
+                .replace('FG2M','2PT✓').replace('FG2MISS','2PT✗')
+                .replace('FG3M','3PT✓').replace('FG3MISS','3PT✗')
+                .replace('FTM','FT✓').replace('FTMISS','FT✗')
+                .replace('SUB_IN','SUB')}
+            </span>
+            <span className="flex-1 text-xs text-gray-400 font-semibold truncate">{play.label}</span>
+            {play.pts > 0 && (
+              <span className={`text-xs font-black flex-shrink-0 ${play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'}`}>
+                +{play.pts}
+              </span>
+            )}
+          </div>
+        ))}
+        {playLog.length === 0 && <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>}
+      </div>
+    </div>
+  );
+});
 
 export default LiveGameView;

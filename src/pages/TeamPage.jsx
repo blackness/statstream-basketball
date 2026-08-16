@@ -4,6 +4,8 @@ import { supabase } from '../../supabase';
 import { aggregateSeasonStats, fmtPct } from '../utils/statsHelpers';
 import ActivityFeed from '../components/Shared/ActivityFeed';
 import { ArrowLeft, LogIn, Trophy, Calendar, Users } from 'lucide-react';
+import { teamGradientStyle, isHexColor } from '../utils/colorUtils';
+import ShareButton from '../components/Shared/ShareButton';
 
 const STAT_RANKINGS = [
   { key: 'pts', label: 'Points',   unit: 'PPG',  source: 'avg' },
@@ -113,6 +115,8 @@ export default function TeamPage() {
     { key: 'stats',   label: 'Stats'   },
     { key: 'games',   label: `Games (${completedGames.length})` },
   ];
+const headerStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+const headerClass = `text-white rounded-2xl p-5 ${!isHexColor(team.colors) ? 'bg-gradient-to-br from-gray-900 to-gray-800' : ''}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,13 +136,18 @@ export default function TeamPage() {
           >
             <LogIn size={14} /> Sign In
           </button>
+          <ShareButton
+            path={`/team/${team.slug || team.id}`}
+            title={team.name}
+            className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-sm transition"
+          />
         </div>
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5 pb-16">
 
         {/* Team header */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white rounded-2xl p-5">
+        <div className={headerClass} style={headerStyle}>
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-3xl font-black flex-shrink-0">
               {team.name[0]?.toUpperCase()}

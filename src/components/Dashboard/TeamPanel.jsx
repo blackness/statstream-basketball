@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, Users, Play, ChevronRight, BarChart2 } from 'lucide-react';
+import { teamGradientStyle, isHexColor } from '../../utils/colorUtils';
 
 const GRADIENTS = [
   'from-blue-500 to-blue-700',    'from-purple-500 to-purple-700',
@@ -10,6 +11,13 @@ const GRADIENTS = [
 
 const gradient = (name = '') =>
   GRADIENTS[(name.charCodeAt(0) || 0) % GRADIENTS.length];
+const getAvatarStyle = (team) =>
+  isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+
+const getAvatarClass = (team) =>
+  `w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 ${
+    isHexColor(team.colors) ? '' : `bg-gradient-to-br ${gradient(team.name)}`
+  }`;
 
 const TeamPanel = ({
   teams = [],
@@ -94,7 +102,7 @@ const TeamPanel = ({
                   onClick={() => onSelectTeam(selected ? null : team)}
                   className="w-full flex items-center gap-3 p-3 text-left"
                 >
-                  <div className={`w-10 h-10 bg-gradient-to-br ${gradient(team.name)} rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0`}>
+                  <div className={getAvatarClass(team)} style={getAvatarStyle(team)}>
                     {team.name[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
