@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../supabase';
 import {
-  Play, Pause, Undo2, ArrowLeftRight,
+  Play, Pause, Undo2,
   BarChart2, X, UserPlus, ChevronRight, AlertTriangle
 } from 'lucide-react';
 import { buildRow, sumRows, fmtPct, STAT_COLS, EMPTY_STATS } from '../../utils/statsHelpers';
-import ActivityFeed from '../Shared/ActivityFeed';
 import LineupModal from '../Game/LineupModal';
 
-// ─── Orientation hook ────────────────────────────────────────────────────────
+// ─── Orientation hook ─────────────────────────────────────────────────────────
 const useOrientation = () => {
   const [ls, setLs] = useState(
     typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false
@@ -17,12 +16,15 @@ const useOrientation = () => {
     const u = () => setLs(window.innerWidth > window.innerHeight);
     window.addEventListener('resize', u);
     window.addEventListener('orientationchange', u);
-    return () => { window.removeEventListener('resize', u); window.removeEventListener('orientationchange', u); };
+    return () => {
+      window.removeEventListener('resize', u);
+      window.removeEventListener('orientationchange', u);
+    };
   }, []);
   return ls;
 };
 
-// ─── Stat definitions ────────────────────────────────────────────────────────
+// ─── Stat definitions ─────────────────────────────────────────────────────────
 const SCORING = [
   { key:'fg2m',    label:'2PT ✓', updates:{fgm:1,fga:1,pts:2}, cls:'bg-blue-600   active:bg-blue-700   text-white' },
   { key:'fg2miss', label:'2PT ✗', updates:{fga:1},             cls:'bg-gray-800   active:bg-gray-700   text-blue-400   border border-blue-900' },
@@ -41,7 +43,7 @@ const OTHER = [
   { key:'pf',   label:'FOUL', updates:{pf:1},   cls:'bg-red-600     active:bg-red-700     text-white' },
 ];
 
-const genId = () => `$${Date.now()}-$${Math.random().toString(36).substr(2,9)}`;
+const genId = () => `${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
 
 // ─── PlayerCard ───────────────────────────────────────────────────────────────
 const PlayerCard = ({ player, isOpp, isSelected, onSelect, pts }) => {
@@ -69,10 +71,7 @@ const StatGrid = ({ onStat, disabled }) => (
   <div className="flex-1 flex flex-col gap-1.5 p-2 overflow-hidden min-h-0">
     <div className="flex-1 flex flex-col gap-0.5 min-h-0">
       <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest flex-shrink-0">Scoring</p>
-      <div
-        className="flex-1 grid grid-cols-3 gap-1 min-h-0"
-        style={{ gridTemplateRows: 'repeat(2, 1fr)' }}
-      >
+      <div className="flex-1 grid grid-cols-3 gap-1 min-h-0" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
         {SCORING.map(a => (
           <button
             key={a.key}
@@ -87,10 +86,7 @@ const StatGrid = ({ onStat, disabled }) => (
     </div>
     <div className="flex-1 flex flex-col gap-0.5 min-h-0">
       <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest flex-shrink-0">Other</p>
-      <div
-        className="flex-1 grid grid-cols-4 gap-1 min-h-0"
-        style={{ gridTemplateRows: 'repeat(2, 1fr)' }}
-      >
+      <div className="flex-1 grid grid-cols-4 gap-1 min-h-0" style={{ gridTemplateRows: 'repeat(2, 1fr)' }}>
         {OTHER.map(a => (
           <button
             key={a.key}
@@ -147,14 +143,9 @@ const BoxScoreModal = ({ team, opponent, ourStats, opponentStats, opponentRoster
           <table className="text-xs min-w-max w-full">
             <thead>
               <tr className="border-b border-gray-800">
-                <th className="text-left py-2 px-3 font-bold text-gray-500 sticky left-0 bg-gray-950 min-w-[120px]">
-                  Player
-                </th>
+                <th className="text-left py-2 px-3 font-bold text-gray-500 sticky left-0 bg-gray-950 min-w-[120px]">Player</th>
                 {STAT_COLS.map(col => (
-                  <th
-                    key={col.label}
-                    className={`py-2 px-2 text-right font-bold ${col.muted ? 'text-gray-700' : 'text-gray-500'}`}
-                  >
+                  <th key={col.label} className={`py-2 px-2 text-right font-bold ${col.muted ? 'text-gray-700' : 'text-gray-500'}`}>
                     {col.label}
                   </th>
                 ))}
@@ -168,12 +159,7 @@ const BoxScoreModal = ({ team, opponent, ourStats, opponentStats, opponentRoster
                     <span className="font-bold text-white">{row.name}</span>
                   </td>
                   {STAT_COLS.map(col => (
-                    <td
-                      key={col.label}
-                      className={`py-2 px-2 text-right tabular-nums ${
-                        col.bold ? `font-black ${ptsCls}` : col.muted ? 'text-gray-600' : 'text-gray-400'
-                      }`}
-                    >
+                    <td key={col.label} className={`py-2 px-2 text-right tabular-nums ${col.bold ? `font-black ${ptsCls}` : col.muted ? 'text-gray-600' : 'text-gray-400'}`}>
                       {col.render(row)}
                     </td>
                   ))}
@@ -182,16 +168,9 @@ const BoxScoreModal = ({ team, opponent, ourStats, opponentStats, opponentRoster
             </tbody>
             <tfoot>
               <tr className="border-t border-gray-700 bg-gray-800 font-black">
-                <td className="py-2 px-3 sticky left-0 bg-gray-800 text-[10px] text-gray-500 uppercase">
-                  Team
-                </td>
+                <td className="py-2 px-3 sticky left-0 bg-gray-800 text-[10px] text-gray-500 uppercase">Team</td>
                 {STAT_COLS.map(col => (
-                  <td
-                    key={col.label}
-                    className={`py-2 px-2 text-right tabular-nums ${
-                      col.bold ? ptsCls : col.muted ? 'text-gray-600' : 'text-gray-400'
-                    }`}
-                  >
+                  <td key={col.label} className={`py-2 px-2 text-right tabular-nums ${col.bold ? ptsCls : col.muted ? 'text-gray-600' : 'text-gray-400'}`}>
                     {col.render(totals)}
                   </td>
                 ))}
@@ -248,7 +227,7 @@ const LiveGameView = ({
 }) => {
   const isLandscape = useOrientation();
 
-  // ── Game state ──────────────────────────────────────────────────────────────
+  // ── Game state ───────────────────────────────────────────────────────────────
   const [currentGameId,  setCurrentGameId]  = useState(existingGame?.id || null);
   const [homeScore,      setHomeScore]      = useState(existingGame?.home_score || 0);
   const [awayScore,      setAwayScore]      = useState(existingGame?.away_score || 0);
@@ -258,7 +237,7 @@ const LiveGameView = ({
   );
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // ── Roster & stats ──────────────────────────────────────────────────────────
+  // ── Roster & stats ───────────────────────────────────────────────────────────
   const [activePlayers,  setActivePlayers]  = useState(
     existingGame?.active_players?.length ? existingGame.active_players : []
   );
@@ -267,12 +246,12 @@ const LiveGameView = ({
   const [opponentStats,  setOpponentStats]  = useState(existingGame?.opponent_stats || {});
   const [playLog,        setPlayLog]        = useState(existingGame?.play_log || []);
 
-  // ── Selection ───────────────────────────────────────────────────────────────
+  // ── Selection ────────────────────────────────────────────────────────────────
   const [ourPlayer,  setOurPlayer]  = useState(null);
   const [oppPlayer,  setOppPlayer]  = useState(null);
   const [lastAction, setLastAction] = useState(null);
 
-  // ── Panels ──────────────────────────────────────────────────────────────────
+  // ── Panels ───────────────────────────────────────────────────────────────────
   const [showLineup,   setShowLineup]   = useState(!existingGame);
   const [showOppPanel, setShowOppPanel] = useState(false);
   const [showSubPanel, setShowSubPanel] = useState(false);
@@ -286,7 +265,7 @@ const LiveGameView = ({
   const [newOppNum,    setNewOppNum]    = useState('');
   const [subIncoming,  setSubIncoming]  = useState(null);
 
-  // ── Refs ────────────────────────────────────────────────────────────────────
+  // ── Refs ─────────────────────────────────────────────────────────────────────
   const live          = useRef({});
   const creatingGame  = useRef(false);
   const minuteTracker = useRef({ entryTimes: {}, accSeconds: {} });
@@ -301,7 +280,7 @@ const LiveGameView = ({
   useEffect(() => { live.current.opponentRoster = opponentRoster; }, [opponentRoster]);
   useEffect(() => { live.current.playLog        = playLog;        }, [playLog]);
 
-  // ── Minute helpers ──────────────────────────────────────────────────────────
+  // ── Minute helpers ───────────────────────────────────────────────────────────
   const getElapsed = () => {
     const r = live.current;
     return (r.currentPeriod - 1) * gameSettings.periodLength * 60 +
@@ -342,7 +321,7 @@ const LiveGameView = ({
     return total > 0 ? Math.max(1, Math.round(total / 60)) : 0;
   };
 
-  // ── Init ────────────────────────────────────────────────────────────────────
+  // ── Init ─────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (existingGame) {
       initMinuteTracking(existingGame.active_players || [], existingGame.stats || {});
@@ -350,7 +329,7 @@ const LiveGameView = ({
     }
   }, []);
 
-  // ── Timer ───────────────────────────────────────────────────────────────────
+  // ── Timer ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isTimerRunning) return;
     const id = setInterval(() => {
@@ -362,7 +341,7 @@ const LiveGameView = ({
     return () => clearInterval(id);
   }, [isTimerRunning]);
 
-  // ── Auto-save ───────────────────────────────────────────────────────────────
+  // ── Auto-save ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!currentGameId) return;
     const id = setInterval(() => {
@@ -378,7 +357,7 @@ const LiveGameView = ({
     return () => clearInterval(id);
   }, [currentGameId]);
 
-  // ── Supabase ────────────────────────────────────────────────────────────────
+  // ── Supabase helpers ─────────────────────────────────────────────────────────
   const createGame = async (starters = []) => {
     try {
       const { data, error } = await supabase.from('games').insert([{
@@ -400,7 +379,10 @@ const LiveGameView = ({
         accSeconds: {},
       };
       toast?.success('Game started!');
-    } catch (err) { console.error(err); toast?.error('Failed to start game'); }
+    } catch (err) {
+      console.error(err);
+      toast?.error('Failed to start game');
+    }
   };
 
   const persist = async (patch) => {
@@ -409,7 +391,9 @@ const LiveGameView = ({
       await supabase.from('games')
         .update({ ...patch, updated_at: new Date().toISOString() })
         .eq('id', currentGameId);
-    } catch (err) { console.error('Save error:', err); }
+    } catch (err) {
+      console.error('Save error:', err);
+    }
   };
 
   const handleLineupConfirmed = (starters) => {
@@ -421,7 +405,7 @@ const LiveGameView = ({
     }
   };
 
-  // ── Stat action ─────────────────────────────────────────────────────────────
+  // ── Stat action ──────────────────────────────────────────────────────────────
   const handleStatAction = async (action, ctx = 'ours') => {
     const player = ctx === 'ours' ? ourPlayer : oppPlayer;
     if (!player) { toast?.info('Select a player first'); return; }
@@ -439,18 +423,21 @@ const LiveGameView = ({
       const ourIsHome = gameSettings.isHome;
       if (isOurs) { ourIsHome ? (newHome += pts) : (newAway += pts); }
       else        { ourIsHome ? (newAway += pts) : (newHome += pts); }
-      setHomeScore(newHome); setAwayScore(newAway);
+      setHomeScore(newHome);
+      setAwayScore(newAway);
     }
 
     const newPlay = {
-      id: genId(), timestamp: new Date().toISOString(),
+      id: genId(),
+      timestamp: new Date().toISOString(),
       period: live.current.currentPeriod,
       clock: formatTime(live.current.gameTime ?? gameTime),
       team: ctx,
       player: { id: player.id, name: player.name, number: player.number || '—' },
       action: action.key,
-      label: `#$${player.number || '—'} $${player.name.split(' ')[0]}`,
-      pts, updates: action.updates,
+      label: `#${player.number || '—'} ${player.name.split(' ')[0]}`,
+      pts,
+      updates: action.updates,
     };
     const newPlayLog = [newPlay, ...live.current.playLog];
 
@@ -465,34 +452,38 @@ const LiveGameView = ({
     setPlayLog(newPlayLog);
 
     await persist({
-      home_score: newHome, away_score: newAway,
-      stats:          isOurs ? nextStats             : live.current.ourStats,
+      home_score:     newHome,
+      away_score:     newAway,
+      stats:          isOurs ? nextStats                  : live.current.ourStats,
       opponent_stats: isOurs ? live.current.opponentStats : nextStats,
-      play_log: newPlayLog,
+      play_log:       newPlayLog,
     });
   };
 
-  // ── Undo ────────────────────────────────────────────────────────────────────
+  // ── Undo ─────────────────────────────────────────────────────────────────────
   const handleUndo = async () => {
     if (!lastAction) return;
     const { isOurs, prevStats, prevHome, prevAway, prevPlayLog } = lastAction;
     if (isOurs) setOurStats(prevStats); else setOpponentStats(prevStats);
-    setHomeScore(prevHome); setAwayScore(prevAway);
-    setPlayLog(prevPlayLog); setLastAction(null);
+    setHomeScore(prevHome);
+    setAwayScore(prevAway);
+    setPlayLog(prevPlayLog);
+    setLastAction(null);
     await persist({
-      home_score: prevHome, away_score: prevAway,
-      stats:          isOurs ? prevStats             : live.current.ourStats,
+      home_score:     prevHome,
+      away_score:     prevAway,
+      stats:          isOurs ? prevStats                  : live.current.ourStats,
       opponent_stats: isOurs ? live.current.opponentStats : prevStats,
-      play_log: prevPlayLog,
+      play_log:       prevPlayLog,
     });
     toast?.info('Undone');
   };
 
-  // ── Delete specific play ─────────────────────────────────────────────────────
+  // ── Delete specific play ──────────────────────────────────────────────────────
   const handleDeletePlay = async (play) => {
-    const isOurs    = play.team === 'ours';
-    const base      = isOurs ? live.current.ourStats : live.current.opponentStats;
-    const pStat     = { ...(base[play.player.id] || { ...EMPTY_STATS }) };
+    const isOurs  = play.team === 'ours';
+    const base    = isOurs ? live.current.ourStats : live.current.opponentStats;
+    const pStat   = { ...(base[play.player.id] || { ...EMPTY_STATS }) };
     Object.entries(play.updates || {}).forEach(([k, v]) => {
       pStat[k] = Math.max(0, (pStat[k] || 0) - v);
     });
@@ -500,8 +491,7 @@ const LiveGameView = ({
 
     const pts = play.pts || 0;
     let newHome = live.current.homeScore, newAway = live.current.awayScore;
-    if (pts > 0
-      ) {
+    if (pts > 0) {
       const ourIsHome = gameSettings.isHome;
       if (isOurs) { ourIsHome ? (newHome -= pts) : (newAway -= pts); }
       else        { ourIsHome ? (newAway -= pts) : (newHome -= pts); }
@@ -515,16 +505,16 @@ const LiveGameView = ({
     setEditingPlay(null);
 
     await persist({
-      home_score: Math.max(0, newHome),
-      away_score: Math.max(0, newAway),
+      home_score:     Math.max(0, newHome),
+      away_score:     Math.max(0, newAway),
       stats:          isOurs ? nextStats                  : live.current.ourStats,
       opponent_stats: isOurs ? live.current.opponentStats : nextStats,
-      play_log: newPlayLog,
+      play_log:       newPlayLog,
     });
     toast?.info('Play removed');
   };
 
-  // ── Substitution ─────────────────────────────────────────────────────────────
+  // ── Substitution ──────────────────────────────────────────────────────────────
   const handleSub = async (outPlayer) => {
     if (!subIncoming) return;
     const elapsed = getElapsed();
@@ -548,14 +538,16 @@ const LiveGameView = ({
     );
 
     const subPlay = {
-      id: genId(), timestamp: new Date().toISOString(),
+      id: genId(),
+      timestamp: new Date().toISOString(),
       period: live.current.currentPeriod,
       clock: formatTime(live.current.gameTime),
       team: 'ours',
       player: { id: subIncoming.id, name: subIncoming.name, number: subIncoming.number || '—' },
       action: 'sub_in',
       label: `${subIncoming.name.split(' ')[0]} for ${outPlayer.name.split(' ')[0]}`,
-      pts: 0, updates: {},
+      pts: 0,
+      updates: {},
     };
     const newPlayLog = [subPlay, ...live.current.playLog];
 
@@ -580,7 +572,8 @@ const LiveGameView = ({
     };
     const updated = [...opponentRoster, player];
     setOpponentRoster(updated);
-    setNewOppName(''); setNewOppNum('');
+    setNewOppName('');
+    setNewOppNum('');
     setShowAddOpp(false);
     await persist({ opponent_roster: updated });
   };
@@ -603,53 +596,54 @@ const LiveGameView = ({
     toast?.info(`Q${next} starting`);
     await persist({ stats: flushed });
   };
-  const ourScore  = gameSettings.isHome ? finalHome : finalAway;
-  const oppScore  = gameSettings.isHome ? finalAway : finalHome;
-    if (ourScore === oppScore) return; // draw — no update
 
-    try {
-      await supabase.rpc('increment_team_record', {
-        p_team_id:    team.id,
-        p_won:        ourScore > oppScore,
-        p_is_playoff: gameSettings.game_type === 'playoff',
-      });
-    } catch (err) {
-      console.error('Failed to update team record:', err);
-    }
-  };
+  // ── Update team record ────────────────────────────────────────────────────────
+ const updateTeamRecord = async (finalHome, finalAway) => {
+  const ourScore = gameSettings.isHome ? finalHome : finalAway;
+  const oppScore = gameSettings.isHome ? finalAway : finalHome;
+  console.log('updateTeamRecord:', { finalHome, finalAway, ourScore, oppScore, teamId: team.id, isHome: gameSettings.isHome });
+  if (ourScore === oppScore) {
+    console.log('Draw — skipping record update');
+    return;
+  }
+  try {
+    const { data, error } = await supabase.rpc('increment_team_record', {
+      p_team_id:    team.id,
+      p_won:        ourScore > oppScore,
+      p_is_playoff: gameSettings.game_type === 'playoff',
+    });
+    console.log('RPC result:', { data, error });
+    if (error) throw error;
+  } catch (err) {
+    console.error('Failed to update team record:', err);
+  }
+};
+
   // ── End game ──────────────────────────────────────────────────────────────────
   const handleEndGame = async () => {
     const r       = live.current;
     const elapsed = getElapsed();
     const flushed = flushMinutes(r.activePlayers, r.ourStats, elapsed);
-    const updateTeamRecord = async (finalHome, finalAway) => {
-    const updateTeamRecord = async (finalHome, finalAway) => {
-    const ourScore  = gameSettings.isHome ? finalHome : finalAway;
-    const oppScore  = gameSettings.isHome ? finalAway : finalHome;
-    if (ourScore === oppScore) return; // draw — no update
-
-    try {
-      await supabase.rpc('increment_team_record', {
-        p_team_id:    team.id,
-        p_won:        ourScore > oppScore,
-        p_is_playoff: gameSettings.game_type === 'playoff',
-      });
-    } catch (err) {
-      console.error('Failed to update team record:', err);
-    }
-  };
     try {
       await persist({
-        home_score: r.homeScore, away_score: r.awayScore,
-        period: r.currentPeriod, time_remaining: r.gameTime,
-        stats: flushed, opponent_stats: r.opponentStats,
-        opponent_roster: r.opponentRoster, active_players: r.activePlayers,
-        play_log: r.playLog, status: 'completed',
+        home_score:      r.homeScore,
+        away_score:      r.awayScore,
+        period:          r.currentPeriod,
+        time_remaining:  r.gameTime,
+        stats:           flushed,
+        opponent_stats:  r.opponentStats,
+        opponent_roster: r.opponentRoster,
+        active_players:  r.activePlayers,
+        play_log:        r.playLog,
+        status:          'completed',
       });
-      await updateTeamRecord(r.homeScore, r.awayScore); // ✅ add this
+      await updateTeamRecord(r.homeScore, r.awayScore);
       toast?.success('Game ended!');
       onGoHome();
-    } catch (err) { toast?.error('Failed to end game'); }
+    } catch (err) {
+      console.error(err);
+      toast?.error('Failed to end game');
+    }
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -668,19 +662,15 @@ const LiveGameView = ({
   const Portrait = () => (
     <div className="h-screen w-full bg-gray-950 flex flex-col overflow-hidden text-white">
 
-      {/* ── Scoreboard ── fixed height ~80px */}
+      {/* Scoreboard */}
       <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-3 py-2">
         <div className="flex items-center justify-between">
-
-          {/* Home */}
           <div className="flex-1 text-center">
             <p className="text-[9px] text-gray-500 font-bold truncate">
               {gameSettings.isHome ? team.name : gameSettings.opponent}
             </p>
             <p className="text-4xl font-black tabular-nums leading-none">{homeScore}</p>
           </div>
-
-          {/* Middle */}
           <div className="px-3 text-center flex-shrink-0">
             <p className="text-[9px] text-gray-500 font-bold">Q{currentPeriod}</p>
             <p className="text-lg font-black tabular-nums leading-none">{formatTime(gameTime)}</p>
@@ -691,8 +681,6 @@ const LiveGameView = ({
               {isTimerRunning ? <Pause size={12} /> : <Play size={12} />}
             </button>
           </div>
-
-          {/* Away */}
           <div className="flex-1 text-center">
             <p className="text-[9px] text-gray-500 font-bold truncate">
               {gameSettings.isHome ? gameSettings.opponent : team.name}
@@ -702,7 +690,7 @@ const LiveGameView = ({
         </div>
       </div>
 
-      {/* ── Selected player strip ── ~52px */}
+      {/* Selected player strip */}
       <div className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-3 py-1.5 flex items-center gap-2 min-h-[44px]">
         {ourSel && ourSelStats ? (
           <>
@@ -729,13 +717,11 @@ const LiveGameView = ({
             )}
           </>
         ) : (
-          <p className="text-xs text-gray-700 font-bold italic">
-            ← Select a player to log stats
-          </p>
+          <p className="text-xs text-gray-700 font-bold italic">← Select a player to log stats</p>
         )}
       </div>
 
-      {/* ── Court players row ── ~64px */}
+      {/* Court players row */}
       <div className="flex-shrink-0 px-2 py-1.5 border-b border-gray-800 bg-gray-900">
         <div className="flex gap-1.5 overflow-x-auto pb-0.5">
           {courtPlayers.map(p => (
@@ -758,13 +744,10 @@ const LiveGameView = ({
         </div>
       </div>
 
-      {/* ── Stat buttons ── flex-1 */}
+      {/* Stat buttons */}
       <div className="flex-1 min-h-0 bg-gray-950">
         {ourPlayer ? (
-          <StatGrid
-            onStat={a => handleStatAction(a, 'ours')}
-            disabled={false}
-          />
+          <StatGrid onStat={a => handleStatAction(a, 'ours')} disabled={false} />
         ) : (
           <div className="h-full flex items-center justify-center">
             <p className="text-gray-700 font-bold text-sm">Select a player above</p>
@@ -772,7 +755,7 @@ const LiveGameView = ({
         )}
       </div>
 
-      {/* ── Last play strip ── ~36px */}
+      {/* Last play strip */}
       <div className="flex-shrink-0 bg-gray-900 border-t border-gray-800 px-3 py-1.5 flex items-center gap-2">
         {lastPlay ? (
           <>
@@ -784,16 +767,10 @@ const LiveGameView = ({
                 {lastPlay.pts > 0 && <span className="text-emerald-500"> +{lastPlay.pts}</span>}
               </p>
             </div>
-            <button
-              onClick={() => setEditingPlay(lastPlay)}
-              className="text-[10px] text-gray-600 hover:text-gray-400 font-bold flex-shrink-0 transition"
-            >
+            <button onClick={() => setEditingPlay(lastPlay)} className="text-[10px] text-gray-600 hover:text-gray-400 font-bold flex-shrink-0 transition">
               EDIT
             </button>
-            <button
-              onClick={() => setShowPlays(true)}
-              className="text-[10px] text-blue-600 hover:text-blue-400 font-bold flex-shrink-0 transition flex items-center gap-0.5"
-            >
+            <button onClick={() => setShowPlays(true)} className="text-[10px] text-blue-600 hover:text-blue-400 font-bold flex-shrink-0 transition flex items-center gap-0.5">
               ALL <ChevronRight size={10} />
             </button>
           </>
@@ -802,21 +779,17 @@ const LiveGameView = ({
         )}
       </div>
 
-      {/* ── Controls bar ── ~48px */}
+      {/* Controls bar */}
       <div className="flex-shrink-0 grid grid-cols-4 gap-1 px-2 py-1.5 bg-gray-900 border-t border-gray-800">
         <button
           onClick={() => { setShowOppPanel(v => !v); setShowSubPanel(false); }}
-          className={`py-2 rounded-xl text-[11px] font-black transition ${
-            showOppPanel ? 'bg-red-700 text-white' : 'bg-gray-800 text-red-400 hover:bg-gray-700'
-          }`}
+          className={`py-2 rounded-xl text-[11px] font-black transition ${showOppPanel ? 'bg-red-700 text-white' : 'bg-gray-800 text-red-400 hover:bg-gray-700'}`}
         >
           OPP
         </button>
         <button
           onClick={() => { setShowSubPanel(v => !v); setShowOppPanel(false); setSubIncoming(null); }}
-          className={`py-2 rounded-xl text-[11px] font-black transition ${
-            showSubPanel ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-          }`}
+          className={`py-2 rounded-xl text-[11px] font-black transition ${showSubPanel ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
         >
           SUB {benchPlayers.length > 0 && <span className="opacity-60">({benchPlayers.length})</span>}
         </button>
@@ -835,7 +808,7 @@ const LiveGameView = ({
         </button>
       </div>
 
-      {/* ── Box score link ── */}
+      {/* Box score link */}
       <button
         onClick={() => setShowBoxScore(true)}
         className="flex-shrink-0 flex items-center justify-center gap-1.5 py-1.5 bg-gray-950 border-t border-gray-900 text-[10px] text-gray-700 hover:text-blue-400 transition font-bold"
@@ -843,12 +816,10 @@ const LiveGameView = ({
         <BarChart2 size={10} /> VIEW BOX SCORE
       </button>
 
-      {/* ── Opp Panel (slides up) ── */}
+      {/* Opp Panel */}
       {showOppPanel && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
           <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[80vh] flex flex-col">
-
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
               <h3 className="font-black text-sm text-red-400">{gameSettings.opponent}</h3>
               <div className="flex items-center gap-2">
@@ -863,41 +834,28 @@ const LiveGameView = ({
                 </button>
               </div>
             </div>
-
-            {/* Add opp player */}
             {showAddOpp && (
               <div className="flex gap-2 px-4 py-2 border-b border-gray-800 flex-shrink-0">
-                <input
-                  autoFocus
-                  type="text" placeholder="Name" value={newOppName}
+                <input autoFocus type="text" placeholder="Name" value={newOppName}
                   onChange={e => setNewOppName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
                   className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
                 />
-                <input
-                  type="text" placeholder="#" value={newOppNum}
+                <input type="text" placeholder="#" value={newOppNum}
                   onChange={e => setNewOppNum(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddOppPlayer()}
                   className="w-14 px-3 py-2 bg-gray-800 border border-gray-700 rounded-xl text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-red-500"
                 />
-                <button
-                  onClick={handleAddOppPlayer}
-                  className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition"
-                >
+                <button onClick={handleAddOppPlayer} className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition">
                   Add
                 </button>
               </div>
             )}
-
-            {/* Opp players */}
             {opponentRoster.length > 0 && (
               <div className="px-4 py-2 border-b border-gray-800 flex-shrink-0">
                 <div className="flex gap-1.5 overflow-x-auto pb-1">
                   {opponentRoster.map(p => (
-                    <PlayerCard
-                      key={p.id}
-                      player={p}
-                      isOpp={true}
+                    <PlayerCard key={p.id} player={p} isOpp={true}
                       isSelected={oppPlayer?.id === p.id}
                       onSelect={() => setOppPlayer(prev => prev?.id === p.id ? null : p)}
                       pts={opponentStats[p.id]?.pts || 0}
@@ -906,17 +864,13 @@ const LiveGameView = ({
                 </div>
               </div>
             )}
-
-            {/* Opp stat grid */}
             <div className="flex-1 min-h-0">
               {oppPlayer ? (
                 <>
                   <div className="px-4 py-1.5 border-b border-gray-800 flex-shrink-0">
                     <p className="text-xs font-black text-red-400">
                       #{oppPlayer.number} {oppPlayer.name}
-                      <span className="ml-2 text-white">
-                        {opponentStats[oppPlayer.id]?.pts || 0}pts
-                      </span>
+                      <span className="ml-2 text-white">{opponentStats[oppPlayer.id]?.pts || 0}pts</span>
                     </p>
                   </div>
                   <StatGrid onStat={a => handleStatAction(a, 'opponent')} disabled={false} />
@@ -924,9 +878,7 @@ const LiveGameView = ({
               ) : (
                 <div className="flex items-center justify-center h-24">
                   <p className="text-gray-600 text-sm font-bold">
-                    {opponentRoster.length === 0
-                      ? 'Add opponent players above'
-                      : 'Select an opponent player'}
+                    {opponentRoster.length === 0 ? 'Add opponent players above' : 'Select an opponent player'}
                   </p>
                 </div>
               )}
@@ -935,7 +887,7 @@ const LiveGameView = ({
         </div>
       )}
 
-      {/* ── Sub Panel ── */}
+      {/* Sub Panel */}
       {showSubPanel && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
           <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[60vh] flex flex-col">
@@ -947,18 +899,14 @@ const LiveGameView = ({
                 <X size={16} className="text-gray-600" />
               </button>
             </div>
-
             {!subIncoming ? (
-              // Bench — step 1
               <div className="flex-1 overflow-y-auto px-4 py-3">
                 {benchPlayers.length === 0 ? (
                   <p className="text-center text-gray-600 py-8 text-sm">No bench players</p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
                     {benchPlayers.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => setSubIncoming(p)}
+                      <button key={p.id} onClick={() => setSubIncoming(p)}
                         className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95"
                       >
                         <p className="text-[10px] text-gray-500">#{p.number || '—'}</p>
@@ -970,25 +918,15 @@ const LiveGameView = ({
                 )}
               </div>
             ) : (
-              // Court — step 2
               <div className="flex-1 overflow-y-auto px-4 py-3">
                 <div className="flex items-center gap-2 mb-3 p-2 bg-blue-950 rounded-xl">
                   <span className="text-[10px] text-blue-400 font-bold">IN:</span>
-                  <span className="text-xs font-black text-white">
-                    #{subIncoming.number || '—'} {subIncoming.name}
-                  </span>
-                  <button
-                    onClick={() => setSubIncoming(null)}
-                    className="ml-auto text-[10px] text-gray-600 hover:text-white"
-                  >
-                    ← back
-                  </button>
+                  <span className="text-xs font-black text-white">#{subIncoming.number || '—'} {subIncoming.name}</span>
+                  <button onClick={() => setSubIncoming(null)} className="ml-auto text-[10px] text-gray-600 hover:text-white">← back</button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {courtPlayers.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => handleSub(p)}
+                    <button key={p.id} onClick={() => handleSub(p)}
                       className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95"
                     >
                       <p className="text-[10px] text-orange-500">#{p.number || '—'}</p>
@@ -1003,7 +941,7 @@ const LiveGameView = ({
         </div>
       )}
 
-      {/* ── Next Period confirmation ── */}
+      {/* Next Period confirmation */}
       {showNextQ && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
@@ -1022,24 +960,14 @@ const LiveGameView = ({
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowNextQ(false)}
-                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleNextPeriod}
-                className="flex-1 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-xl font-black text-sm transition"
-              >
-                Start Q{currentPeriod + 1}
-              </button>
+              <button onClick={() => setShowNextQ(false)} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
+              <button onClick={handleNextPeriod} className="flex-1 py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-xl font-black text-sm transition">Start Q{currentPeriod + 1}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── End game confirmation ── */}
+      {/* End game confirmation */}
       {showEndGame && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
@@ -1058,24 +986,14 @@ const LiveGameView = ({
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowEndGame(false)}
-                className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEndGame}
-                className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-sm transition"
-              >
-                End Game
-              </button>
+              <button onClick={() => setShowEndGame(false)} className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-xl font-bold text-sm transition">Cancel</button>
+              <button onClick={handleEndGame} className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-sm transition">End Game</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Plays modal ── */}
+      {/* Plays modal */}
       {showPlays && (
         <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
@@ -1087,41 +1005,24 @@ const LiveGameView = ({
           <div className="flex-1 overflow-y-auto">
             <div className="divide-y divide-gray-900">
               {playLog.map(play => (
-                <div
-                  key={play.id}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-900 cursor-pointer"
+                <div key={play.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-900 cursor-pointer"
                   onClick={() => { setEditingPlay(play); setShowPlays(false); }}
                 >
-                  <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">
-                    Q{play.period} {play.clock}
+                  <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">Q{play.period} {play.clock}</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'}`}>
+                    {play.action.replace('fg2','2PT ').replace('fg3','3PT ').replace('m','✓').replace('miss','✗')
+                      .replace('oreb','OREB').replace('dreb','DREB').replace('ast','AST').replace('stl','STL')
+                      .replace('blk','BLK').replace('to','TO').replace('pf','FOUL').replace('sub_in','SUB').toUpperCase()}
                   </span>
-                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${
-                    play.team === 'opponent'
-                      ? 'bg-red-950 text-red-400'
-                      : 'bg-blue-950 text-blue-400'
-                  }`}>
-                    {play.action.replace('fg2', '2PT ').replace('fg3', '3PT ')
-                      .replace('m','✓').replace('miss','✗')
-                      .replace('oreb','OREB').replace('dreb','DREB')
-                      .replace('ast','AST').replace('stl','STL')
-                      .replace('blk','BLK').replace('to','TO')
-                      .replace('pf','FOUL').replace('sub_in','SUB').toUpperCase()}
-                  </span>
-                  <span className="flex-1 text-xs text-gray-400 font-semibold truncate">
-                    {play.label}
-                  </span>
+                  <span className="flex-1 text-xs text-gray-400 font-semibold truncate">{play.label}</span>
                   {play.pts > 0 && (
-                    <span className={`text-xs font-black flex-shrink-0 ${
-                      play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'
-                    }`}>
+                    <span className={`text-xs font-black flex-shrink-0 ${play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'}`}>
                       +{play.pts}
                     </span>
                   )}
                 </div>
               ))}
-              {playLog.length === 0 && (
-                <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>
-              )}
+              {playLog.length === 0 && <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>}
             </div>
           </div>
         </div>
@@ -1133,35 +1034,26 @@ const LiveGameView = ({
   const Landscape = () => (
     <div className="h-screen w-full bg-gray-950 flex overflow-hidden text-white">
 
-      {/* Left column — score + players */}
+      {/* Left column */}
       <div className="w-[200px] flex-shrink-0 flex flex-col border-r border-gray-800 bg-gray-900">
 
         {/* Score */}
         <div className="flex-shrink-0 px-3 pt-3 pb-2 border-b border-gray-800">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] text-gray-600 font-bold uppercase">
-              Q{currentPeriod}
-            </span>
+            <span className="text-[9px] text-gray-600 font-bold uppercase">Q{currentPeriod}</span>
             <span className="text-sm font-black tabular-nums">{formatTime(gameTime)}</span>
-            <button
-              onClick={() => setIsTimerRunning(t => !t)}
-              className="p-1 bg-gray-800 hover:bg-gray-700 rounded-lg transition"
-            >
+            <button onClick={() => setIsTimerRunning(t => !t)} className="p-1 bg-gray-800 hover:bg-gray-700 rounded-lg transition">
               {isTimerRunning ? <Pause size={10} /> : <Play size={10} />}
             </button>
           </div>
           <div className="flex items-center justify-between">
             <div className="text-center">
-              <p className="text-[9px] text-gray-600 truncate max-w-[60px]">
-                {gameSettings.isHome ? team.name : gameSettings.opponent}
-              </p>
+              <p className="text-[9px] text-gray-600 truncate max-w-[60px]">{gameSettings.isHome ? team.name : gameSettings.opponent}</p>
               <p className="text-3xl font-black tabular-nums leading-none">{homeScore}</p>
             </div>
             <span className="text-gray-700 font-black text-sm">—</span>
             <div className="text-center">
-              <p className="text-[9px] text-gray-600 truncate max-w-[60px]">
-                {gameSettings.isHome ? gameSettings.opponent : team.name}
-              </p>
+              <p className="text-[9px] text-gray-600 truncate max-w-[60px]">{gameSettings.isHome ? gameSettings.opponent : team.name}</p>
               <p className="text-3xl font-black tabular-nums leading-none">{awayScore}</p>
             </div>
           </div>
@@ -1173,22 +1065,13 @@ const LiveGameView = ({
           {courtPlayers.map(p => {
             const isSel = ourPlayer?.id === p.id;
             return (
-              <button
-                key={p.id}
+              <button key={p.id}
                 onClick={() => setOurPlayer(prev => prev?.id === p.id ? null : p)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-xl border transition active:scale-95 ${
-                  isSel ? 'border-blue-500 bg-blue-950' : 'border-gray-800 hover:border-gray-700 bg-gray-800'
-                }`}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-xl border transition active:scale-95 ${isSel ? 'border-blue-500 bg-blue-950' : 'border-gray-800 hover:border-gray-700 bg-gray-800'}`}
               >
-                <span className={`text-[10px] font-bold flex-shrink-0 ${isSel ? 'text-blue-400' : 'text-gray-600'}`}>
-                  #{p.number || '—'}
-                </span>
-                <span className="text-xs font-black text-white truncate flex-1 text-left">
-                  {p.name.split(' ')[0]}
-                </span>
-                <span className={`text-sm font-black tabular-nums flex-shrink-0 ${isSel ? 'text-blue-300' : 'text-gray-500'}`}>
-                  {ourStats[p.id]?.pts || 0}
-                </span>
+                <span className={`text-[10px] font-bold flex-shrink-0 ${isSel ? 'text-blue-400' : 'text-gray-600'}`}>#{p.number || '—'}</span>
+                <span className="text-xs font-black text-white truncate flex-1 text-left">{p.name.split(' ')[0]}</span>
+                <span className={`text-sm font-black tabular-nums flex-shrink-0 ${isSel ? 'text-blue-300' : 'text-gray-500'}`}>{ourStats[p.id]?.pts || 0}</span>
               </button>
             );
           })}
@@ -1197,48 +1080,33 @@ const LiveGameView = ({
         {/* Controls */}
         <div className="flex-shrink-0 px-2 pb-2 space-y-1.5 border-t border-gray-800 pt-2">
           <div className="grid grid-cols-2 gap-1">
-            <button
-              onClick={() => { setShowOppPanel(v => !v); setShowSubPanel(false); }}
-              className={`py-2 rounded-xl text-[10px] font-black transition ${
-                showOppPanel ? 'bg-red-700 text-white' : 'bg-gray-800 text-red-400'
-              }`}
-            >
+            <button onClick={() => { setShowOppPanel(v => !v); setShowSubPanel(false); }}
+              className={`py-2 rounded-xl text-[10px] font-black transition ${showOppPanel ? 'bg-red-700 text-white' : 'bg-gray-800 text-red-400'}`}>
               OPP
             </button>
-            <button
-              onClick={() => { setShowSubPanel(v => !v); setShowOppPanel(false); setSubIncoming(null); }}
-              className={`py-2 rounded-xl text-[10px] font-black transition ${
-                showSubPanel ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400'
-              }`}
-            >
+            <button onClick={() => { setShowSubPanel(v => !v); setShowOppPanel(false); setSubIncoming(null); }}
+              className={`py-2 rounded-xl text-[10px] font-black transition ${showSubPanel ? 'bg-gray-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
               SUB
             </button>
           </div>
           <div className="grid grid-cols-2 gap-1">
-            <button
-              onClick={() => setShowNextQ(true)}
-              disabled={currentPeriod >= gameSettings.totalPeriods}
-              className="py-2 rounded-xl text-[10px] font-black bg-blue-900 text-blue-300 disabled:opacity-30 transition"
-            >
+            <button onClick={() => setShowNextQ(true)} disabled={currentPeriod >= gameSettings.totalPeriods}
+              className="py-2 rounded-xl text-[10px] font-black bg-blue-900 text-blue-300 disabled:opacity-30 transition">
               NEXT Q
             </button>
-            <button
-              onClick={() => setShowEndGame(true)}
-              className="py-2 rounded-xl text-[10px] font-black bg-gray-800 text-gray-500 transition"
-            >
+            <button onClick={() => setShowEndGame(true)}
+              className="py-2 rounded-xl text-[10px] font-black bg-gray-800 text-gray-500 transition">
               END
             </button>
           </div>
-          <button
-            onClick={() => setShowBoxScore(true)}
-            className="w-full py-1.5 flex items-center justify-center gap-1 text-[10px] text-gray-700 hover:text-blue-400 transition font-bold"
-          >
+          <button onClick={() => setShowBoxScore(true)}
+            className="w-full py-1.5 flex items-center justify-center gap-1 text-[10px] text-gray-700 hover:text-blue-400 transition font-bold">
             <BarChart2 size={10} /> Box Score
           </button>
         </div>
       </div>
 
-      {/* Right column — selected player + stats */}
+      {/* Right column */}
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Selected player strip */}
@@ -1257,10 +1125,8 @@ const LiveGameView = ({
                 </p>
               </div>
               {lastAction && (
-                <button
-                  onClick={handleUndo}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-[10px] font-black text-gray-400 flex-shrink-0"
-                >
+                <button onClick={handleUndo}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-[10px] font-black text-gray-400 flex-shrink-0">
                   <Undo2 size={10} /> UNDO
                 </button>
               )}
@@ -1290,9 +1156,7 @@ const LiveGameView = ({
                 {' · Q'}{lastPlay.period} {lastPlay.clock}
                 {lastPlay.pts > 0 && <span className="text-emerald-500"> +{lastPlay.pts}</span>}
               </p>
-              <button onClick={() => setEditingPlay(lastPlay)} className="text-[10px] text-gray-600 hover:text-gray-400 font-bold">
-                EDIT
-              </button>
+              <button onClick={() => setEditingPlay(lastPlay)} className="text-[10px] text-gray-600 hover:text-gray-400 font-bold">EDIT</button>
               <button onClick={() => setShowPlays(true)} className="text-[10px] text-blue-600 hover:text-blue-400 font-bold flex items-center gap-0.5">
                 ALL <ChevronRight size={10} />
               </button>
@@ -1303,17 +1167,15 @@ const LiveGameView = ({
         </div>
       </div>
 
-      {/* Landscape overlays — same as portrait */}
+      {/* Landscape overlays */}
       {showOppPanel && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
           <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
               <h3 className="font-black text-sm text-red-400">{gameSettings.opponent}</h3>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAddOpp(v => !v)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:bg-gray-700 transition"
-                >
+                <button onClick={() => setShowAddOpp(v => !v)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:bg-gray-700 transition">
                   <UserPlus size={11} /> Add
                 </button>
                 <button onClick={() => setShowOppPanel(false)}><X size={16} className="text-gray-600" /></button>
@@ -1372,9 +1234,7 @@ const LiveGameView = ({
         <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/60">
           <div className="bg-gray-900 rounded-t-2xl border-t border-gray-700 max-h-[50vh] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
-              <h3 className="font-black text-sm text-white">
-                {!subIncoming ? '① Coming IN' : '② Going OUT'}
-              </h3>
+              <h3 className="font-black text-sm text-white">{!subIncoming ? '① Coming IN' : '② Going OUT'}</h3>
               <button onClick={() => { setShowSubPanel(false); setSubIncoming(null); }}>
                 <X size={16} className="text-gray-600" />
               </button>
@@ -1384,8 +1244,7 @@ const LiveGameView = ({
                 <div className="grid grid-cols-4 gap-2">
                   {benchPlayers.map(p => (
                     <button key={p.id} onClick={() => setSubIncoming(p)}
-                      className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95"
-                    >
+                      className="p-3 bg-gray-800 hover:bg-blue-900 border border-gray-700 hover:border-blue-500 rounded-xl text-left transition active:scale-95">
                       <p className="text-[10px] text-gray-500">#{p.number || '—'}</p>
                       <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
                       <p className="text-[10px] text-gray-600 mt-0.5">{getLiveMin(p.id)} min</p>
@@ -1402,8 +1261,7 @@ const LiveGameView = ({
                   <div className="grid grid-cols-4 gap-2">
                     {courtPlayers.map(p => (
                       <button key={p.id} onClick={() => handleSub(p)}
-                        className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95"
-                      >
+                        className="p-3 bg-orange-950 hover:bg-orange-900 border border-orange-800 rounded-xl text-left transition active:scale-95">
                         <p className="text-[10px] text-orange-500">#{p.number || '—'}</p>
                         <p className="text-sm font-black text-white truncate">{p.name.split(' ')[0]}</p>
                         <p className="text-[10px] text-orange-700 mt-0.5">{getLiveMin(p.id)} min</p>
@@ -1417,7 +1275,7 @@ const LiveGameView = ({
         </div>
       )}
 
-      {/* Shared modals — same in both orientations */}
+      {/* Shared modals */}
       {showNextQ && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-2xl border border-gray-700 p-6 w-full max-w-sm">
@@ -1470,14 +1328,15 @@ const LiveGameView = ({
     </div>
   );
 
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <>
       {isLandscape ? <Landscape /> : <Portrait />}
 
-      {/* Global overlays — work in both orientations */}
       {showLineup && !existingGame && (
         <LineupModal team={team} onConfirm={handleLineupConfirmed} />
       )}
+
       {showBoxScore && (
         <BoxScoreModal
           team={team}
@@ -1488,6 +1347,7 @@ const LiveGameView = ({
           onClose={() => setShowBoxScore(false)}
         />
       )}
+
       {editingPlay && (
         <EditPlayModal
           play={editingPlay}
@@ -1495,6 +1355,7 @@ const LiveGameView = ({
           onClose={() => setEditingPlay(null)}
         />
       )}
+
       {showPlays && (
         <div className="fixed inset-0 z-50 bg-gray-950 flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 flex-shrink-0">
@@ -1505,34 +1366,27 @@ const LiveGameView = ({
           </div>
           <div className="flex-1 overflow-y-auto">
             {playLog.map(play => (
-              <div
-                key={play.id}
+              <div key={play.id}
                 onClick={() => { setEditingPlay(play); setShowPlays(false); }}
                 className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-900 hover:bg-gray-900 cursor-pointer"
               >
-                <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">
-                  Q{play.period} {play.clock}
-                </span>
-                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${
-                  play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'
-                }`}>
-                  {play.action.toUpperCase().replace('FG2M','2PT✓').replace('FG2MISS','2PT✗')
+                <span className="text-[10px] font-mono text-gray-600 w-14 flex-shrink-0 text-right">Q{play.period} {play.clock}</span>
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0 ${play.team === 'opponent' ? 'bg-red-950 text-red-400' : 'bg-blue-950 text-blue-400'}`}>
+                  {play.action.toUpperCase()
+                    .replace('FG2M','2PT✓').replace('FG2MISS','2PT✗')
                     .replace('FG3M','3PT✓').replace('FG3MISS','3PT✗')
-                    .replace('FTM','FT✓').replace('FTMISS','FT✗').replace('SUB_IN','SUB')}
+                    .replace('FTM','FT✓').replace('FTMISS','FT✗')
+                    .replace('SUB_IN','SUB')}
                 </span>
                 <span className="flex-1 text-xs text-gray-400 font-semibold truncate">{play.label}</span>
                 {play.pts > 0 && (
-                  <span className={`text-xs font-black flex-shrink-0 ${
-                    play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'
-                  }`}>
+                  <span className={`text-xs font-black flex-shrink-0 ${play.team === 'opponent' ? 'text-red-500' : 'text-emerald-500'}`}>
                     +{play.pts}
                   </span>
                 )}
               </div>
             ))}
-            {playLog.length === 0 && (
-              <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>
-            )}
+            {playLog.length === 0 && <p className="text-center text-gray-700 py-12 text-sm">No plays yet</p>}
           </div>
         </div>
       )}

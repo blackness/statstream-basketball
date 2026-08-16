@@ -44,26 +44,60 @@ const LiveGameTracker = ({ user, toast }) => {
   }, [user]);
 
   // ── Realtime subscription ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (!user) return;
-    const channel = supabase
-      .channel('lgt-games')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public_view', table: 'games' },
-        ({ eventType, new: newGame, old: oldGame }) => {
-          if (eventType === 'INSERT') {
-            setGameHistory(prev => [newGame, ...prev]);
-          } else if (eventType === 'UPDATE') {
-            setGameHistory(prev => prev.map(g => g.id === newGame.id ? newGame : g));
-          } else if (eventType === 'DELETE') {
-            setGameHistory(prev => prev.filter(g => g.id !== oldGame.id));
-          }
+  // ❌ Before — only watches games
+useEffect(() => {
+  if (!user) return;
+  const channel = supabase
+    .channel('lgt-games')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'games' },
+      ({ eventType, new: newGame, old: oldGame }) => {
+        if (eventType === 'INSERT') {
+          setGameHistory(prev => [newGame, ...prev]);
+        } else if (eventType === 'UPDATE') {
+          setGameHistory(prev => prev.map(g => g.id === newGame.id ? newGame : g));
+        } else if (eventType === 'DELETE') {
+          setGameHistory(prev => prev.filter(g => g.id !== oldGame.id));
         }
-      )
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+      }
+    )
+    .subscribe();
+  return () => supabase.removeChannel(channel);
+}, [user]);
+
+// ✅ After — watches both games and teams
+useEffect(() => {
+  if (!user) return;
+  const channel = supabase
+    .channel('lgt-realtime')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'games' },
+      ({ eventType, new: newGame, old: oldGame }) => {
+        if (eventType === 'INSERT') {
+          setGameHistory(prev => [newGame, ...prev]);
+        } else if (eventType === 'UPDATE') {
+          setGameHistory(prev => prev.map(g => g.id === newGame.id ? newGame : g));
+        } else if (eventType === 'DELETE') {
+          setGameHistory(prev => prev.filter(g => g.id !== oldGame.id));
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'teams' },
+      ({ new: newTeam }) => {
+        setTeams(prev => prev.map(t =>
+          t.id === newTeam.id
+            ? { ...t, ...newTeam, roster: t.roster } // ✅ preserve roster, update record
+            : t
+        ));
+      }
+    )
+    .subscribe();
+  return () => supabase.removeChannel(channel);
+}, [user]);
 
   const loadData = async () => {
     try {
@@ -292,6 +326,52 @@ const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
     toast?.error('Failed to end game');
   }
 };
+
+// After handleReopenGame, also reverse the win/loss record
+const handleReopenGame = async (game) => {
+  try {
+    const { error } = await supabase
+      .from('games')
+      .update({ status: 'in_progress' })
+      .eq('id', game.id);
+    if (error) throw error;
+
+    // Reverse the win/loss that was recorded when game ended
+    const team     = teams.find(t => t.id === game.team_id);
+    const isHome   = game.home_team === team?.name;
+    const ourScore = isHome ? game.home_score : game.away_score;
+    const oppScore = isHome ? game.away_score : game.home_score;
+
+    if (ourScore !== oppScore) {
+      const wasWin     = ourScore > oppScore;
+      const isPlayoff  = game.game_type === 'playoff';
+      await supabase.rpc('decrement_team_record', {
+        p_team_id:    game.team_id,
+        p_won:        wasWin,
+        p_is_playoff: isPlayoff,
+      });
+    }
+
+    setSelectedTeam(team);
+    setCurrentGameSettings({
+      opponent:     game.opponent,
+      location:     game.game_settings?.location || '',
+      isHome:       game.home_team === team?.name,
+      periodLength: game.game_settings?.periodLength || 8,
+      totalPeriods: game.game_settings?.totalPeriods || 4,
+      game_type:    game.game_type || 'regular',
+      homeFouls:    0,
+      awayFouls:    0,
+    });
+    setResumingGame({ ...game, status: 'in_progress' });
+    setActiveView('liveGame');
+    toast?.success('Game reopened!');
+  } catch (err) {
+    console.error(err);
+    toast?.error('Failed to reopen game');
+  }
+};
+
   const handleViewPlayer = (player, team) => {
     setViewingPlayer({ player, team });
     setActiveView('playerStats');
@@ -363,13 +443,17 @@ const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
   />
 );
 
-  if (activeView === 'liveGame') return (
+    if (activeView === 'liveGame') return (
     <LiveGameView
       user={user}
       team={selectedTeam}
       gameSettings={currentGameSettings}
       existingGame={resumingGame}
-      onGoHome={() => { setResumingGame(null); setActiveView('home'); }}
+      onGoHome={() => {
+        setResumingGame(null);
+        setActiveView('home');
+        loadData();           // ✅ refresh teams with new record
+      }}
       toast={toast}
     />
   );
@@ -445,6 +529,7 @@ if (activeView === 'seasonStats' && statsTeam) return (
         onViewStats={handleViewStats}
         onDeleteGame={handleDeleteGame}
         onEndGame={handleEndGame}
+        onReopenGame={handleReopenGame}
         onRefresh={loadData}
         toast={toast}
         onSeasonStats={handleSeasonStats}

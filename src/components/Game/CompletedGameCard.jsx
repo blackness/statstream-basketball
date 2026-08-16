@@ -1,8 +1,8 @@
 import React from 'react';
-import { Trash2, Edit2, ChevronRight } from 'lucide-react';
+import { Trash2, Edit2, ChevronRight, RotateCcw } from 'lucide-react';
 import { buildRow, maxBy } from '../../utils/statsHelpers';
 
-const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit }) => {
+const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit, onReopen}) => {
   const teamName = team?.name || 'Unknown';
   const isHome   = game.home_team === teamName;
   const ourScore = isHome ? game.home_score : game.away_score;
@@ -102,8 +102,8 @@ const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit }) => {
       <div className="flex border-t border-gray-50">
         <button
           onClick={onDelete}
+          title="Delete game"
           className="px-3 py-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 transition"
-          title="Delete"
         >
           <Trash2 size={14} />
         </button>
@@ -114,6 +114,14 @@ const CompletedGameCard = ({ game, team, onViewStats, onDelete, onEdit }) => {
         >
           <Edit2 size={12} />
           Edit
+        </button>
+        <div className="w-px bg-gray-50" />
+        <button
+          onClick={onReopen}                                   
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-orange-400 hover:text-orange-600 hover:bg-orange-50 transition"
+        >
+          <RotateCcw size={12} />                            
+          Reopen
         </button>
         <div className="w-px bg-gray-50" />
         <button

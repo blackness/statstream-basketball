@@ -15,6 +15,7 @@ const SplitView = ({
   onViewStats,
   onDeleteGame,
   onEndGame,
+  onReopenGame,
   onStartScheduled,
   onRefresh,
   toast,
@@ -106,6 +107,7 @@ const SplitView = ({
           onViewStats={onViewStats}
           onDeleteGame={onDeleteGame}
           onEndGame={onEndGame}
+          onReopenGame={onReopenGame} 
           onStartScheduled={onStartScheduled}
           onNewGame={onNewGame}
           onRefresh={onRefresh}

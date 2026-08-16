@@ -16,6 +16,7 @@ const GamePanel = ({
   onViewStats,
   onDeleteGame,
   onEndGame,
+  onReopenGame,
   onStartScheduled,
   onNewGame,
   onRefresh,
@@ -185,6 +186,7 @@ const GamePanel = ({
                     onViewStats={() => onViewStats(game)}
                     onDelete={() => onDeleteGame(game)}
                     onEdit={() => setEditingGame(game)}
+                    onReopen={() => onReopenGame(game)}
                   />
                 );
               })}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabase';
+import { supabase } from '../../supabase';
 import { fmtPct } from '../utils/statsHelpers';
 import { ArrowLeft, LogIn } from 'lucide-react';
 

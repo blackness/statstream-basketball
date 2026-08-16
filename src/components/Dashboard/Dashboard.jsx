@@ -6,7 +6,7 @@ const Dashboard = ({
   user, teams = [], gameHistory = [], canManage,
   onNewTeam, onNewGame, onEditTeam, onManageRoster,
   onResumeGame, onStartScheduled, onViewStats,
-  onDeleteGame, onEndGame, onRefresh, toast, onSeasonStats,
+  onDeleteGame, onEndGame, onRefresh, toast, onSeasonStats, onReopenGame,
 }) => (
   <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
     <AppHeader title="Dashboard" isDashboard={true} onDashboard={() => {}} userEmail={user?.email} />
@@ -19,6 +19,7 @@ const Dashboard = ({
         onDeleteGame={onDeleteGame} onEndGame={onEndGame}
         onRefresh={onRefresh} toast={toast}
         onSeasonStats={onSeasonStats}
+        onReopenGame={onReopenGame} 
       />
     </div>
   </div>
