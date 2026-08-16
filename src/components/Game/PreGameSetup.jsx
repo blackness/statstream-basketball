@@ -20,6 +20,7 @@ const PreGameSetup = ({
   const [scheduleForLater, setScheduleForLater] = useState(false);
   const [scheduledAt,     setScheduledAt]     = useState('');
   const [saving,          setSaving]          = useState(false);
+  const [gameType,        setGameType]        = useState('regular');
 
   // Auto-select preselected team
   useEffect(() => {
@@ -35,6 +36,7 @@ const PreGameSetup = ({
     isHome,
     periodLength,
     totalPeriods,
+    game_type:    gameType,
     homeFouls:    0,
     awayFouls:    0,
   };
@@ -179,6 +181,27 @@ const PreGameSetup = ({
                     >
                       ✈️ Away
                     </button>
+                  </div>
+                </div>
+                {/* Game Type */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Game Type
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['regular','playoff','tournament','scrimmage'].map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setGameType(type)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition ${
+                          gameType === type
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

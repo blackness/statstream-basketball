@@ -7,6 +7,7 @@ import PublicHome from './pages/PublicHome';
 import TeamPage from './pages/TeamPage';
 import LiveGamePage from './pages/LiveGamePage';
 import { ToastContainer, useToast } from './components/Shared/Toast';
+import PlayerPage from './pages/PlayerPage';
 
 function PrivateApp() {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ function App() {
           <Route path="/game/:id"   element={<LiveGamePage />} />
           <Route path="/app"        element={<PrivateApp />} />
           <Route path="*"           element={<Navigate to="/" replace />} />
+          <Route path="/player/:id" element={<PlayerPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

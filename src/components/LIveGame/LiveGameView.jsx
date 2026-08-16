@@ -603,12 +603,41 @@ const LiveGameView = ({
     toast?.info(`Q${next} starting`);
     await persist({ stats: flushed });
   };
+  const ourScore  = gameSettings.isHome ? finalHome : finalAway;
+  const oppScore  = gameSettings.isHome ? finalAway : finalHome;
+    if (ourScore === oppScore) return; // draw — no update
 
+    try {
+      await supabase.rpc('increment_team_record', {
+        p_team_id:    team.id,
+        p_won:        ourScore > oppScore,
+        p_is_playoff: gameSettings.game_type === 'playoff',
+      });
+    } catch (err) {
+      console.error('Failed to update team record:', err);
+    }
+  };
   // ── End game ──────────────────────────────────────────────────────────────────
   const handleEndGame = async () => {
     const r       = live.current;
     const elapsed = getElapsed();
     const flushed = flushMinutes(r.activePlayers, r.ourStats, elapsed);
+    const updateTeamRecord = async (finalHome, finalAway) => {
+    const updateTeamRecord = async (finalHome, finalAway) => {
+    const ourScore  = gameSettings.isHome ? finalHome : finalAway;
+    const oppScore  = gameSettings.isHome ? finalAway : finalHome;
+    if (ourScore === oppScore) return; // draw — no update
+
+    try {
+      await supabase.rpc('increment_team_record', {
+        p_team_id:    team.id,
+        p_won:        ourScore > oppScore,
+        p_is_playoff: gameSettings.game_type === 'playoff',
+      });
+    } catch (err) {
+      console.error('Failed to update team record:', err);
+    }
+  };
     try {
       await persist({
         home_score: r.homeScore, away_score: r.awayScore,
@@ -617,6 +646,7 @@ const LiveGameView = ({
         opponent_roster: r.opponentRoster, active_players: r.activePlayers,
         play_log: r.playLog, status: 'completed',
       });
+      await updateTeamRecord(r.homeScore, r.awayScore); // ✅ add this
       toast?.success('Game ended!');
       onGoHome();
     } catch (err) { toast?.error('Failed to end game'); }

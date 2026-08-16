@@ -10,6 +10,7 @@ import StartGameModal   from './components/Game/StartGameModal';
 import EditTeam         from './components/Team/EditTeam';
 import ManageRoster     from './components/Team/ManageRoster';
 import SeasonStats      from './components/Stats/SeasonStats';
+import PlayerStatsView from './components/Stats/PlayerStatsView';
 
 const LiveGameTracker = ({ user, toast }) => {
   const [teams,           setTeams]           = useState([]);
@@ -35,6 +36,7 @@ const LiveGameTracker = ({ user, toast }) => {
   const [editingTeam, setEditingTeam] = useState(null);
   const [rosterTeam,  setRosterTeam]  = useState(null);
   const [statsTeam, setStatsTeam] = useState(null);
+  const [viewingPlayer, setViewingPlayer] = useState(null);
 
   // ── Load initial data ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -262,16 +264,39 @@ const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
   };
 
   const handleEndGame = async (game) => {
-    if (!confirm('End this game?')) return;
-    try {
-      const { error } = await supabase.from('games')
-        .update({ status: 'completed' }).eq('id', game.id);
-      if (error) throw error;
-      toast?.success('Game ended!');
-    } catch (err) {
-      toast?.error('Failed to end game');
+  if (!confirm('End this game?')) return;
+  try {
+    const { error } = await supabase
+      .from('games')
+      .update({ status: 'completed' })
+      .eq('id', game.id);
+    if (error) throw error;
+
+    // ✅ Update team win/loss record
+    const gameTeam   = teams.find(t => t.id === game.team_id);
+    const isHome     = game.home_team === gameTeam?.name;
+    const ourScore   = isHome ? game.home_score : game.away_score;
+    const oppScore   = isHome ? game.away_score : game.home_score;
+    if (ourScore !== oppScore) {
+      await supabase.rpc('increment_team_record', {
+        p_team_id:    game.team_id,
+        p_won:        ourScore > oppScore,
+        p_is_playoff: game.game_type === 'playoff',
+      });
     }
+
+    toast?.success('Game ended!');
+    loadData();
+  } catch (err) {
+    console.error(err);
+    toast?.error('Failed to end game');
+  }
+};
+  const handleViewPlayer = (player, team) => {
+    setViewingPlayer({ player, team });
+    setActiveView('playerStats');
   };
+
   const handleSeasonStats = (team) => {
     setStatsTeam(team);
     setActiveView('seasonStats');
@@ -367,6 +392,43 @@ const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
       }}
     />
   );
+  if (activeView === 'playerStats' && viewingPlayer) return (
+  <PlayerStatsView
+    user={user}
+    player={viewingPlayer.player}
+    team={viewingPlayer.team}
+    onBack={() => {
+      setViewingPlayer(null);
+      setActiveView('home');
+    }}
+    toast={toast}
+  />
+  
+);
+if (activeView === 'manageRoster' && rosterTeam) return (
+  <ManageRoster
+    user={user}
+    team={rosterTeam}
+    onViewPlayer={(player) => handleViewPlayer(player, rosterTeam)}  // ✅ add
+    onBack={() => {
+      setRosterTeam(null);
+      setActiveView('home');
+      loadData();
+    }}
+    toast={toast}
+  />
+);
+if (activeView === 'seasonStats' && statsTeam) return (
+  <SeasonStats
+    user={user}
+    team={statsTeam}
+    onViewPlayer={(player) => handleViewPlayer(player, statsTeam)}  // ✅ add
+    onBack={() => {
+      setStatsTeam(null);
+      setActiveView('home');
+    }}
+  />
+);
   return (
     <>
       <Dashboard

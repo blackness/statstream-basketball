@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../supabase';
 import AppHeader from '../Shared/AppHeader';
-import {
-  Plus, Edit2, UserX, UserCheck,
-  Trash2, X, ChevronDown, ChevronUp
-} from 'lucide-react';
+import { Plus, Edit2, UserX, UserCheck, Trash2, X, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
 
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
 
@@ -133,11 +130,11 @@ const EditPlayerModal = ({ player, onSave, onClose, toast }) => {
 };
 
 // ─── Player Row ────────────────────────────────────────────────────────────────
-const PlayerRow = ({ player, onEdit, onUnroster, onReroster, onDelete, isInactive }) => (
+const PlayerRow = ({ player, onEdit, onUnroster, onReroster, onDelete, onViewStats, isInactive }) => (
   <div className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition ${
     isInactive ? 'opacity-50 hover:opacity-100' : ''
   }`}>
-    {/* Jersey number */}
+    {/* jersey number */}
     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
       isInactive ? 'bg-gray-100' : 'bg-gray-900'
     }`}>
@@ -146,7 +143,7 @@ const PlayerRow = ({ player, onEdit, onUnroster, onReroster, onDelete, isInactiv
       </span>
     </div>
 
-    {/* Name + position */}
+    {/* name + position */}
     <div className="flex-1 min-w-0">
       <p className={`font-black truncate ${isInactive ? 'text-gray-500' : 'text-gray-900'}`}>
         {player.name}
@@ -158,37 +155,35 @@ const PlayerRow = ({ player, onEdit, onUnroster, onReroster, onDelete, isInactiv
 
     {/* Actions */}
     <div className="flex items-center gap-1 flex-shrink-0">
+      {/* ✅ Stats button — active players only */}
+      {!isInactive && (
+        <button
+          onClick={onViewStats}
+          title="View stats"
+          className="p-2 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+        >
+          <BarChart2 size={14} />
+        </button>
+      )}
       {isInactive ? (
         <>
-          <button
-            onClick={onReroster}
-            title="Re-roster"
-            className="p-2 text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
-          >
+          <button onClick={onReroster} title="Re-roster"
+            className="p-2 text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition">
             <UserCheck size={14} />
           </button>
-          <button
-            onClick={onDelete}
-            title="Delete permanently"
-            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-          >
+          <button onClick={onDelete} title="Delete"
+            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
             <Trash2 size={14} />
           </button>
         </>
       ) : (
         <>
-          <button
-            onClick={onEdit}
-            title="Edit player"
-            className="p-2 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-          >
+          <button onClick={onEdit} title="Edit"
+            className="p-2 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
             <Edit2 size={14} />
           </button>
-          <button
-            onClick={onUnroster}
-            title="Remove from roster"
-            className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition"
-          >
+          <button onClick={onUnroster} title="Remove from roster"
+            className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition">
             <UserX size={14} />
           </button>
         </>
@@ -198,7 +193,7 @@ const PlayerRow = ({ player, onEdit, onUnroster, onReroster, onDelete, isInactiv
 );
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-const ManageRoster = ({ user, team, onBack, toast }) => {
+const ManageRoster = ({ user, team, onBack, onViewPlayer, toast }) => {
   const [players,       setPlayers]       = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [editingPlayer, setEditingPlayer] = useState(null);
@@ -481,6 +476,7 @@ const ManageRoster = ({ user, team, onBack, toast }) => {
                       isInactive={false}
                       onEdit={() => setEditingPlayer(player)}
                       onUnroster={() => handleUnroster(player)}
+                      onViewStats={() => onViewPlayer?.(player)}
                     />
                   ))}
                 </div>

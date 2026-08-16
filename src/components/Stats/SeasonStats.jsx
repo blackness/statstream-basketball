@@ -12,11 +12,12 @@ const RANK_TABS = [
   { key: 'blk', label: 'Blocks',   unit: 'BPG', source: 'avg' },
 ];
 
-export default function SeasonStats({ user, team, onBack }) {
+export default function SeasonStats({ user, team, onBack, onViewPlayer }) {
   const [games,   setGames]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab,     setTab]     = useState('leaders');
   const [rankKey, setRankKey] = useState('pts');
+  
 
   useEffect(() => { loadGames(); }, [team.id]);
 
@@ -176,9 +177,14 @@ export default function SeasonStats({ user, team, onBack }) {
                           {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-black text-sm truncate ${isFirst ? 'text-blue-900' : 'text-gray-900'}`}>
+                          <button
+                            onClick={() => onViewPlayer?.(entry.player)}
+                            className={`font-black text-sm truncate text-left hover:underline hover:text-blue-600 transition ${
+                              isFirst ? 'text-blue-900' : 'text-gray-900'
+                            }`}
+                          >
                             {entry.player.name}
-                          </p>
+                          </button>
                           <p className="text-xs text-gray-400">
                             #{entry.player.number || '—'} · {entry.gp} GP
                             {entry.player.position && ` · ${entry.player.position}`}
@@ -261,7 +267,12 @@ export default function SeasonStats({ user, team, onBack }) {
                       <tr key={entry.player.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         <td className={`py-2.5 px-4 sticky left-0 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                           <span className="text-[10px] text-gray-400 font-mono mr-1.5">#{entry.player.number || '—'}</span>
-                          <span className="font-bold text-gray-900">{entry.player.name}</span>
+                          <button
+                            onClick={() => onViewPlayer?.(entry.player)}
+                            className="font-bold text-gray-900 hover:text-blue-600 hover:underline transition"
+                          >
+                            {entry.player.name}
+                          </button>
                         </td>
                         <td className="py-2.5 px-3 text-right text-gray-500 tabular-nums">{entry.gp}</td>
                         <td className="py-2.5 px-3 text-right text-gray-500 tabular-nums">{entry.avg.min}</td>
