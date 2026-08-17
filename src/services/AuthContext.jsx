@@ -29,11 +29,6 @@ export const AuthProvider = ({ children }) => {
     // Check if Supabase is configured
     const cloudMode = isSupabaseConfigured();
     
-    console.log('🔍 Supabase Config Check:');
-    console.log('URL:', import.meta.env.VITE_SUPABASE_URL);
-    console.log('Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
-    console.log('Cloud Mode:', cloudMode);
-    
     setIsCloudMode(cloudMode);
 
     if (!cloudMode) {

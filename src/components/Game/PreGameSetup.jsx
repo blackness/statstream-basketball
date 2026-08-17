@@ -21,11 +21,18 @@ const PreGameSetup = ({
   const [scheduledAt,     setScheduledAt]     = useState('');
   const [saving,          setSaving]          = useState(false);
   const [gameType,        setGameType]        = useState('regular');
+  const [trackingMode, setTrackingMode] = useState(
+    () => localStorage.getItem('ss_tracking_mode') || 'quick'
+  );
+  const [foulLimit, setFoulLimit] = useState(5);
 
   // Auto-select preselected team
   useEffect(() => {
     if (preselectedTeam) setSelectedTeam(preselectedTeam);
   }, [preselectedTeam]);
+  useEffect(() => {
+    localStorage.setItem('ss_tracking_mode', trackingMode);
+  }, [trackingMode]);
 
   // Min datetime for scheduling — now
   const minDateTime = new Date(Date.now() - 60000).toISOString().slice(0, 16);
@@ -36,6 +43,8 @@ const PreGameSetup = ({
     isHome,
     periodLength,
     totalPeriods,
+    trackingMode, 
+    foulLimit,
     game_type:    gameType,
     homeFouls:    0,
     awayFouls:    0,
@@ -70,6 +79,8 @@ const PreGameSetup = ({
     'w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none ' +
     'focus:border-blue-600 transition text-sm font-semibold text-gray-900 ' +
     'placeholder:text-gray-300 placeholder:font-normal';
+
+  
 
   return (
     <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
@@ -235,6 +246,56 @@ const PreGameSetup = ({
                       <option value={2}>2 halves</option>
                       <option value={4}>4 quarters</option>
                     </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Opponent Stats Tracking
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { key: 'quick', title: 'Quick Mode', desc: 'Team score only — +1/+2/+3 buttons' },
+                      { key: 'full',  title: 'Full Tracking', desc: 'Individual opponent player stats' },
+                    ].map(opt => (
+                      <button
+                        key={opt.key}
+                        onClick={() => setTrackingMode(opt.key)}
+                        className={`p-3 rounded-xl border-2 text-left transition ${
+                          trackingMode === opt.key
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-100 hover:border-gray-200 bg-white'
+                        }`}
+                      >
+                        <p className={`font-black text-sm ${trackingMode === opt.key ? 'text-blue-700' : 'text-gray-800'}`}>
+                          {opt.title}
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">{opt.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Foul Limit */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                    Foul Limit Per Player
+                  </label>
+                  <div className="flex gap-2">
+                    {[3, 4, 5, 6].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setFoulLimit(n)}
+                        className={`flex-1 py-3 rounded-xl font-black text-sm transition ${
+                          foulLimit === n
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
+                      >
+                        {n}
+                        {n === 5 && <span className="block text-[9px] font-medium opacity-60">NCAA</span>}
+                        {n === 6 && <span className="block text-[9px] font-medium opacity-60">NBA</span>}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
