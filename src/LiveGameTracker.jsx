@@ -309,10 +309,34 @@ const handleScheduleGame = async (team, gameSettings, scheduledAt) => {
   const handleDeleteGame = async (game) => {
     if (!confirm('Delete this game?')) return;
     try {
-      const { error } = await supabase.from('games').delete().eq('id', game.id);
+      const { error } = await supabase
+        .from('games')
+        .delete()
+        .eq('id', game.id);
       if (error) throw error;
+
+      // ✅ Reverse win/loss only for completed games
+      if (game.status === 'completed') {
+        const gameTeam = teams.find(t => t.id === game.team_id);
+        const isHome   = game.home_team?.trim().toLowerCase() === gameTeam?.name?.trim().toLowerCase();
+        const ourScore = isHome ? (game.home_score || 0) : (game.away_score || 0);
+        const oppScore = isHome ? (game.away_score || 0) : (game.home_score || 0);
+
+        console.log('Decrementing record:', { ourScore, oppScore, won: ourScore > oppScore });
+
+        if (ourScore !== oppScore) {
+          const { error: rpcError } = await supabase.rpc('decrement_team_record', {
+            p_team_id:    game.team_id,
+            p_won:        ourScore > oppScore,
+            p_is_playoff: game.game_type === 'playoff',
+          });
+          if (rpcError) console.error('decrement_team_record error:', rpcError);
+        }
+      }
+
       toast?.success('Game deleted!');
     } catch (err) {
+      console.error(err);
       toast?.error('Failed to delete game');
     }
   };
