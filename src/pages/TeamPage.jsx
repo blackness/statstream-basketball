@@ -96,7 +96,10 @@ export default function TeamPage() {
       </div>
     </div>
   );
-
+  const headerStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+  const headerClass = `text-white rounded-2xl p-5 ${
+    !isHexColor(team.colors) ? 'bg-gradient-to-br from-gray-900 to-gray-800' : ''
+  }`;
   const completedGames = games.filter(g => g.status === 'completed');
   const isHome         = (game) => game.home_team === team.name;
   const ourScore       = (game) => isHome(game) ? game.home_score : game.away_score;
@@ -115,8 +118,6 @@ export default function TeamPage() {
     { key: 'stats',   label: 'Stats'   },
     { key: 'games',   label: `Games (${completedGames.length})` },
   ];
-const headerStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
-const headerClass = `text-white rounded-2xl p-5 ${!isHexColor(team.colors) ? 'bg-gradient-to-br from-gray-900 to-gray-800' : ''}`;
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -490,7 +490,7 @@ const EditPlayModal = React.memo(({ play, isDark, onDelete, onClose }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome, toast }) => {
   const isLandscape = useOrientation();
-
+  const scoreboardStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
   const [theme, setTheme] = useState(() => localStorage.getItem('ss_theme') || 'light');
   const isDark = theme === 'dark';
   const toggleTheme = () => {
@@ -834,7 +834,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const lastPlay        = playLog[0] || null;
   const activePlayer    = activeTeam === 'ours' ? selectedPlayer : selectedOpp;
   const activeStats     = activePlayer ? ((activeTeam === 'ours' ? ourStats : opponentStats)[activePlayer.id] || { ...EMPTY_STATS }) : null;
-  const scoreboardStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+  
 
   const bg  = isDark ? 'bg-gray-950' : 'bg-gray-50';
   const crd = isDark ? 'bg-gray-900' : 'bg-white';

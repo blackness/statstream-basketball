@@ -12,13 +12,12 @@ const GRADIENTS = [
 const gradient = (name = '') =>
   GRADIENTS[(name.charCodeAt(0) || 0) % GRADIENTS.length];
 const getAvatarStyle = (team) =>
-  isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+  isHexColor(team?.colors) ? teamGradientStyle(team.colors) : undefined;
 
 const getAvatarClass = (team) =>
   `w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-lg flex-shrink-0 ${
-    isHexColor(team.colors) ? '' : `bg-gradient-to-br ${gradient(team.name)}`
+    !isHexColor(team?.colors) ? `bg-gradient-to-br ${gradient(team?.name || '')}` : ''
   }`;
-
 const TeamPanel = ({
   teams = [],
   selectedTeamId,
