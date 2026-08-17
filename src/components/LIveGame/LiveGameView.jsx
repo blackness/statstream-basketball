@@ -9,12 +9,10 @@ import ShareButton from '../Shared/ShareButton';
 import LineupModal from '../Game/LineupModal';
 import { buildRow, sumRows, fmtPct, STAT_COLS, EMPTY_STATS } from '../../utils/statsHelpers';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const haptic  = () => navigator.vibrate?.(8);
 const genId   = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-// ─── Orientation hook ─────────────────────────────────────────────────────────
 const useOrientation = () => {
   const [ls, setLs] = useState(
     typeof window !== 'undefined' ? window.innerWidth > window.innerHeight : false
@@ -28,7 +26,6 @@ const useOrientation = () => {
   return ls;
 };
 
-// ─── Stat definitions ─────────────────────────────────────────────────────────
 const STAT_DEFS = [
   { key:'fg2m',    label:'2PT ✓', updates:{fgm:1,fga:1,pts:2},
     light:'bg-blue-500 hover:bg-blue-600 text-white shadow-sm shadow-blue-100',
@@ -132,7 +129,7 @@ const PlayerCard = React.memo(({
     if (!didHold.current) onSelect(player);
     didHold.current = false;
   }, [player, onSelect]);
-
+  
   return (
     <button
       onPointerDown={onDown}
@@ -207,10 +204,12 @@ const StatButton = React.memo(({ statKey, isDark, onStat, disabled }) => {
 });
 
 // ─── SubModal ─────────────────────────────────────────────────────────────────
-const SubModal = React.memo(({ courtPlayers, benchPlayers, ourStats, getLiveMin, isDark, onConfirm, onClose }) => {
-  const [going,  setGoing]  = useState([]);
-  const [coming, setComing] = useState([]);
-
+// ✅ Receives going/setGoing/coming/setComing from parent — no internal state
+const SubModal = React.memo(({
+  courtPlayers, benchPlayers, ourStats, getLiveMin, isDark,
+  going, setGoing, coming, setComing,
+  onConfirm, onClose
+}) => {
   const toggle = (arr, setArr, id) =>
     setArr(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
@@ -307,19 +306,20 @@ const SubModal = React.memo(({ courtPlayers, benchPlayers, ourStats, getLiveMin,
 // ─── BoxScoreModal ────────────────────────────────────────────────────────────
 const BoxScoreModal = React.memo(({
   team, opponent, ourStats, opponentStats,
-  opponentRoster, isQuick, isDark, onClose
+  opponentRoster, isQuick, isDark, tab, setTab, onClose
 }) => {
-  const [tab, setTab] = useState('ours');
+  
   const isOurs = tab === 'ours';
 
   const roster  = team?.roster || [];
   const ourRows = roster.map(p => buildRow(p, ourStats));
 
-  const oppRows = isQuick
-    ? (opponentStats['opp-team']
-        ? [buildRow({ id: 'opp-team', name: opponent, number: '—' }, opponentStats)]
-        : [])
-    : opponentRoster.map(p => buildRow(p, opponentStats));
+  const oppStats_   = opponentStats || {};
+  const oppRoster_  = opponentRoster || [];
+  const isQuickMode = oppRoster_.length === 0 && !!oppStats_['opp-team'];
+  const oppRows     = isQuickMode
+    ? [buildRow({ id: 'opp-team', name: opponent, number: '—' }, oppStats_)]
+    : oppRoster_.map(p => buildRow(p, oppStats_));
 
   const rows   = isOurs ? ourRows : oppRows;
   const totals = isOurs ? sumRows(ourRows) : sumRows(oppRows);
@@ -417,7 +417,6 @@ const BoxScoreModal = React.memo(({
               <span className="w-4" />
               <span className="w-16 text-center text-[10px] font-black text-red-500 uppercase truncate">{opponent}</span>
             </div>
-
             {COMPARE_STATS.map(({ label, our, opp, bold, lowerBetter }) => {
               const ourN = typeof our === 'number' ? our : parseInt(our) || 0;
               const oppN = typeof opp === 'number' ? opp : parseInt(opp) || 0;
@@ -490,7 +489,8 @@ const EditPlayModal = React.memo(({ play, isDark, onDelete, onClose }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome, toast }) => {
   const isLandscape = useOrientation();
-  const scoreboardStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
+
+  // ── Theme ────────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(() => localStorage.getItem('ss_theme') || 'light');
   const isDark = theme === 'dark';
   const toggleTheme = () => {
@@ -502,6 +502,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const isQuick   = (gameSettings.trackingMode || 'quick') === 'quick';
   const foulLimit = gameSettings.foulLimit || 5;
 
+  // ── Game state ───────────────────────────────────────────────────────────────
   const [currentGameId,  setCurrentGameId]  = useState(existingGame?.id || null);
   const [homeScore,      setHomeScore]      = useState(existingGame?.home_score || 0);
   const [awayScore,      setAwayScore]      = useState(existingGame?.away_score || 0);
@@ -515,19 +516,26 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const [playLog,        setPlayLog]        = useState(existingGame?.play_log || []);
   const [periodFouls,    setPeriodFouls]    = useState(existingGame?.game_settings?.period_fouls || { ours: 0, opp: 0 });
 
-  const [activeTeam,      setActiveTeam]      = useState('ours');
-  const [selectedPlayer,  setSelectedPlayer]  = useState(null);
-  const [selectedOpp,     setSelectedOpp]     = useState(null);
-  const [lastAction,      setLastAction]      = useState(null);
-  const [showLineup,      setShowLineup]      = useState(!existingGame);
-  const [showBoxScore,    setShowBoxScore]    = useState(false);
-  const [showSubModal,    setShowSubModal]    = useState(false);
-  const [showPlays,       setShowPlays]       = useState(false);
-  const [editingPlay,     setEditingPlay]     = useState(null);
-  const [showNextQ,       setShowNextQ]       = useState(false);
-  const [showEndGame,     setShowEndGame]     = useState(false);
-  const [quickSubTarget,  setQuickSubTarget]  = useState(null);
+  // ── Selection & UI ───────────────────────────────────────────────────────────
+  const [activeTeam,     setActiveTeam]     = useState('ours');
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedOpp,    setSelectedOpp]    = useState(null);
+  const [lastAction,     setLastAction]     = useState(null);
+  const [showLineup,     setShowLineup]     = useState(!existingGame);
+  const [showBoxScore,   setShowBoxScore]   = useState(false);
+  const [showSubModal,   setShowSubModal]   = useState(false);
+  const [showPlays,      setShowPlays]      = useState(false);
+  const [editingPlay,    setEditingPlay]    = useState(null);
+  const [showNextQ,      setShowNextQ]      = useState(false);
+  const [showEndGame,    setShowEndGame]    = useState(false);
+  const [quickSubTarget, setQuickSubTarget] = useState(null);
 
+  // ✅ Sub selection state lives here — survives re-renders
+  const [subGoing,  setSubGoing]  = useState([]);
+  const [subComing, setSubComing] = useState([]);
+  const [boxScoreTab, setBoxScoreTab] = useState('ours');
+
+  // ── Refs ─────────────────────────────────────────────────────────────────────
   const live          = useRef({});
   const creatingGame  = useRef(false);
   const minuteTracker = useRef({ entryTimes: {}, accSeconds: {} });
@@ -538,6 +546,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     isDirty.current = true;
   }, [homeScore, awayScore, currentPeriod, gameTime, ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls]);
 
+  // ── Minute helpers ───────────────────────────────────────────────────────────
   const getElapsed = useCallback(() => {
     const r = live.current;
     return (r.currentPeriod - 1) * gameSettings.periodLength * 60 + (gameSettings.periodLength * 60 - r.gameTime);
@@ -574,6 +583,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     return total > 0 ? Math.max(1, Math.round(total / 60)) : 0;
   }, [getElapsed]);
 
+  // ── Init ─────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (existingGame) {
       initMinuteTracking(existingGame.active_players || [], existingGame.stats || {});
@@ -581,6 +591,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     }
   }, []); // eslint-disable-line
 
+  // ── Timer ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isTimerRunning) return;
     const id = setInterval(() => {
@@ -589,6 +600,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     return () => clearInterval(id);
   }, [isTimerRunning]); // eslint-disable-line
 
+  // ── Auto-save ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!currentGameId) return;
     const id = setInterval(() => {
@@ -608,6 +620,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     return () => clearInterval(id);
   }, [currentGameId]); // eslint-disable-line
 
+  // ── Supabase helpers ─────────────────────────────────────────────────────────
   const createGame = async (starters = []) => {
     try {
       const { data, error } = await supabase.from('games').insert([{
@@ -647,6 +660,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     }
   }, [currentGameId]); // eslint-disable-line
 
+  // ── Stat action ──────────────────────────────────────────────────────────────
   const handleStatAction = useCallback(async (statDef) => {
     const isOurs = activeTeam === 'ours';
     const player = isOurs
@@ -787,6 +801,8 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     const newPlayLog = [...subPlays, ...live.current.playLog];
     setOurStats(updatedStats); setActivePlayers(newActive); setPlayLog(newPlayLog);
     setShowSubModal(false); setSelectedPlayer(null);
+    setSubGoing([]);   // ✅ reset
+    setSubComing([]);  // ✅ reset
     toast?.info(`${pairs.length} sub${pairs.length > 1 ? 's' : ''} complete`);
     await persist({ stats: updatedStats, active_players: newActive, play_log: newPlayLog });
   }, [getElapsed, team.roster]); // eslint-disable-line
@@ -834,7 +850,9 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const lastPlay        = playLog[0] || null;
   const activePlayer    = activeTeam === 'ours' ? selectedPlayer : selectedOpp;
   const activeStats     = activePlayer ? ((activeTeam === 'ours' ? ourStats : opponentStats)[activePlayer.id] || { ...EMPTY_STATS }) : null;
-  
+
+  // ✅ scoreboardStyle inside component after all hooks
+  const scoreboardStyle = isHexColor(team.colors) ? teamGradientStyle(team.colors) : undefined;
 
   const bg  = isDark ? 'bg-gray-950' : 'bg-gray-50';
   const crd = isDark ? 'bg-gray-900' : 'bg-white';
@@ -905,20 +923,41 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const Modals = () => (
     <>
       {showLineup && !existingGame && <LineupModal team={team} onConfirm={handleLineupConfirmed} />}
+
       {showSubModal && (
-        <SubModal courtPlayers={courtPlayers} benchPlayers={benchPlayers}
-          ourStats={ourStats} getLiveMin={getLiveMin} isDark={isDark}
-          onConfirm={handleSubConfirm} onClose={() => setShowSubModal(false)} />
+        <SubModal
+          courtPlayers={courtPlayers}
+          benchPlayers={benchPlayers}
+          ourStats={ourStats}
+          getLiveMin={getLiveMin}
+          isDark={isDark}
+          going={subGoing}
+          setGoing={setSubGoing}
+          coming={subComing}
+          setComing={setSubComing}
+          onConfirm={handleSubConfirm}
+          onClose={() => {
+            setShowSubModal(false);
+            setSubGoing([]);
+            setSubComing([]);
+            setBoxScoreTab('ours');
+          }}
+        />
       )}
+
       {showBoxScore && (
         <BoxScoreModal team={team} opponent={gameSettings.opponent}
           ourStats={ourStats} opponentStats={opponentStats}
           opponentRoster={opponentRoster} isQuick={isQuick}
-          isDark={isDark} onClose={() => setShowBoxScore(false)} />
+          isDark={isDark} onClose={() => setShowBoxScore(false)}
+          tab={boxScoreTab} 
+          setTab={setBoxScoreTab} />
       )}
+
       {editingPlay && (
         <EditPlayModal play={editingPlay} isDark={isDark} onDelete={handleDeletePlay} onClose={() => setEditingPlay(null)} />
       )}
+
       {showPlays && (
         <div className={`fixed inset-0 z-50 flex flex-col ${isDark ? 'bg-gray-950' : 'bg-white'}`}>
           <div className={`flex items-center justify-between px-4 py-3 border-b ${div} flex-shrink-0`}>
@@ -941,6 +980,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
           </div>
         </div>
       )}
+
       {showNextQ && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className={`w-full max-w-sm rounded-2xl p-6 ${isDark ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200 shadow-2xl'}`}>
@@ -968,6 +1008,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
           </div>
         </div>
       )}
+
       {showEndGame && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
           <div className={`w-full max-w-sm rounded-2xl p-6 ${isDark ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200 shadow-2xl'}`}>
@@ -1005,7 +1046,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
 
         {/* Scoreboard */}
         <div className="flex-shrink-0 text-white" style={scoreboardStyle || { background: '#111827' }}>
-          {/* Top row */}
           <div className="flex items-center justify-between px-4 pt-2.5 pb-1">
             <div className="flex items-center gap-2.5">
               <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Q{currentPeriod}</span>
@@ -1026,15 +1066,12 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             </div>
           </div>
 
-          {/* Score + fouls + active player */}
           <div className="flex items-end px-4 pb-3 gap-2">
             <div className="flex-1">
               <p className="text-[9px] font-bold text-white/40 truncate mb-1">{gameSettings.isHome ? team.name : gameSettings.opponent}</p>
               <p className="text-5xl font-black tabular-nums leading-none">{homeScore}</p>
               <FoulDots count={periodFouls[gameSettings.isHome ? 'ours' : 'opp']} limit={foulLimit} className="mt-1.5" />
             </div>
-
-            {/* Active player panel */}
             <div className="flex-shrink-0 text-center bg-white/10 rounded-2xl px-3 py-2 min-w-[80px]">
               {activePlayer && activeStats ? (
                 <>
@@ -1051,7 +1088,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
                 <p className="text-[9px] text-white/20 py-2">—</p>
               )}
             </div>
-
             <div className="flex-1 text-right">
               <p className="text-[9px] font-bold text-white/40 truncate mb-1">{gameSettings.isHome ? gameSettings.opponent : team.name}</p>
               <p className="text-5xl font-black tabular-nums leading-none">{awayScore}</p>
@@ -1091,7 +1127,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             )}
           </div>
 
-          {/* Quick sub bench panel */}
           {quickSubTarget && benchPlayers.length > 0 && (
             <div className={`mt-2 rounded-xl border p-2 ${isDark ? 'border-orange-900 bg-orange-950/50' : 'border-orange-200 bg-orange-50'}`}>
               <div className="flex items-center justify-between mb-2 px-1">
@@ -1115,7 +1150,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             </div>
           )}
 
-          {/* Opp player row — full tracking */}
           {!isQuick && opponentRoster.length > 0 && (
             <div className="flex gap-1.5 h-[70px] mt-1.5">
               {opponentRoster.slice(0, 6).map(p => (
@@ -1155,7 +1189,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
           )}
         </div>
 
-        {/* Stat grid */}
         {renderPortraitGrid()}
 
         {/* Last play */}
@@ -1200,10 +1233,8 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     <>
       <div className={`h-screen w-full flex overflow-hidden ${bg}`}>
 
-        {/* ── Column 1: Players ── */}
+        {/* Column 1: Players */}
         <div className={`w-[165px] flex-shrink-0 flex flex-col border-r ${div} ${crd} overflow-hidden`}>
-
-          {/* Header */}
           <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5 flex-shrink-0">
             <span className={`text-[9px] font-black uppercase tracking-wider ${mut}`}>Players</span>
             <button
@@ -1214,7 +1245,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             </button>
           </div>
 
-          {/* Player list */}
           <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5">
             {courtPlayers.map(p => {
               const s    = ourStats[p.id] || EMPTY_STATS;
@@ -1244,7 +1274,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
               );
             })}
 
-            {/* OPP tile — quick mode */}
             {isQuick && (
               <button
                 onClick={() => setActiveTeam(prev => prev === 'opponent' ? 'ours' : 'opponent')}
@@ -1261,7 +1290,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
               </button>
             )}
 
-            {/* Opp players — full tracking */}
             {!isQuick && opponentRoster.length > 0 && (
               <>
                 <div className={`my-1.5 border-t ${div}`} />
@@ -1290,7 +1318,6 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             )}
           </div>
 
-          {/* Quick sub panel */}
           {quickSubTarget && benchPlayers.length > 0 && (
             <div className={`mx-2 mb-2 rounded-xl border p-2 flex-shrink-0 ${isDark ? 'border-orange-900 bg-orange-950/50' : 'border-orange-200 bg-orange-50'}`}>
               <p className={`text-[9px] font-black mb-1.5 px-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
@@ -1315,10 +1342,8 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
           )}
         </div>
 
-        {/* ── Column 2: Stats ── */}
+        {/* Column 2: Stats */}
         <div className={`flex-1 flex flex-col border-r ${div} ${crd} min-w-0`}>
-
-          {/* Selected player line */}
           <div className={`flex-shrink-0 px-3 py-2 border-b ${div} flex items-center gap-2 min-h-[38px]`}>
             {activePlayer && activeStats ? (
               <>
@@ -1344,10 +1369,8 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
             )}
           </div>
 
-          {/* Stat grid */}
           {renderLandscapeGrid()}
 
-          {/* Last play */}
           <div className={`flex-shrink-0 px-3 py-1.5 border-t ${div} flex items-center gap-2 min-h-[32px]`}>
             {lastPlay ? (
               <>
@@ -1364,9 +1387,8 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
           </div>
         </div>
 
-        {/* ── Column 3: Score + Controls ── */}
+        {/* Column 3: Score + Controls */}
         <div className="w-[160px] flex-shrink-0 flex flex-col text-white" style={scoreboardStyle || { background: '#111827' }}>
-
           <div className="flex-1 flex flex-col justify-center px-4 py-3 space-y-3">
             <div>
               <p className="text-[9px] font-bold text-white/40 truncate mb-0.5">{gameSettings.isHome ? team.name : gameSettings.opponent}</p>

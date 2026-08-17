@@ -167,13 +167,20 @@ const GameStatsView = ({ user, game, team, onBack }) => {
   const [activeTab, setActiveTab] = useState('ours');
   const isOurs = activeTab === 'ours';
 
-  // Build rows for each side
-  const ourRoster  = team?.roster || [];
-  const oppRoster  = game.opponent_roster || [];
-  const ourRows    = ourRoster.map(p => buildRow(p, game.stats        || {}));
-  const oppRows    = oppRoster.map(p => buildRow(p, game.opponent_stats || {}));
-  const ourTotals  = sumRows(ourRows);
-  const oppTotals  = sumRows(oppRows);
+  // ── Our team rows ──────────────────────────────────────────────────────────
+  const ourRoster = team?.roster || [];
+  const ourRows   = ourRoster.map(p => buildRow(p, game.stats || {}));
+  const ourTotals = sumRows(ourRows);
+
+  // ── Opponent rows — handles quick mode (opp-team) and full mode (roster) ──
+  const oppStats    = game.opponent_stats || {};
+  const oppRoster   = game.opponent_roster || [];
+  const isQuickMode = oppRoster.length === 0 && !!oppStats['opp-team'];
+  const oppRows     = isQuickMode
+    ? [buildRow({ id: 'opp-team', name: game.opponent, number: '—' }, oppStats)]
+    : oppRoster.map(p => buildRow(p, oppStats));
+  const oppTotals = sumRows(oppRows);   // ✅ moved AFTER oppRows is defined
+
 
   // Scores — handle home/away correctly
   const ourScore  = game.home_team === team?.name ? game.home_score : game.away_score;

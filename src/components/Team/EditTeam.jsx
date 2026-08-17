@@ -39,6 +39,8 @@ const EditTeam = ({ user, team, onSave, onCancel, toast }) => {
   const [form, setForm] = useState({
     name:            team.name            || '',
     sport:           team.sport           || 'basketball',
+
+    
     coach:           team.coach           || '',
     assistant_coach: team.assistant_coach || '',
     manager:         team.manager         || '',
