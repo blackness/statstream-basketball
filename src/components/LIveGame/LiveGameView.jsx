@@ -709,10 +709,13 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     setPlayLog(newPlayLog);
 
     await persist({
-      home_score: newHome, away_score: newAway,
+      home_score:     newHome,
+      away_score:     newAway,
+      time_remaining: live.current.gameTime,   // ✅ add
+      period:         live.current.currentPeriod, // ✅ add
       stats:          isOurs ? nextStats                  : live.current.ourStats,
       opponent_stats: isOurs ? live.current.opponentStats : nextStats,
-      play_log: newPlayLog,
+      play_log:       newPlayLog,
     });
   }, [activeTeam, selectedPlayer, selectedOpp, gameSettings.isHome, gameSettings.opponent, foulLimit, isQuick]); // eslint-disable-line
 
@@ -730,8 +733,25 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     const newPlayLog = [newPlay, ...live.current.playLog];
     setLastAction({ isOurs: false, prevStats: live.current.opponentStats, prevHome: live.current.homeScore, prevAway: live.current.awayScore, prevPlayLog: live.current.playLog });
     setPlayLog(newPlayLog);
-    await persist({ home_score: newHome, away_score: newAway, play_log: newPlayLog });
+    await persist({ home_score: newHome, away_score: newAway, time_remaining: live.current.gameTime, play_log: newPlayLog });
   }, [gameSettings.isHome, gameSettings.opponent]); // eslint-disable-line
+const handleGoHome = useCallback(async () => {
+  const r = live.current;
+  if (currentGameId) {
+    await persist({
+      home_score:     r.homeScore,
+      away_score:     r.awayScore,
+      period:         r.currentPeriod,
+      time_remaining: r.gameTime,           // ✅ save current clock
+      stats:          r.ourStats,
+      opponent_stats: r.opponentStats,
+      active_players: r.activePlayers,
+      play_log:       r.playLog,
+      game_settings:  { ...gameSettings, period_fouls: r.periodFouls },
+    });
+  }
+  handleGoHome();
+}, [currentGameId, gameSettings, onGoHome]); // eslint-disable-line
 
   const handleUndo = useCallback(async () => {
     if (!lastAction) return;
@@ -842,7 +862,7 @@ const handleNextPeriod = useCallback(async () => {
     try {
       await persist({ home_score: r.homeScore, away_score: r.awayScore, period: r.currentPeriod, time_remaining: r.gameTime, stats: flushed, opponent_stats: r.opponentStats, opponent_roster: r.opponentRoster, active_players: r.activePlayers, play_log: r.playLog, status: 'completed', game_settings: { ...gameSettings, period_fouls: r.periodFouls } });
       await updateTeamRecord(r.homeScore, r.awayScore);
-      toast?.success('Game ended!'); onGoHome();
+      toast?.success('Game ended!'); handleGoHome();
     } catch (err) { console.error(err); toast?.error('Failed to end game'); }
   }, [getElapsed, flushMinutes, updateTeamRecord, onGoHome, gameSettings]); // eslint-disable-line
 
