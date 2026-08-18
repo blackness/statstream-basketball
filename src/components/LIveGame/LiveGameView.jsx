@@ -553,13 +553,15 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   }, [gameSettings.periodLength]);
 
   const initMinuteTracking = useCallback((ids, resumedStats = null) => {
-    const elapsed = getElapsed();
-    minuteTracker.current = {
-      entryTimes: Object.fromEntries(ids.map(id => [id, elapsed])),
-      accSeconds: Object.fromEntries(ids.map(id => [id, ((resumedStats?.[id]?.min) || 0) * 60])),
-    };
-  }, [getElapsed]);
-
+  const period        = existingGame?.period || 1;
+  const timeRemaining = existingGame?.time_remaining ?? gameSettings.periodLength * 60;
+  const periodSecs    = gameSettings.periodLength * 60;
+  const elapsed       = (period - 1) * periodSecs + (periodSecs - timeRemaining);
+  minuteTracker.current = {
+    entryTimes: Object.fromEntries(ids.map(id => [id, elapsed])),
+    accSeconds: Object.fromEntries(ids.map(id => [id, ((resumedStats?.[id]?.min) || 0) * 60])),
+  };
+}, [existingGame, gameSettings.periodLength]); // eslint-disable-line
   const flushMinutes = useCallback((ids, statsSnap, elapsed) => {
     const { entryTimes, accSeconds } = minuteTracker.current;
     const updated = { ...statsSnap };
@@ -568,7 +570,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
       const stint    = Math.max(0, elapsed - entryTimes[id]);
       const total    = (accSeconds[id] || 0) + stint;
       accSeconds[id] = total;
-      updated[id]    = { ...(updated[id] || { ...EMPTY_STATS }), min: total > 0 ? Math.max(1, Math.round(total / 60)) : 0 };
+      updated[id]    = { ...(updated[id] || { ...EMPTY_STATS }), min: total > 0 ? Math.ceil(total / 60) : 0 };
     });
     minuteTracker.current.accSeconds = accSeconds;
     return updated;
@@ -807,20 +809,22 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     await persist({ stats: updatedStats, active_players: newActive, play_log: newPlayLog });
   }, [getElapsed, team.roster]); // eslint-disable-line
 
-  const handleNextPeriod = useCallback(async () => {
-    const r = live.current;
-    const periodEnd = r.currentPeriod * gameSettings.periodLength * 60;
-    const flushed   = flushMinutes(r.activePlayers, r.ourStats, periodEnd);
-    r.activePlayers.forEach(id => { minuteTracker.current.entryTimes[id] = periodEnd; });
-    const next = r.currentPeriod + 1;
-    setOurStats(flushed); setCurrentPeriod(next);
-    setGameTime(gameSettings.periodLength * 60);
-    setIsTimerRunning(false); setShowNextQ(false);
-    setSelectedPlayer(null); setSelectedOpp(null);
-    setPeriodFouls({ ours: 0, opp: 0 });
-    toast?.info(`Q${next} starting`);
-    await persist({ stats: flushed, game_settings: { ...gameSettings, period_fouls: { ours: 0, opp: 0 } } });
-  }, [gameSettings, flushMinutes]); // eslint-disable-line
+const handleNextPeriod = useCallback(async () => {
+  const r       = live.current;
+  const elapsed = getElapsed();                              // ✅ actual not theoretical
+  const flushed = flushMinutes(r.activePlayers, r.ourStats, elapsed);
+  r.activePlayers.forEach(id => {
+    minuteTracker.current.entryTimes[id] = elapsed;          // ✅ continuous clock
+  });
+  const next = r.currentPeriod + 1;
+  setOurStats(flushed); setCurrentPeriod(next);
+  setGameTime(gameSettings.periodLength * 60);
+  setIsTimerRunning(false); setShowNextQ(false);
+  setSelectedPlayer(null); setSelectedOpp(null);
+  setPeriodFouls({ ours: 0, opp: 0 });
+  toast?.info(`Q${next} starting`);
+  await persist({ stats: flushed, game_settings: { ...gameSettings, period_fouls: { ours: 0, opp: 0 } } });
+}, [gameSettings, flushMinutes, getElapsed]); // eslint-disable-line
 
   const updateTeamRecord = useCallback(async (fH, fA) => {
     const ourS = gameSettings.isHome ? fH : fA;
