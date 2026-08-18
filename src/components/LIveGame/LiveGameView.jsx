@@ -229,7 +229,13 @@ const SubModal = React.memo(({
         : isDark ? 'border-blue-500 bg-blue-950' : 'border-blue-400 bg-blue-50'
       : isDark ? 'border-gray-800 bg-gray-800' : 'border-gray-100 bg-gray-50'}
   `;
-
+  const timerStartedAt = useRef(null);   // wall-clock ms when timer last started
+  const timerBaseTime  = useRef(null);   // timeRemaining value at that moment
+  const startTimer = () => {
+    timerStartedAt.current = Date.now();
+    timerBaseTime.current  = timeRemaining; // capture current value
+    setTimerRunning(true);
+  };
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center">
       <div className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border-t sm:border overflow-hidden flex flex-col max-h-[85vh] ${root}`}>
@@ -594,33 +600,58 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   }, []); // eslint-disable-line
 
   // ── Timer ────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isTimerRunning) return;
-    const id = setInterval(() => {
-      setGameTime(p => { if (p <= 1) { setIsTimerRunning(false); toast?.info('Period ended!'); return 0; } return p - 1; });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [isTimerRunning]); // eslint-disable-line
+useEffect(() => {
+  if (!timerRunning) return;
 
+  const id = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+    const next    = Math.max(0, timerBaseTime.current - elapsed);
+    setTimeRemaining(next);
+    if (next <= 0) {
+      setTimerRunning(false);
+      clearInterval(id);
+    }
+  }, 500); // 500ms so it catches up quickly after throttle
+
+  return () => clearInterval(id);
+}, [timerRunning]);
+useEffect(() => {
+  const onVisible = () => {
+    if (document.visibilityState === 'visible' && timerRunning && timerStartedAt.current) {
+      const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+      const next    = Math.max(0, timerBaseTime.current - elapsed);
+      setTimeRemaining(next);
+    }
+  };
+
+  document.addEventListener('visibilitychange', onVisible);
+  return () => document.removeEventListener('visibilitychange', onVisible);
+}, [timerRunning]);
+const pauseTimer = () => {
+  // Compute actual remaining at pause moment
+  const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+  const actual  = Math.max(0, timerBaseTime.current - elapsed);
+  setTimeRemaining(actual);  // freeze display at real value
+  setTimerRunning(false);
+};
   // ── Auto-save ────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!currentGameId) return;
-    const id = setInterval(() => {
-      if (!isDirty.current) return;
-      isDirty.current = false;
-      const r = live.current;
-      supabase.from('games').update({
-        home_score: r.homeScore, away_score: r.awayScore,
-        period: r.currentPeriod, time_remaining: r.gameTime,
-        stats: r.ourStats, opponent_stats: r.opponentStats,
-        opponent_roster: r.opponentRoster, active_players: r.activePlayers,
-        play_log: r.playLog,
-        game_settings: { ...gameSettings, period_fouls: r.periodFouls },
-        updated_at: new Date().toISOString(),
-      }).eq('id', currentGameId);
-    }, 5000);
-    return () => clearInterval(id);
-  }, [currentGameId]); // eslint-disable-line
+useEffect(() => {
+  return () => {
+    const r = live.current;
+    if (!r.currentGameId) return;
+    supabase.from('games').update({
+      time_remaining: r.gameTime,
+      period:         r.currentPeriod,
+      home_score:     r.homeScore,
+      away_score:     r.awayScore,
+      stats:          r.ourStats,
+      opponent_stats: r.opponentStats,
+      active_players: r.activePlayers,
+      play_log:       r.playLog,
+      updated_at:     new Date().toISOString(),
+    }).eq('id', r.currentGameId);
+  };
+}, []); // eslint-disable-line
 
   // ── Supabase helpers ─────────────────────────────────────────────────────────
   const createGame = async (starters = []) => {
@@ -735,6 +766,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
     setPlayLog(newPlayLog);
     await persist({ home_score: newHome, away_score: newAway, time_remaining: live.current.gameTime, play_log: newPlayLog });
   }, [gameSettings.isHome, gameSettings.opponent]); // eslint-disable-line
+
 const handleGoHome = useCallback(async () => {
   const r = live.current;
   if (currentGameId) {
@@ -742,7 +774,7 @@ const handleGoHome = useCallback(async () => {
       home_score:     r.homeScore,
       away_score:     r.awayScore,
       period:         r.currentPeriod,
-      time_remaining: r.gameTime,           // ✅ save current clock
+      time_remaining: r.gameTime,
       stats:          r.ourStats,
       opponent_stats: r.opponentStats,
       active_players: r.activePlayers,
@@ -750,9 +782,8 @@ const handleGoHome = useCallback(async () => {
       game_settings:  { ...gameSettings, period_fouls: r.periodFouls },
     });
   }
-  handleGoHome();
+  onGoHome();
 }, [currentGameId, gameSettings, onGoHome]); // eslint-disable-line
-
   const handleUndo = useCallback(async () => {
     if (!lastAction) return;
     const { isOurs, prevStats, prevHome, prevAway, prevPlayLog } = lastAction;
@@ -842,6 +873,10 @@ const handleNextPeriod = useCallback(async () => {
   setIsTimerRunning(false); setShowNextQ(false);
   setSelectedPlayer(null); setSelectedOpp(null);
   setPeriodFouls({ ours: 0, opp: 0 });
+  timerStartedAt.current = null;
+  timerBaseTime.current  = null;
+  setTimeRemaining(periodLengthInSeconds);
+  setTimerRunning(false); // or auto-start if you prefer
   toast?.info(`Q${next} starting`);
   await persist({ stats: flushed, game_settings: { ...gameSettings, period_fouls: { ours: 0, opp: 0 } } });
 }, [gameSettings, flushMinutes, getElapsed]); // eslint-disable-line

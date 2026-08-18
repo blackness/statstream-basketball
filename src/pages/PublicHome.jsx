@@ -335,12 +335,10 @@ export default function PublicHome() {
                 <p className="font-black text-gray-400">No games yet</p>
               </div>
             )}
-            <div className={avatarClass(team)} style={avatarStyle(team)}>
-              {team.name[0]?.toUpperCase()}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            {/* ← nothing here, just close the divs */}
+          </div>  
+        </div>    
+      </div>      
+    </div>        
   );
 }
