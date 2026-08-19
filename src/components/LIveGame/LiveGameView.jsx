@@ -227,15 +227,9 @@ const SubModal = React.memo(({
       ? side === 'out'
         ? isDark ? 'border-orange-500 bg-orange-950' : 'border-orange-400 bg-orange-50'
         : isDark ? 'border-blue-500 bg-blue-950' : 'border-blue-400 bg-blue-50'
-      : isDark ? 'border-gray-800 bg-gray-800' : 'border-gray-100 bg-gray-50'}
-  `;
-  const timerStartedAt = useRef(null);   // wall-clock ms when timer last started
-  const timerBaseTime  = useRef(null);   // timeRemaining value at that moment
-  const startTimer = () => {
-    timerStartedAt.current = Date.now();
-    timerBaseTime.current  = timeRemaining; // capture current value
-    setTimerRunning(true);
-  };
+      : isDark ? 'border-gray-800 bg-gray-800' : 'border-gray-100 bg-gray-50'}`
+    ;
+  
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center">
       <div className={`w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl border-t sm:border overflow-hidden flex flex-col max-h-[85vh] ${root}`}>
@@ -312,20 +306,25 @@ const SubModal = React.memo(({
 // ─── BoxScoreModal ────────────────────────────────────────────────────────────
 const BoxScoreModal = React.memo(({
   team, opponent, ourStats, opponentStats,
+  ourStatsByPeriod, oppStatsByPeriod, currentPeriod,   // ✅ new props
   opponentRoster, isQuick, isDark, tab, setTab, onClose
 }) => {
-  
+  const [periodView, setPeriodView] = React.useState('total');  // ✅ 'total' | 1 | 2 | 3...
+
   const isOurs = tab === 'ours';
 
-  const roster  = team?.roster || [];
-  const ourRows = roster.map(p => buildRow(p, ourStats));
+  // ── Derive stats from period selection ────────────────────────────────────
+  const displayOurStats = periodView === 'total' ? ourStats : (ourStatsByPeriod?.[periodView] || {});
+  const displayOppStats = periodView === 'total' ? opponentStats : (oppStatsByPeriod?.[periodView] || {});
 
-  const oppStats_   = opponentStats || {};
+  const roster  = team?.roster || [];
+  const ourRows = roster.map(p => buildRow(p, displayOurStats));
+
   const oppRoster_  = opponentRoster || [];
-  const isQuickMode = oppRoster_.length === 0 && !!oppStats_['opp-team'];
+  const isQuickMode = isQuick || (oppRoster_.length === 0 && !!opponentStats['opp-team']);
   const oppRows     = isQuickMode
-    ? [buildRow({ id: 'opp-team', name: opponent, number: '—' }, oppStats_)]
-    : oppRoster_.map(p => buildRow(p, oppStats_));
+    ? [buildRow({ id: 'opp-team', name: opponent, number: '—' }, displayOppStats)]
+    : oppRoster_.map(p => buildRow(p, displayOppStats));
 
   const rows   = isOurs ? ourRows : oppRows;
   const totals = isOurs ? sumRows(ourRows) : sumRows(oppRows);
@@ -356,25 +355,60 @@ const BoxScoreModal = React.memo(({
     { label: 'PF',   our: ourTot.pf,   opp: oppTot.pf,   lowerBetter: true },
   ];
 
+  // Period tab button style
+  const periodTabCls = (active) => `flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black transition ${
+    active
+      ? isDark ? 'bg-gray-600 text-white' : 'bg-gray-700 text-white'
+      : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'
+  }`;
+
   return (
     <div className={`fixed inset-0 z-50 flex flex-col ${bg}`}>
+      {/* Header */}
       <div className={`flex items-center justify-between px-4 py-3 border-b ${hdr} flex-shrink-0`}>
         <h2 className={`font-black text-sm ${txt}`}>Box Score</h2>
         <button onClick={onClose} className={`p-1.5 rounded-lg ${mut}`}><X size={18} /></button>
       </div>
 
-      <div className={`flex p-2 gap-1 border-b ${hdr} flex-shrink-0`}>
-        <button onClick={() => setTab('ours')} className={`flex-1 py-2 rounded-xl text-xs font-black transition ${isOurs ? 'bg-blue-500 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{team?.name}</button>
-        <button onClick={() => setTab('opp')} className={`flex-1 py-2 rounded-xl text-xs font-black transition ${tab === 'opp' ? 'bg-red-500 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{opponent}</button>
-        <button onClick={() => setTab('compare')} className={`flex-1 py-2 rounded-xl text-xs font-black transition ${tab === 'compare' ? isDark ? 'bg-gray-600 text-white' : 'bg-gray-800 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>Compare</button>
+      {/* Team tabs */}
+      <div className={`flex p-2 pb-1 gap-1 border-b ${hdr} flex-shrink-0`}>
+        <button onClick={() => setTab('ours')}
+          className={`flex-1 py-2 rounded-xl text-xs font-black transition ${isOurs ? 'bg-blue-500 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+          {team?.name}
+        </button>
+        <button onClick={() => setTab('opp')}
+          className={`flex-1 py-2 rounded-xl text-xs font-black transition ${tab === 'opp' ? 'bg-red-500 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+          {opponent}
+        </button>
+        <button onClick={() => setTab('compare')}
+          className={`flex-1 py-2 rounded-xl text-xs font-black transition ${tab === 'compare' ? isDark ? 'bg-gray-600 text-white' : 'bg-gray-800 text-white' : isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>
+          Compare
+        </button>
       </div>
 
+      {/* ✅ Period tabs */}
+      <div className={`flex gap-1.5 px-2 py-2 border-b ${hdr} flex-shrink-0 overflow-x-auto`}>
+        <button onClick={() => setPeriodView('total')} className={periodTabCls(periodView === 'total')}>
+          Total
+        </button>
+        {Array.from({ length: currentPeriod }, (_, i) => i + 1).map(q => (
+          <button key={q} onClick={() => setPeriodView(q)} className={periodTabCls(periodView === q)}>
+            Q{q}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
       <div className="flex-1 overflow-auto">
         {(tab === 'ours' || tab === 'opp') && (
           rows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <p className={`text-sm font-bold ${mut}`}>No stats recorded</p>
-              {tab === 'opp' && isQuick && <p className={`text-xs mt-1 ${mut}`}>Stats logged via OPP tile appear here</p>}
+              <p className={`text-sm font-bold ${mut}`}>
+                {periodView === 'total' ? 'No stats recorded' : `No stats in Q${periodView}`}
+              </p>
+              {tab === 'opp' && isQuick && (
+                <p className={`text-xs mt-1 ${mut}`}>Stats logged via OPP tile appear here</p>
+              )}
             </div>
           ) : (
             <table className="text-xs min-w-max w-full">
@@ -403,7 +437,9 @@ const BoxScoreModal = React.memo(({
               </tbody>
               <tfoot>
                 <tr className={`border-t-2 font-black ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
-                  <td className={`py-2 px-3 sticky left-0 text-[10px] uppercase ${isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>Team</td>
+                  <td className={`py-2 px-3 sticky left-0 text-[10px] uppercase ${isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'}`}>
+                    {periodView === 'total' ? 'Team' : `Q${periodView}`}
+                  </td>
                   {STAT_COLS.map(col => (
                     <td key={col.label} className={`py-2 px-2 text-right tabular-nums ${col.bold ? ptsCls : col.muted ? isDark ? 'text-gray-700' : 'text-gray-400' : isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       {col.render(totals)}
@@ -418,7 +454,9 @@ const BoxScoreModal = React.memo(({
         {tab === 'compare' && (
           <div className="p-4 space-y-2">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${cmp}`}>
-              <span className={`flex-1 text-[10px] font-black uppercase tracking-wider ${mut}`}>Stat</span>
+              <span className={`flex-1 text-[10px] font-black uppercase tracking-wider ${mut}`}>
+                {periodView === 'total' ? 'Game' : `Q${periodView}`}
+              </span>
               <span className="w-16 text-center text-[10px] font-black text-blue-500 uppercase truncate">{team?.name}</span>
               <span className="w-4" />
               <span className="w-16 text-center text-[10px] font-black text-red-500 uppercase truncate">{opponent}</span>
@@ -495,6 +533,9 @@ const EditPlayModal = React.memo(({ play, isDark, onDelete, onClose }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome, toast }) => {
   const isLandscape = useOrientation();
+  const [ourStatsByPeriod, setOurStatsByPeriod] = useState(existingGame?.stats_by_period || {});
+  const [oppStatsByPeriod, setOppStatsByPeriod] = useState(existingGame?.opponent_stats_by_period || {});
+
 
   // ── Theme ────────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(() => localStorage.getItem('ss_theme') || 'light');
@@ -520,7 +561,7 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const [ourStats,       setOurStats]       = useState(existingGame?.stats || {});
   const [opponentStats,  setOpponentStats]  = useState(existingGame?.opponent_stats || {});
   const [playLog,        setPlayLog]        = useState(existingGame?.play_log || []);
-  const [periodFouls,    setPeriodFouls]    = useState(existingGame?.game_settings?.period_fouls || { ours: 0, opp: 0 });
+  const [periodFouls, setPeriodFouls] = useState(existingGame?.game_settings?.period_fouls || { ours: 0, opp: 0 });
 
   // ── Selection & UI ───────────────────────────────────────────────────────────
   const [activeTeam,     setActiveTeam]     = useState('ours');
@@ -548,10 +589,17 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   const isDirty       = useRef(false);
 
   useEffect(() => {
-    live.current = { homeScore, awayScore, currentPeriod, gameTime, ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls };
-    isDirty.current = true;
-  }, [homeScore, awayScore, currentPeriod, gameTime, ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls]);
-
+  live.current = {
+    currentGameId,                          // ✅ ADD
+    homeScore, awayScore, currentPeriod, gameTime,
+    ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls
+  };
+  isDirty.current = true;
+}, [currentGameId, homeScore, awayScore, currentPeriod, gameTime,  // ✅ ADD currentGameId
+    ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls]);
+    
+  const timerStartedAt = useRef(null);
+  const timerBaseTime  = useRef(null);
   // ── Minute helpers ───────────────────────────────────────────────────────────
   const getElapsed = useCallback(() => {
     const r = live.current;
@@ -600,47 +648,64 @@ const LiveGameView = ({ user, team, gameSettings, existingGame = null, onGoHome,
   }, []); // eslint-disable-line
 
   // ── Timer ────────────────────────────────────────────────────────────────────
-useEffect(() => {
-  if (!timerRunning) return;
+// ── Add this ref alongside your other refs ────────────────────────────────────
+const isRunningRef = useRef(false); // mirrors isTimerRunning — avoids stale closure
 
+// ── Keep isRunningRef in sync ─────────────────────────────────────────────────
+useEffect(() => {
+  isRunningRef.current = isTimerRunning;
+}, [isTimerRunning]);
+
+// ── Timer interval (unchanged) ────────────────────────────────────────────────
+useEffect(() => {
+  if (!isTimerRunning) return;
   const id = setInterval(() => {
+    if (!timerStartedAt.current) return;
     const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
     const next    = Math.max(0, timerBaseTime.current - elapsed);
-    setTimeRemaining(next);
+    setGameTime(next);
     if (next <= 0) {
-      setTimerRunning(false);
+      setIsTimerRunning(false);
       clearInterval(id);
     }
-  }, 500); // 500ms so it catches up quickly after throttle
-
+  }, 500);
   return () => clearInterval(id);
-}, [timerRunning]);
+}, [isTimerRunning]);
+
+// ── Tab visibility — snap time on return ──────────────────────────────────────
 useEffect(() => {
   const onVisible = () => {
-    if (document.visibilityState === 'visible' && timerRunning && timerStartedAt.current) {
-      const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
-      const next    = Math.max(0, timerBaseTime.current - elapsed);
-      setTimeRemaining(next);
-    }
+    if (document.visibilityState !== 'visible') return;
+    if (!isRunningRef.current || !timerStartedAt.current) return;  // ✅ reads ref, not stale state
+
+    const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+    const next    = Math.max(0, timerBaseTime.current - elapsed);
+
+    // Re-anchor so the interval continues cleanly from this point
+    timerStartedAt.current = Date.now();
+    timerBaseTime.current  = next;
+    setGameTime(next);
   };
 
   document.addEventListener('visibilitychange', onVisible);
   return () => document.removeEventListener('visibilitychange', onVisible);
-}, [timerRunning]);
-const pauseTimer = () => {
-  // Compute actual remaining at pause moment
-  const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
-  const actual  = Math.max(0, timerBaseTime.current - elapsed);
-  setTimeRemaining(actual);  // freeze display at real value
-  setTimerRunning(false);
-};
+}, []); // ✅ empty deps — safe because it reads isRunningRef (a ref), not state
   // ── Auto-save ────────────────────────────────────────────────────────────────
+// ── Auto-save on unmount ──────────────────────────────────────────────────────
 useEffect(() => {
   return () => {
     const r = live.current;
     if (!r.currentGameId) return;
+
+    // ✅ Compute actual wall-clock time — don't trust stale React state
+    let finalTime = r.gameTime;
+    if (timerStartedAt.current) {
+      const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+      finalTime = Math.max(0, timerBaseTime.current - elapsed);
+    }
+
     supabase.from('games').update({
-      time_remaining: r.gameTime,
+      time_remaining: finalTime,
       period:         r.currentPeriod,
       home_score:     r.homeScore,
       away_score:     r.awayScore,
@@ -652,6 +717,18 @@ useEffect(() => {
     }).eq('id', r.currentGameId);
   };
 }, []); // eslint-disable-line
+
+useEffect(() => {
+  live.current = {
+    currentGameId,
+    homeScore, awayScore, currentPeriod, gameTime,
+    ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls,
+    ourStatsByPeriod, oppStatsByPeriod,   // ✅ add both
+  };
+  isDirty.current = true;
+}, [currentGameId, homeScore, awayScore, currentPeriod, gameTime,
+    ourStats, opponentStats, activePlayers, opponentRoster, playLog, periodFouls,
+    ourStatsByPeriod, oppStatsByPeriod]); // ✅ add both to deps
 
   // ── Supabase helpers ─────────────────────────────────────────────────────────
   const createGame = async (starters = []) => {
@@ -694,87 +771,152 @@ useEffect(() => {
   }, [currentGameId]); // eslint-disable-line
 
   // ── Stat action ──────────────────────────────────────────────────────────────
-  const handleStatAction = useCallback(async (statDef) => {
-    const isOurs = activeTeam === 'ours';
-    const player = isOurs
-      ? selectedPlayer
-      : (isQuick ? { id: 'opp-team', name: gameSettings.opponent, number: '' } : selectedOpp);
+const handleStatAction = useCallback(async (statDef) => {
+  const isOurs = activeTeam === 'ours';
+  const player = isOurs
+    ? selectedPlayer
+    : (isQuick ? { id: 'opp-team', name: gameSettings.opponent, number: '' } : selectedOpp);
 
-    if (!player) { toast?.info('Select a player'); return; }
+  if (!player) { toast?.info('Select a player'); return; }
 
-    const base      = isOurs ? live.current.ourStats : live.current.opponentStats;
-    const prev      = base[player.id] || { ...EMPTY_STATS };
-    const next      = { ...prev };
-    Object.entries(statDef.updates).forEach(([k, v]) => { next[k] = (next[k] || 0) + v; });
-    const nextStats = { ...base, [player.id]: next };
+  const base      = isOurs ? live.current.ourStats : live.current.opponentStats;
+  const prev      = base[player.id] || { ...EMPTY_STATS };
+  const next      = { ...prev };
+  Object.entries(statDef.updates).forEach(([k, v]) => { next[k] = (next[k] || 0) + v; });
+  const nextStats = { ...base, [player.id]: next };
 
-    const pts = statDef.updates.pts || 0;
-    let newHome = live.current.homeScore;
-    let newAway = live.current.awayScore;
-    if (pts > 0) {
-      const ourIsHome = gameSettings.isHome;
-      if (isOurs) { ourIsHome ? (newHome += pts) : (newAway += pts); }
-      else        { ourIsHome ? (newAway += pts) : (newHome += pts); }
-      setHomeScore(newHome);
-      setAwayScore(newAway);
-    }
-
-    if (statDef.key === 'pf') {
-      const side = isOurs ? 'ours' : 'opp';
-      setPeriodFouls(prev => ({ ...prev, [side]: Math.min((prev[side] || 0) + 1, foulLimit + 2) }));
-    }
-
-    const newPlay = {
-      id: genId(), timestamp: new Date().toISOString(),
-      period: live.current.currentPeriod, clock: fmtTime(live.current.gameTime),
-      team: activeTeam,
-      player: { id: player.id, name: player.name, number: player.number || '' },
-      action: statDef.key,
-      label: player.id === 'opp-team' ? gameSettings.opponent : `#${player.number || '—'} ${player.name.split(' ')[0]}`,
-      pts, updates: statDef.updates,
-    };
-    const newPlayLog = [newPlay, ...live.current.playLog];
-
-    setLastAction({ isOurs, prevStats: base, prevHome: live.current.homeScore, prevAway: live.current.awayScore, prevPlayLog: live.current.playLog });
-    if (isOurs) setOurStats(nextStats); else setOpponentStats(nextStats);
-    setPlayLog(newPlayLog);
-
-    await persist({
-      home_score:     newHome,
-      away_score:     newAway,
-      time_remaining: live.current.gameTime,   // ✅ add
-      period:         live.current.currentPeriod, // ✅ add
-      stats:          isOurs ? nextStats                  : live.current.ourStats,
-      opponent_stats: isOurs ? live.current.opponentStats : nextStats,
-      play_log:       newPlayLog,
-    });
-  }, [activeTeam, selectedPlayer, selectedOpp, gameSettings.isHome, gameSettings.opponent, foulLimit, isQuick]); // eslint-disable-line
-
-  const handleOppScore = useCallback(async (pts) => {
+  const pts = statDef.updates.pts || 0;
+  let newHome = live.current.homeScore;
+  let newAway = live.current.awayScore;
+  if (pts > 0) {
     const ourIsHome = gameSettings.isHome;
-    let newHome = live.current.homeScore, newAway = live.current.awayScore;
-    ourIsHome ? (newAway += pts) : (newHome += pts);
-    setHomeScore(newHome); setAwayScore(newAway);
-    const newPlay = {
-      id: genId(), timestamp: new Date().toISOString(),
-      period: live.current.currentPeriod, clock: fmtTime(live.current.gameTime),
-      team: 'opponent', player: { id: 'team', name: 'Team', number: '' },
-      action: 'score', label: gameSettings.opponent, pts, updates: { pts },
-    };
-    const newPlayLog = [newPlay, ...live.current.playLog];
-    setLastAction({ isOurs: false, prevStats: live.current.opponentStats, prevHome: live.current.homeScore, prevAway: live.current.awayScore, prevPlayLog: live.current.playLog });
-    setPlayLog(newPlayLog);
-    await persist({ home_score: newHome, away_score: newAway, time_remaining: live.current.gameTime, play_log: newPlayLog });
-  }, [gameSettings.isHome, gameSettings.opponent]); // eslint-disable-line
+    if (isOurs) { ourIsHome ? (newHome += pts) : (newAway += pts); }
+    else        { ourIsHome ? (newAway += pts) : (newHome += pts); }
+    setHomeScore(newHome);
+    setAwayScore(newAway);
+  }
+
+  if (statDef.key === 'pf') {
+    const side = isOurs ? 'ours' : 'opp';
+    setPeriodFouls(prev => ({ ...prev, [side]: Math.min((prev[side] || 0) + 1, foulLimit + 2) }));
+  }
+
+  // ── Per-period stats ──────────────────────────────────────────────────────
+  const period = live.current.currentPeriod;
+  let nextOurByPeriod = live.current.ourStatsByPeriod;
+  let nextOppByPeriod = live.current.oppStatsByPeriod;
+
+  if (isOurs) {
+    const pStats = nextOurByPeriod[period] || {};
+    const pPrev  = pStats[player.id] || { ...EMPTY_STATS };
+    const pNext  = { ...pPrev };
+    Object.entries(statDef.updates).forEach(([k, v]) => { pNext[k] = (pNext[k] || 0) + v; });
+    nextOurByPeriod = { ...nextOurByPeriod, [period]: { ...pStats, [player.id]: pNext } };
+    setOurStatsByPeriod(nextOurByPeriod);
+  } else {
+    const pStats = nextOppByPeriod[period] || {};
+    const pPrev  = pStats[player.id] || { ...EMPTY_STATS };
+    const pNext  = { ...pPrev };
+    Object.entries(statDef.updates).forEach(([k, v]) => { pNext[k] = (pNext[k] || 0) + v; });
+    nextOppByPeriod = { ...nextOppByPeriod, [period]: { ...pStats, [player.id]: pNext } };
+    setOppStatsByPeriod(nextOppByPeriod);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const newPlay = {
+    id: genId(), timestamp: new Date().toISOString(),
+    period: live.current.currentPeriod, clock: fmtTime(live.current.gameTime),
+    team: activeTeam,
+    player: { id: player.id, name: player.name, number: player.number || '' },
+    action: statDef.key,
+    label: player.id === 'opp-team' ? gameSettings.opponent : `#${player.number || '—'} ${player.name.split(' ')[0]}`,
+    pts, updates: statDef.updates,
+  };
+  const newPlayLog = [newPlay, ...live.current.playLog];
+
+  setLastAction({
+    isOurs,
+    prevStats:       base,
+    prevHome:        live.current.homeScore,
+    prevAway:        live.current.awayScore,
+    prevPlayLog:     live.current.playLog,
+    prevOurByPeriod: live.current.ourStatsByPeriod,  // ✅ for undo
+    prevOppByPeriod: live.current.oppStatsByPeriod,  // ✅ for undo
+  });
+  if (isOurs) setOurStats(nextStats); else setOpponentStats(nextStats);
+  setPlayLog(newPlayLog);
+
+  await persist({
+    home_score:               newHome,
+    away_score:               newAway,
+    time_remaining:           live.current.gameTime,
+    period:                   live.current.currentPeriod,
+    stats:                    isOurs ? nextStats               : live.current.ourStats,
+    opponent_stats:           isOurs ? live.current.opponentStats : nextStats,
+    play_log:                 newPlayLog,
+    stats_by_period:          isOurs ? nextOurByPeriod : live.current.ourStatsByPeriod,        // ✅
+    opponent_stats_by_period: isOurs ? live.current.oppStatsByPeriod : nextOppByPeriod,        // ✅
+  });
+}, [activeTeam, selectedPlayer, selectedOpp, gameSettings.isHome, gameSettings.opponent, foulLimit, isQuick]); // eslint-disable-line
+const handleOppScore = useCallback(async (pts) => {
+  const ourIsHome = gameSettings.isHome;
+  let newHome = live.current.homeScore, newAway = live.current.awayScore;
+  ourIsHome ? (newAway += pts) : (newHome += pts);
+  setHomeScore(newHome); setAwayScore(newAway);
+
+  // ── Per-period opp pts ────────────────────────────────────────────────────
+  const period   = live.current.currentPeriod;
+  const pStats   = { ...(live.current.oppStatsByPeriod[period] || {}) };
+  const pTeam    = { ...(pStats['opp-team'] || { ...EMPTY_STATS }) };
+  pTeam.pts      = (pTeam.pts || 0) + pts;
+  const nextOppByPeriod = { ...live.current.oppStatsByPeriod, [period]: { ...pStats, 'opp-team': pTeam } };
+  setOppStatsByPeriod(nextOppByPeriod);
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const newPlay = {
+    id: genId(), timestamp: new Date().toISOString(),
+    period: live.current.currentPeriod, clock: fmtTime(live.current.gameTime),
+    team: 'opponent', player: { id: 'team', name: 'Team', number: '' },
+    action: 'score', label: gameSettings.opponent, pts, updates: { pts },
+  };
+  const newPlayLog = [newPlay, ...live.current.playLog];
+
+  setLastAction({
+    isOurs:          false,
+    prevStats:       live.current.opponentStats,
+    prevHome:        live.current.homeScore,
+    prevAway:        live.current.awayScore,
+    prevPlayLog:     live.current.playLog,
+    prevOurByPeriod: live.current.ourStatsByPeriod,  // ✅
+    prevOppByPeriod: live.current.oppStatsByPeriod,  // ✅
+  });
+  setPlayLog(newPlayLog);
+
+  await persist({
+    home_score:               newHome,
+    away_score:               newAway,
+    time_remaining:           live.current.gameTime,
+    play_log:                 newPlayLog,
+    opponent_stats_by_period: nextOppByPeriod,        // ✅
+  });
+}, [gameSettings.isHome, gameSettings.opponent]); // eslint-disable-line
 
 const handleGoHome = useCallback(async () => {
+  // ✅ Compute actual wall-clock time before saving
+  let finalTime = live.current.gameTime;
+  if (timerStartedAt.current) {
+    const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+    finalTime = Math.max(0, timerBaseTime.current - elapsed);
+  }
+  setIsTimerRunning(false);
+
   const r = live.current;
   if (currentGameId) {
     await persist({
       home_score:     r.homeScore,
       away_score:     r.awayScore,
       period:         r.currentPeriod,
-      time_remaining: r.gameTime,
+      time_remaining: finalTime,        // ✅ not r.gameTime
       stats:          r.ourStats,
       opponent_stats: r.opponentStats,
       active_players: r.activePlayers,
@@ -784,36 +926,84 @@ const handleGoHome = useCallback(async () => {
   }
   onGoHome();
 }, [currentGameId, gameSettings, onGoHome]); // eslint-disable-line
-  const handleUndo = useCallback(async () => {
-    if (!lastAction) return;
-    const { isOurs, prevStats, prevHome, prevAway, prevPlayLog } = lastAction;
-    if (isOurs) setOurStats(prevStats); else setOpponentStats(prevStats);
-    setHomeScore(prevHome); setAwayScore(prevAway);
-    setPlayLog(prevPlayLog); setLastAction(null);
-    await persist({ home_score: prevHome, away_score: prevAway, stats: isOurs ? prevStats : live.current.ourStats, opponent_stats: isOurs ? live.current.opponentStats : prevStats, play_log: prevPlayLog });
-    toast?.info('Undone');
-  }, [lastAction]); // eslint-disable-line
 
-  const handleDeletePlay = useCallback(async (play) => {
-    const isOurs  = play.team === 'ours';
-    const base    = isOurs ? live.current.ourStats : live.current.opponentStats;
-    const pStat   = { ...(base[play.player?.id] || { ...EMPTY_STATS }) };
-    Object.entries(play.updates || {}).forEach(([k, v]) => { pStat[k] = Math.max(0, (pStat[k] || 0) - v); });
-    const nextStats = { ...base, [play.player?.id]: pStat };
-    const pts = play.pts || 0;
-    let newHome = live.current.homeScore, newAway = live.current.awayScore;
-    if (pts > 0) {
-      const ourIsHome = gameSettings.isHome;
-      if (isOurs) { ourIsHome ? (newHome -= pts) : (newAway -= pts); }
-      else        { ourIsHome ? (newAway -= pts) : (newHome -= pts); }
-      setHomeScore(Math.max(0, newHome)); setAwayScore(Math.max(0, newAway));
-    }
-    const newPlayLog = live.current.playLog.filter(p => p.id !== play.id);
-    if (isOurs) setOurStats(nextStats); else setOpponentStats(nextStats);
-    setPlayLog(newPlayLog); setEditingPlay(null);
-    await persist({ home_score: Math.max(0, newHome), away_score: Math.max(0, newAway), stats: isOurs ? nextStats : live.current.ourStats, opponent_stats: isOurs ? live.current.opponentStats : nextStats, play_log: newPlayLog });
-    toast?.info('Play removed');
-  }, [gameSettings.isHome]); // eslint-disable-line
+  const handleUndo = useCallback(async () => {
+  if (!lastAction) return;
+  const { isOurs, prevStats, prevHome, prevAway, prevPlayLog, prevOurByPeriod, prevOppByPeriod } = lastAction;
+
+  if (isOurs) {
+    setOurStats(prevStats);
+    if (prevOurByPeriod) setOurStatsByPeriod(prevOurByPeriod);   // ✅
+  } else {
+    setOpponentStats(prevStats);
+    if (prevOppByPeriod) setOppStatsByPeriod(prevOppByPeriod);   // ✅
+  }
+  setHomeScore(prevHome); setAwayScore(prevAway);
+  setPlayLog(prevPlayLog); setLastAction(null);
+
+  await persist({
+    home_score:               prevHome,
+    away_score:               prevAway,
+    stats:                    isOurs ? prevStats               : live.current.ourStats,
+    opponent_stats:           isOurs ? live.current.opponentStats : prevStats,
+    play_log:                 prevPlayLog,
+    stats_by_period:          prevOurByPeriod || live.current.ourStatsByPeriod,   // ✅
+    opponent_stats_by_period: prevOppByPeriod || live.current.oppStatsByPeriod,   // ✅
+  });
+  toast?.info('Undone');
+}, [lastAction]); // eslint-disable-line
+
+const handleDeletePlay = useCallback(async (play) => {
+  const isOurs  = play.team === 'ours';
+  const base    = isOurs ? live.current.ourStats : live.current.opponentStats;
+  const pStat   = { ...(base[play.player?.id] || { ...EMPTY_STATS }) };
+  Object.entries(play.updates || {}).forEach(([k, v]) => { pStat[k] = Math.max(0, (pStat[k] || 0) - v); });
+  const nextStats = { ...base, [play.player?.id]: pStat };
+
+  const pts = play.pts || 0;
+  let newHome = live.current.homeScore, newAway = live.current.awayScore;
+  if (pts > 0) {
+    const ourIsHome = gameSettings.isHome;
+    if (isOurs) { ourIsHome ? (newHome -= pts) : (newAway -= pts); }
+    else        { ourIsHome ? (newAway -= pts) : (newHome -= pts); }
+    setHomeScore(Math.max(0, newHome)); setAwayScore(Math.max(0, newAway));
+  }
+
+  // ── Per-period rollback ───────────────────────────────────────────────────
+  const period = play.period;
+  let nextOurByPeriod = live.current.ourStatsByPeriod;
+  let nextOppByPeriod = live.current.oppStatsByPeriod;
+
+  if (isOurs) {
+    const ps   = { ...(nextOurByPeriod[period] || {}) };
+    const pst  = { ...(ps[play.player?.id] || { ...EMPTY_STATS }) };
+    Object.entries(play.updates || {}).forEach(([k, v]) => { pst[k] = Math.max(0, (pst[k] || 0) - v); });
+    nextOurByPeriod = { ...nextOurByPeriod, [period]: { ...ps, [play.player?.id]: pst } };
+    setOurStatsByPeriod(nextOurByPeriod);
+  } else {
+    const ps   = { ...(nextOppByPeriod[period] || {}) };
+    const pst  = { ...(ps[play.player?.id] || { ...EMPTY_STATS }) };
+    Object.entries(play.updates || {}).forEach(([k, v]) => { pst[k] = Math.max(0, (pst[k] || 0) - v); });
+    nextOppByPeriod = { ...nextOppByPeriod, [period]: { ...ps, [play.player?.id]: pst } };
+    setOppStatsByPeriod(nextOppByPeriod);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const newPlayLog = live.current.playLog.filter(p => p.id !== play.id);
+  if (isOurs) setOurStats(nextStats); else setOpponentStats(nextStats);
+  setPlayLog(newPlayLog); setEditingPlay(null);
+
+  await persist({
+    home_score:               Math.max(0, newHome),
+    away_score:               Math.max(0, newAway),
+    stats:                    isOurs ? nextStats               : live.current.ourStats,
+    opponent_stats:           isOurs ? live.current.opponentStats : nextStats,
+    play_log:                 newPlayLog,
+    stats_by_period:          isOurs ? nextOurByPeriod : live.current.ourStatsByPeriod,  // ✅
+    opponent_stats_by_period: isOurs ? live.current.oppStatsByPeriod : nextOppByPeriod,  // ✅
+  });
+  toast?.info('Play removed');
+}, [gameSettings.isHome]); // eslint-disable-line
 
   const handleSubConfirm = useCallback(async (outIds, inIds) => {
     const elapsed = getElapsed();
@@ -875,8 +1065,6 @@ const handleNextPeriod = useCallback(async () => {
   setPeriodFouls({ ours: 0, opp: 0 });
   timerStartedAt.current = null;
   timerBaseTime.current  = null;
-  setTimeRemaining(periodLengthInSeconds);
-  setTimerRunning(false); // or auto-start if you prefer
   toast?.info(`Q${next} starting`);
   await persist({ stats: flushed, game_settings: { ...gameSettings, period_fouls: { ours: 0, opp: 0 } } });
 }, [gameSettings, flushMinutes, getElapsed]); // eslint-disable-line
@@ -890,7 +1078,21 @@ const handleNextPeriod = useCallback(async () => {
       if (error) throw error;
     } catch (err) { console.error(err); }
   }, [gameSettings, team.id]);
-
+const handleTimerToggle = useCallback(() => {
+  if (isTimerRunning) {
+    // Pause — freeze display at wall-clock actual value
+    if (timerStartedAt.current) {
+      const elapsed = Math.floor((Date.now() - timerStartedAt.current) / 1000);
+      setGameTime(prev => Math.max(0, timerBaseTime.current - elapsed));
+    }
+    setIsTimerRunning(false);
+  } else {
+    // Start — anchor wall clock NOW
+    timerStartedAt.current = Date.now();
+    timerBaseTime.current  = live.current.gameTime;
+    setIsTimerRunning(true);
+  }
+}, [isTimerRunning]);
   const handleEndGame = useCallback(async () => {
     const r = live.current;
     const flushed = flushMinutes(r.activePlayers, r.ourStats, getElapsed());
@@ -1005,12 +1207,21 @@ const handleNextPeriod = useCallback(async () => {
       )}
 
       {showBoxScore && (
-        <BoxScoreModal team={team} opponent={gameSettings.opponent}
-          ourStats={ourStats} opponentStats={opponentStats}
-          opponentRoster={opponentRoster} isQuick={isQuick}
-          isDark={isDark} onClose={() => setShowBoxScore(false)}
-          tab={boxScoreTab} 
-          setTab={setBoxScoreTab} />
+        <BoxScoreModal
+          team={team}
+          opponent={gameSettings.opponent}
+          ourStats={ourStats}
+          opponentStats={opponentStats}
+          ourStatsByPeriod={ourStatsByPeriod}   // ✅
+          oppStatsByPeriod={oppStatsByPeriod}   // ✅
+          currentPeriod={currentPeriod}         // ✅
+          opponentRoster={opponentRoster}
+          isQuick={isQuick}
+          isDark={isDark}
+          onClose={() => setShowBoxScore(false)}
+          tab={boxScoreTab}
+          setTab={setBoxScoreTab}
+        />
       )}
 
       {editingPlay && (
@@ -1109,7 +1320,7 @@ const handleNextPeriod = useCallback(async () => {
             <div className="flex items-center gap-2.5">
               <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Q{currentPeriod}</span>
               <div className="flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1">
-                <button onClick={() => setIsTimerRunning(t => !t)} className="text-white/70 hover:text-white transition">
+                <button onClick={handleTimerToggle} className="text-white/70 hover:text-white transition">
                   {isTimerRunning ? <Pause size={11} /> : <Play size={11} />}
                 </button>
                 <span className="text-sm font-black tabular-nums">{fmtTime(gameTime)}</span>
@@ -1462,7 +1673,7 @@ const handleNextPeriod = useCallback(async () => {
             </div>
             <div className="w-full h-px bg-white/10" />
             <div className="flex items-center gap-2">
-              <button onClick={() => setIsTimerRunning(t => !t)} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition">
+              <button onClick={handleTimerToggle} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition">
                 {isTimerRunning ? <Pause size={13} /> : <Play size={13} />}
               </button>
               <div>
